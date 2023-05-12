@@ -1,0 +1,69 @@
+Package: LTabundR
+Title: Development Version 
+Version: 0.0.2
+Authors@R: 
+    person("Eric", "Keen", , "eric.keen@noaa.gov", role = c("aut", "cre"))
+    person("Amanda", "Bradford", , "amanda.bradford@noaa.gov", role = c("aut", "cre"))
+Description: Development version
+License: MIT + file LICENSE
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.1.2
+Imports: 
+    cowplot,
+    coxed,
+    devtools,
+    Distance,
+    dplyr,
+    DT,
+    geosphere,
+    ggplot2,
+    ggpubr,
+    ggrepel,
+    ggspatial,
+    ggstance,
+    googlesheets4,
+    grDevices,
+    gridExtra,
+    htmltools,
+    leaflet,
+    lubridate,
+    lutz,
+    magrittr,
+    mapproj,
+    mgcv,
+    miceadds,
+    mrds,
+    MuMIn,
+    pkgcond,
+    purrr,
+    raster,
+    rasterVis,
+    RColorBrewer,
+    readr,
+    readtext,
+    remotes,
+    rgdal,
+    rintrojs,
+    rnaturalearth,
+    rnaturalearthdata,
+    rstudioapi,
+    scales,
+    scam,
+    sf,
+    shiny,
+    shinydashboard,
+    shinyjs,
+    shinythemes,
+    sp,
+    stats,
+    stringr,
+    swfscDAS,
+    tmap,
+    tmaptools,
+    tools,
+    units,
+    usethis
+Depends: 
+    R (>= 2.10)
+LazyData: true
