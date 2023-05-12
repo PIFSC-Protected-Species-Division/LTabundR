@@ -1,0 +1,33 @@
+AllDas_1986-2017.DAS                       INPUT DATA FILE NAME
+CalibrArea.dat                                    INPUT BOUNDARIES OF STUDY AREA (OR BLANK)
+TRUE                                USE PROBABLE SPECIES IDENTIFICATIONS
+FALSE                               USE 'LOW' ESTIMATES OF GROUP SIZE IF NO 'BEST' ESTIMATES ARE AVAILABLE
+TRUE                                USE GROUP SIZE CALIBRATION FACTORS? (TRUE OR FALSE)
+TRUE                                USE GEOMETRIC MEAN GROUP SIZE (WEIGHTED BY VAR IF CALIBRATED)
+0.0                                 SMEAR ANGLES +/- DEGREES? (0= NO SMEARING)
+                                    GEOGRAPHIC STRATA FILE (OR BLANK)
+1142567.                            MAIN STUDY AREA IN SQ KM. (CAMMS=817542, ORWA=325018, ORCAWA=1142567)
+FALSE	                            INCLUDE off-transect EFFORT AS SEPARATE GEO STRATUM
+FALSE                               USE FINE-SCALE EFFORT IN DENSITY ESTIMATION
+0.0       10000.0                   MIN/MAX SCHOOL SIZE
+0   6                               MIN/MAX BEAUFORT
+0   7                               MIN/MAX OBSERVATION CUE (0=MISSNG,1=BRD,2=SPLSH,3=MAMM,4=SHIP,5=?,6=BLOW,7=HELO)
+0                                   SIGHTING METHOD (0=ANY, 1=25X, 2=not 25X OR HELO)
+5.5                                 TRUNCATION DISTANCE (KM)
+0                                   IND. OBSERVER STRATA (-1= include IO sightings, 0= IGNORE IO sightings, 1= IO PRESENT, 2= IO ONLY)
+10.0                                MINIMUM BOOTSTRAP DISTANCE (in km)
+833171                              ISEED for BOOTSTRAP AND SMEARING ANGLES
+ 002 OFFSH_SPOT
+ 003 UNID_SPINR
+ 005 UNID_COMM
+ 006 COAST_SPOT
+ 010 EAST_SPINR
+ 011 WBEL_SPINR
+ 016 LONGB_COMM
+ 017 SHRTB_COMM
+ 088 C_A_SPINNR
+ 090 UNID_SPOT
+ 100 TRESMARIAS
+ 101 SW_SPINNER
+ 102 GRAYS_SPIN
+ 103 E/CA_SPIN
