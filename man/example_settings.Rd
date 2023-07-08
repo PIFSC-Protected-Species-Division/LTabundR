@@ -14,7 +14,9 @@ example_settings
 Example settings used in \code{LTabundR} vignette (WHICEAS 2020)
 }
 \details{
-This example \code{settings} object was prepared with the following code:\preformatted{data(strata_cnp)
+This example \code{settings} object was prepared with the following code:
+
+\if{html}{\out{<div class="sourceCode">}}\preformatted{data(strata_cnp)
 data(study_cnp)
 data(group_size_coefficients)
 survey <- load_survey_settings()
@@ -23,6 +25,6 @@ example_settings <- load_settings(strata = strata_cnp,
                                study_area = study_cnp,
                                survey = survey,
                                cohorts=list(cohort1))
-}
+}\if{html}{\out{</div>}}
 }
 \keyword{datasets}

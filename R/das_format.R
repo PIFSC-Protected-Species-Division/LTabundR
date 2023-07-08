@@ -144,7 +144,7 @@ das_format <- function(cruz,
   das_ship <- rep(NA,times=nrow(dass))
   cruises <- dass$Cruise %>%  unique
   cruises
-  i=15
+  i=1
   for(i in 1:length(cruises)){
     cruisi <- cruises[i]
     shipi <- ships$ship[ships$cruise == cruisi] %>% unique %>%  head(1); shipi
@@ -166,6 +166,7 @@ das_format <- function(cruz,
   # Get overlap handling setting for each cohort
   cohorts <- settings$cohorts
   length(cohorts)
+  #(overlap_i <- which(names(cohorts[1]) == 'strata_overlap_handling'))
   overlap_i <- which(names(cohorts[[1]]) == 'strata_overlap_handling')
   overlap_i
   overlap_handling <- lapply(cohorts,'[[',overlap_i)
@@ -184,7 +185,7 @@ das_format <- function(cruz,
   length(cohorts)
   overlap_handling
 
-  i=2 # for debugging
+  i=1 # for debugging
   # Loop through each cohort
   for(i in 1:length(cohorts)){
     cohorti <- cohorts[[i]] ; cohorti %>% names # get cohort data
@@ -207,10 +208,11 @@ das_format <- function(cruz,
       eff_cohort %>% names
       (stratum_cols <- grep('stratum_',names(eff_cohort),fixed=TRUE))
       stratum_keeps <- c()
-      si <- 5
+      si <- 1
       for(si in 1:length(cohort_strata)){
-        (strati <- cohort_strata[si])
+        (strati <- cohort_strata[si] %>% names)
         (strati_col <- grep(strati, names(eff_cohort), fixed=TRUE)[1])
+        #(strati_col <- grep(strati, names(eff_cohort), fixed=TRUE)[1])
         stratum_keeps <- c(stratum_keeps, strati_col)
       }
       stratum_keeps
@@ -231,7 +233,7 @@ das_format <- function(cruz,
       # Arrange strata summary from largest area to smallest
       strata_summari <-
         strata_summary %>%
-        dplyr::filter(stratum %in% cohort_strata) %>%
+        dplyr::filter(stratum %in% names(cohort_strata)) %>%
         dplyr::arrange(dplyr::desc(as.numeric(area)))
       strata_summari
 

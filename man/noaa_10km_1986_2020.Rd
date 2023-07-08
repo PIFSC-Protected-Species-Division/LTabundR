@@ -14,7 +14,9 @@ noaa_10km_1986_2020
 Cruise data processed for all NOAA SWFSC and PIFSC surveys, 1986 - 2020 (10 km segment lengths)
 }
 \details{
-This dataset was processed using the following code:\preformatted{data(group_size_coefficients)
+This dataset was processed using the following code:
+
+\if{html}{\out{<div class="sourceCode">}}\preformatted{data(group_size_coefficients)
 
 survey <- load_survey_settings(
 out_handling = 'stratum',
@@ -66,6 +68,6 @@ pifsc <- process_surveys(das_file,
 
 cruzes <- list(swfsc, pifsc)
 noaa_10km_1986_2020 <- cruz_combine(cruzes)
-}
+}\if{html}{\out{</div>}}
 }
 \keyword{datasets}

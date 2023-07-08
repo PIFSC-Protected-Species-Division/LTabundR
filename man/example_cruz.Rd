@@ -14,9 +14,11 @@ example_cruz
 Example cruz object (WHICEAS 2020)
 }
 \details{
-This example \code{cruz} object was prepared with the following code:\preformatted{data(example_settings)
+This example \code{cruz} object was prepared with the following code:
+
+\if{html}{\out{<div class="sourceCode">}}\preformatted{data(example_settings)
 example_cruz <- process_surveys('data-raw/data/HICEASwinter2020.das',
                           settings = example_settings)
-}
+}\if{html}{\out{</div>}}
 }
 \keyword{datasets}

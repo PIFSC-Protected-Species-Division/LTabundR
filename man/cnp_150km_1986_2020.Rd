@@ -14,7 +14,9 @@ cnp_150km_1986_2020
 Cruise data processed for the CNP, 1986 - 2020 (150 km segment lengths)
 }
 \details{
-This dataset was processed with the following code:\preformatted{data(group_size_coefficients)
+This dataset was processed with the following code:
+
+\if{html}{\out{<div class="sourceCode">}}\preformatted{data(group_size_coefficients)
 
 survey <- load_survey_settings(
 out_handling = 'remove',
@@ -130,6 +132,6 @@ das_file = '../test_code/CNP/CenPac1986-2020_Final_alb.das'
 
 cnp_150km_1986_2020 <- process_surveys(das_file = das_file,
                      settings = settings)
-}
+}\if{html}{\out{</div>}}
 }
 \keyword{datasets}
