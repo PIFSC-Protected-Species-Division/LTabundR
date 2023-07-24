@@ -147,7 +147,7 @@ das_format <- function(cruz,
   i=1
   for(i in 1:length(cruises)){
     cruisi <- cruises[i]
-    shipi <- ships$ship[ships$cruise == cruisi] %>% unique %>%  head(1); shipi
+    shipi <- ships_use$ship[ships_use$cruise == cruisi] %>% unique %>%  head(1); shipi
     if(length(shipi)>0){
       matches <- which(dass$Cruise == cruisi)
       if(length(matches)>0){
