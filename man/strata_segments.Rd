@@ -15,5 +15,5 @@ strata_segments(cruz, cohort = 1)
 A \code{ggplot2} object.
 }
 \description{
-Display/map stratum assignments for segments
+A simple diagnostic function, usually not used by most analysts.
 }

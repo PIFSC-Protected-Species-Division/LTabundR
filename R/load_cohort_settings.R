@@ -90,18 +90,25 @@
 #' in estimating the detection function and densities. Default is `FALSE`:
 #' all abeam sightings will not be used in density estimation or detection function estimation.
 #'
-#' @param strata_overlap_handling In the event that survey strata overlap,
-#' this setting tells `R` how to handle it. The options are `"smallest"` (the default),
-#' in which effort can belong to only a single stratum,
-#' and the smallest of overlapping strata will be used
-#' (e.g., an insular polygon nested within a larger EEZ polygon);
-#' `"largest"`, in which effort can belong to only a single stratum
-#' and the largest of overlapping strata will be used
-#' (we are not sure what use case this would serve, but we offer it as an option for niche analyses);
-#' and `"each"`, in which each effort is allowed to belong to two or more strata at once
-#' and all analyses will be conducted for each overlapping polygon separately
-#' (e.g., this may be appropriate for nested strata in which you want to estimate
-#' density in the entirety of the larger stratum in addition to estimating density for the nested stratum).
+#' @param strata_overlap_handling This setting informs how effort is split into
+#' segments when surveys cross stratum boundaries, and also which stratum name
+#' is assigned to each row of data. Note that the main impact of this setting is
+#' on how effort is broken into segments; the assigned stratum name is for display
+#' only and will not constrain options for including/excluding strata in analyses
+#' farther along in the `LTabundR` workflow. The default option is `"smallest"`,
+#' which means that effort will always be assigned to the smallest stratum when
+#' multiple strata overlap spatially. This is a safe option for surveys with "nested"
+#' strata (such as the Central North Pacific strata used by NOAA Fisheries.
+#' Another option is `"each"`in which each time a stratum boundary is crossed the
+#' current segment will end and a new segment will begin.
+#' Also, stratum assignments for each row of effort will be shown as a concatenation
+#' of all the stratum layers overlapping at its position (e.g., "OtherCNP&HI_EEZ").
+#' Note that the `"each"` option segmentizes effort in the exact same was as `"smallest"`
+#' when strata are fully nested; its main advantage is in dealing with partially
+#' overlapping strata. The third option is `"largest"`, in which the largest of
+#' overlapping strata is used to assign a stratum name to each row.
+#' (We are not sure what use case this would serve,
+#' but we offer it as an option for niche analyses.)
 #'
 #' @param distance_types  A character vector of the effort types that meet the "analysis
 #' inclusion criteria", i.e., will be included in detection function estimation,

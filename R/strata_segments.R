@@ -1,5 +1,6 @@
 #' Display/map stratum assignments for segments
 #'
+#' A simple diagnostic function, usually not used by most analysts.
 #'
 #' @param cruz Your `cruz` object (produced from `LTabundR::process_surveys()`).
 #' @param cohort The cohort whose data you would like to display, provided as a number indicating which slot in `cruz$cohorts` should be referenced.
