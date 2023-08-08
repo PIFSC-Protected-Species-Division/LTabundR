@@ -23,7 +23,7 @@ command \code{load_survey_settings()}. See the documentation for that function f
 if nothing is supplied, the default survey-wide settings (see \code{load_survey_settings()})
 will be applied.}
 
-\item{cohorts}{Cohort-specific settings, provided as a named list.
+\item{cohorts}{Cohort-specific settings, provided as a list of lists.
 Each slot contains the settings for a single cohort, which can be generated with the
 command \code{load_cohort_settings()}. See the documentation for that function for full details.
 Cohort-specific settings apply only to a group of species.

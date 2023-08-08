@@ -42,8 +42,11 @@ process_strata <- function(das,
   out_handling <- settings$survey$out_handling[1]
 
   # Handle locations that cross the Int'l Date Line
+  # If effort spans the dateline, coerce all longitudes to be negative.
   bads <- which(effi$Lon > 0)
-  if(length(bads)>0){
+  negs <- which(effi$Lon < 0)
+  if(length(negs)>0 & length(bads) > 0){
+  #if(length(bads)>0){
     effi$Lon[bads] <- -180 + (effi$Lon[bads] - 180)
   }
 
@@ -60,7 +63,7 @@ process_strata <- function(das,
     strata_summary <- data.frame()
 
     if(verbose){message('Testing whether each DAS line is in each stratum ...')}
-    i=3
+    i=1
     for(i in 1:length(strata)){
       strati <- strata[i] # get dataframe of coordinates for this stratum
       sname <- names(strati) # get name of stratum
@@ -98,8 +101,10 @@ process_strata <- function(das,
 
     # Handle OUTS -- events that do not occur within a geo-stratum
     if(out_handling == 'remove'){
-      stratum_cols <- grep('stratum',names(effi))
-      ins <- apply(effi[,stratum_cols],1,any)
+      (stratum_cols <- grep('stratum',names(effi)))
+      #as.data.frame(effi[,stratum_cols])
+      ins <- apply(as.data.frame(effi[,stratum_cols]),1,any)
+      #ins
       ins %>% table
       #length(ins)
       effi <- effi[which(ins),]

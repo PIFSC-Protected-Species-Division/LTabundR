@@ -210,9 +210,8 @@ das_format <- function(cruz,
       stratum_keeps <- c()
       si <- 1
       for(si in 1:length(cohort_strata)){
-        (strati <- cohort_strata[si] %>% names)
+        (strati <- cohort_strata[si]) # %>% names)
         (strati_col <- grep(strati, names(eff_cohort), fixed=TRUE)[1])
-        #(strati_col <- grep(strati, names(eff_cohort), fixed=TRUE)[1])
         stratum_keeps <- c(stratum_keeps, strati_col)
       }
       stratum_keeps
@@ -233,7 +232,8 @@ das_format <- function(cruz,
       # Arrange strata summary from largest area to smallest
       strata_summari <-
         strata_summary %>%
-        dplyr::filter(stratum %in% names(cohort_strata)) %>%
+        dplyr::filter(stratum %in% cohort_strata) %>%
+        #dplyr::filter(stratum %in% names(cohort_strata)) %>%
         dplyr::arrange(dplyr::desc(as.numeric(area)))
       strata_summari
 
@@ -269,7 +269,7 @@ das_format <- function(cruz,
         strati_col <- grep('stratum', names(eff_cohort), fixed=TRUE)
         strati_names <- names(eff_cohort)[strati_col]
         strati_names <<- gsub('stratum_','',strati_names)
-        strati_df <- eff_cohort[,strati_col]
+        (strati_df <- as.data.frame(eff_cohort[,strati_col]))
         stratum <-
           apply(strati_df,1,function(x){
             paste(unique(strati_names[x]),collapse='&')

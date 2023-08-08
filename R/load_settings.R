@@ -19,7 +19,7 @@
 #' if nothing is supplied, the default survey-wide settings (see `load_survey_settings()`)
 #' will be applied.
 #'
-#' @param cohorts  Cohort-specific settings, provided as a named list.
+#' @param cohorts  Cohort-specific settings, provided as a list of lists.
 #' Each slot contains the settings for a single cohort, which can be generated with the
 #' command `load_cohort_settings()`. See the documentation for that function for full details.
 #' Cohort-specific settings apply only to a group of species.

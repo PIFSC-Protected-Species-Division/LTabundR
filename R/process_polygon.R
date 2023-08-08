@@ -48,10 +48,17 @@ process_polygon <- function(polygon_dataframe,
   polygon_dataframe$Lon <- as.numeric(polygon_dataframe$Lon)
   polygon_dataframe$Lat <- as.numeric(polygon_dataframe$Lat)
 
-  # Format as sf polygon
+  # If polygon spans the international date line, coerce to all negative
   coords <- polygon_dataframe ; coords
   coords$Lon <- as.numeric(coords$Lon)
   coords$Lat <- as.numeric(coords$Lat)
+  bads <- which(coords$Lon > 0)
+  negs <- which(coords$Lon < 0)
+  if(length(negs)>0 & length(bads) > 0){
+    coords$Lon[bads] <- -180 + (coords$Lon[bads] - 180)
+  }
+
+  # Format as sf polygon
   coords <- data.frame(Lon = coords$Lon, Lat = coords$Lat)
   coords <- coords[complete.cases(coords),]
 

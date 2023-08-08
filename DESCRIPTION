@@ -1,6 +1,6 @@
 Package: LTabundR
 Title: Development Version 
-Version: 0.0.4
+Version: 0.0.5
 Authors@R: 
     person("Eric", "Keen", , "eric.keen@noaa.gov", role = c("aut", "cre"))
     person("Amanda", "Bradford", , "amanda.bradford@noaa.gov", role = c("aut", "cre"))
@@ -8,7 +8,7 @@ Description: Development version
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.2.1
+RoxygenNote: 7.2.3
 Imports: 
     cowplot,
     coxed,
