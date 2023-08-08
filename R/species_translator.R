@@ -1,13 +1,13 @@
 #' Species name/code search engine
 #'
-#' Retrieve common and scientific names for a species based on their observer code,
+#' Retrieve common and scientific names for a species based on their code number or short name,
 #' or vice versa: retrieve the species code based on common or scientific name.
 #'
 #' @param id Your search query term; can be a character or numeric. The function will
 #' return partial matches and is case insensitive.
 #'
-#' @param species_codes A `data.frame` of species codes, with the same column structure
-#' as the `LTabundR` dataset `data(species_codes)`. If this is not provided, that
+#' @param codes A `data.frame` of species codes, with the same column structure
+#' as the `LTabundR` dataset `data(species_codes)`. If not provided by the user, that
 #' built-in dataset will be provided.
 #'
 #' @param match_by_code The remaining inputs are a way to toggle on/off certain
@@ -41,7 +41,7 @@ species_translator <- function(id,
   #=============================================================================
   # for debugging only -- not run!
   if(FALSE){
-    id <- 45
+    id <- 46
     codes <- NULL
     match_by_code=TRUE
     match_by_short_name=TRUE
@@ -90,20 +90,22 @@ species_translator <- function(id,
 
       if(match_by_common){
         # Common1
-        matchi <- grep(toupper(as.character(id)), toupper(key$common_name1))
+        matchi <- grep(toupper(as.character(id)), toupper(key$common))
+        #matchi <- grep(toupper(as.character(id)), toupper(key$common_name1))
         matches <- c(matches, matchi)
 
         # Common2
-        matchi <- grep(toupper(as.character(id)), toupper(key$common_name2))
+        matchi <- grep(toupper(as.character(id)), toupper(key$description))
+        #matchi <- grep(toupper(as.character(id)), toupper(key$common_name2))
         matches <- c(matches, matchi)
 
         # Common3
-        matchi <- grep(toupper(as.character(id)), toupper(key$common_name3))
-        matches <- c(matches, matchi)
+        #matchi <- grep(toupper(as.character(id)), toupper(key$common_name3))
+        #matches <- c(matches, matchi)
 
         # Common4
-        matchi <- grep(toupper(as.character(id)), toupper(key$common_name4))
-        matches <- c(matches, matchi)
+        #matchi <- grep(toupper(as.character(id)), toupper(key$common_name4))
+        #matches <- c(matches, matchi)
       }
 
       # Get unique matches
@@ -116,10 +118,10 @@ species_translator <- function(id,
       if(length(matches)>0){
 
         # subset species_codes table to matches
-        search_result <- key[matches,]
+        (search_result <- key[matches,])
 
         # make sure none are NA
-        search_result <- search_result[!is.na(search_result$common_name1),]
+        (search_result <- search_result[!is.na(search_result$common),])
       }
     })
   })

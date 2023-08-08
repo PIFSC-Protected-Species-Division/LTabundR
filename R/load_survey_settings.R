@@ -74,9 +74,9 @@
 #' Supplied `data.frames` must match the column naming structure of `data(ships)`.
 #'
 #' @param species_codes A `data.frame` containing species codes.
-#' If not provided the default version, which was current as of the release of `ABUND9` in 2020,
-#' will be used (`data(species_codes)`).
-#' Supplied `data.frames` must match the column naming structure of `data(species_codes)`.
+#' This is an optional input, chiefly used to format species names
+#' in the reporting stage of the workflow (`lta_report()` especially).
+#' If the user supplies a `data.frame` it must match the column naming structure of `data(species_codes)`.
 #'
 #' @param group_size_coefficients A `data.frame` of calibration factors.
 #' If not provided, group sizes will not be calibrated.

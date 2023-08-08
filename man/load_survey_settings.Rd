@@ -88,9 +88,9 @@ If not provided the default version, which was current as of the release of \cod
 Supplied \code{data.frames} must match the column naming structure of \code{data(ships)}.}
 
 \item{species_codes}{A \code{data.frame} containing species codes.
-If not provided the default version, which was current as of the release of \code{ABUND9} in 2020,
-will be used (\code{data(species_codes)}).
-Supplied \code{data.frames} must match the column naming structure of \code{data(species_codes)}.}
+This is an optional input, chiefly used to format species names
+in the reporting stage of the workflow (\code{lta_report()} especially).
+If the user supplies a \code{data.frame} it must match the column naming structure of \code{data(species_codes)}.}
 
 \item{group_size_coefficients}{A \code{data.frame} of calibration factors.
 If not provided, group sizes will not be calibrated.

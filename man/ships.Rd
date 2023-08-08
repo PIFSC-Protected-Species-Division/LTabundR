@@ -5,7 +5,7 @@
 \alias{ships}
 \title{Ship codes}
 \format{
-An object of class \code{data.frame} with 78 rows and 3 columns.
+An object of class \code{data.frame} with 77 rows and 3 columns.
 }
 \usage{
 ships

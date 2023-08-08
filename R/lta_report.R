@@ -207,8 +207,13 @@ lta_report <- function(lta_result,
       if(sizi$species == 'Other'){
         sppnami <- 'Other'
       }else{
+        spp_codes <- NULL
+        if(!is.null(cruz)){
+          spp_codes <- cruz$settings$survey$species_codes
+        }
         # Attempt species translator function, using built-in data(species_codes)
-        sppnami <- species_translator(sizi$species)$common_name1[1]
+        sppnami <- species_translator(id = sizi$species,
+                                      species_codes = spp_codes)$common_name1[1]
         if(length(sppnami)==0){
           sppnami <- sizi$species
         }

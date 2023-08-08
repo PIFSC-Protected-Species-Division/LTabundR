@@ -17,6 +17,10 @@ species_translator(
 \item{id}{Your search query term; can be a character or numeric. The function will
 return partial matches and is case insensitive.}
 
+\item{codes}{A \code{data.frame} of species codes, with the same column structure
+as the \code{LTabundR} dataset \code{data(species_codes)}. If not provided by the user, that
+built-in dataset will be provided.}
+
 \item{match_by_code}{The remaining inputs are a way to toggle on/off certain
 methods for searching for matches. This input will try to match your search query
 to species codes, e.g., \code{"033"} for the false killer whale.}
@@ -27,16 +31,12 @@ e.g., \code{"MESOP_PERU"} for the pygmy beaked whale.}
 \item{match_by_latin}{Try matching search query to scientific name.}
 
 \item{match_by_common}{Try matching search query to common name.}
-
-\item{species_codes}{A \code{data.frame} of species codes, with the same column structure
-as the \code{LTabundR} dataset \code{data(species_codes)}. If this is not provided, that
-built-in dataset will be provided.}
 }
 \value{
 A \code{data.frame} with all viable patches to your search query.
 }
 \description{
-Retrieve common and scientific names for a species based on their observer code,
+Retrieve common and scientific names for a species based on their code number or short name,
 or vice versa: retrieve the species code based on common or scientific name.
 }
 \examples{

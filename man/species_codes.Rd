@@ -5,15 +5,13 @@
 \alias{species_codes}
 \title{Species codes used in WinCRUZ}
 \format{
-A \code{data.frame} with 164 rows and 7 variables:
+A \code{data.frame} with 164 rows and 5 variables:
 \describe{
 \item{code}{Code used in WinCRUZ}
 \item{short_name}{Abbreviated name, in all CAPS}
 \item{scientific_name}{Latin Genus species}
-\item{common_name1}{Most common name}
-\item{common_name2}{Alternative common name}
-\item{comman_name3}{Alternative common name}
-\item{common_name4}{Alternative common name}
+\item{common}{Most common name}
+\item{description}{Alternative common names}
 }
 }
 \usage{

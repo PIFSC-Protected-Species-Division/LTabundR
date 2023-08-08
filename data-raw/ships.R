@@ -2,5 +2,6 @@
 
 ships <- read.csv('data-raw/data/ships.csv')
 ships
-tail(ships)
+ships <- ships[-55,]
+ships
 usethis::use_data(ships, overwrite = TRUE)
