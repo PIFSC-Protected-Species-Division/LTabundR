@@ -1120,7 +1120,7 @@ lta <- function(cruz,
             if('cruises' %in% names(est_filters)){cruisi <- est_filters$cruises}
             cruisi
             sppi
-            if(!is.null(sppi) && sppi=='Other'){sppi <- NULL}
+            if(!is.null(sppi) && length(sppi)==1 && sppi=='Other'){sppi <- NULL}
             sppi
             filtered_data <- filter_cohort(abund_segments,
                                            abund_sightings,
