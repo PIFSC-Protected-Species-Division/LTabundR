@@ -59,6 +59,17 @@ load_settings <- function(strata = NULL,
     cohorts <- list(default = load_cohort_settings())
   }
 
+  # Check to see if cohorts was properly loaded as a list of cohort settings
+  # if not, fix
+  cohorts %>% names
+  if(length(names(cohorts)) > 1){
+    if(paste(names(cohorts)[1:2], collapse=' ') == c('id species')){
+      cohorts <- list(cohorts)
+    }
+  }
+  cohorts %>% names
+
+  # Prepare final settings list
   settings <- list(strata = strata,
                    survey = survey,
                    cohorts = cohorts)

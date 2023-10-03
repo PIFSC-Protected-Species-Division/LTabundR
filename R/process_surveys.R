@@ -36,6 +36,7 @@
 #' \enumerate{
 #' \item Read and format the survey data contained in your `DAS` file using functions developed in the package `swfscDAS`
 #' (this step is carried out using the internal `LTabundR` function `load_das()`).
+#' \item Interpolate the `DAS` data, if instructed by settings. See `load_survey_settings()` for details.
 #' \item Determine which `DAS` events occur within the geo-strata
 #' provided by the user (using the internal `LTabundR` function `process_strata()`).
 #' \item Remove invalid entries, determine the ship used in each cruise,
@@ -363,6 +364,20 @@ process_surveys <- function(das_file,
 
     message('\nReading in DAS file(s) ============================================')
     das <- das_load(fili)
+
+    # Is interpolation requested?
+    interp_interval <- 0
+    if(!is.null(settings$survey$interpolate)){
+      interpi <- as.numeric(settings$survey$interpolate)
+      if(!is.na(interpi)){
+        if(interpi > 0 & interpi < Inf){
+          message('\nInterpolating DAS data =============================================')
+          das <- das_interpolate(das,
+                                 new_interval = interpi,
+                                 verbose = TRUE)
+        }
+      }
+    }
 
     message('\nProcessing strata =================================================')
     cruz <- process_strata(das, settings, verbose=TRUE)

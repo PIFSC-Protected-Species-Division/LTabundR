@@ -197,7 +197,10 @@ das_format <- function(cruz,
     if(is.null(cohort_strata)){
       (cohort_strata <- names(settings$strata))
     }
-    cohort_strata
+
+    #if(is.data.frame(cohort_strata) == FALSE){
+    #  cohort_strata <- cohort_strata[[1]]
+    #}
 
     # Save copy of DAS to make it cohort-specific
     eff_cohort <- dass
@@ -227,7 +230,7 @@ das_format <- function(cruz,
 
     # Only do this if strata were input in the function call
     if(!is.null(cohort_strata)){
-      stratum <- rep('out',times=nrow(eff_cohort))
+      (stratum <- rep('out',times=nrow(eff_cohort)))
 
       # Arrange strata summary from largest area to smallest
       strata_summari <-

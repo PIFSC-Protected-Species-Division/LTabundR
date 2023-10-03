@@ -6,6 +6,7 @@
 \usage{
 load_survey_settings(
   out_handling = "remove",
+  interpolate = NULL,
   max_row_interval = 900,
   segment_method = "day",
   segment_target_km = 150,
@@ -31,6 +32,14 @@ for survey summaries and/or detection function estimation.
 The default is \code{"remove"}, since that saves the most time and memory.
 If no geostratum is provided, this setting will be ignored and all rows of data
 will be assigned to a stratum called \code{"none"}.}
+
+\item{interpolate}{This argument allows you to interpolate the \code{DAS} data
+at the onset of processing, which can be useful if your position updates are separated
+by large time intervals, which would make spatial effort and stratum assignments less exact.
+If this argument is \code{NULL} then no interpolation will occur. If it is a number, e.g., 30, \code{LTabundR} will
+interpolate the data using simple-linear methods (i.e., no great-sphere calculations) such that
+position updates occur every 30 seconds or less. If adjacent DAS rows are from different dates or cruises,
+the interpolation routine will skip to the next pair of rows.}
 
 \item{max_row_interval}{The maximum alloweable time interval, in seconds, between rows before
 the function assumes that there has been a break in survey data logging. The default is 900 seconds,

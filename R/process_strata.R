@@ -26,8 +26,10 @@ process_strata <- function(das,
   # For debugging -- not run!
   if(FALSE){
     data(example_settings)
+    settings <- example_settings
     das_file <- 'data-raw/data/HICEASwinter2020.das'
     das <- das_load(das_file)
+    das <- dasi
     verbose=TRUE
   }
   #=============================================================================
