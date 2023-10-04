@@ -12,7 +12,7 @@
 #' by large time intervals, which would make spatial effort and stratum assignments less exact.
 #' `LTabundR` will interpolate the data using simple-linear methods (i.e., no great-sphere calculations) such that
 #' position updates occur every `new_interval` seconds or less. If adjacent DAS rows are from different dates or cruises,
-#' the interpolation routine will skip to the next pair of rows.
+#' the interpolation routine will skip to the next pair of rows. Interpolation will only occur for On-Effort rows.
 #'
 #' @return An interpolated `data.frame` of the `DAS` data. No formatting has been changed.
 #' @export
@@ -25,7 +25,7 @@ das_interpolate <- function(das,
   if(FALSE){ #==================================================================
     # debugging
     das_file <- 'data-raw/data/HICEASwinter2020.das'
-    das <- das_load(das_file, settings)
+    das <- das_load(das_file)
     verbose = TRUE
     new_interval = 120
   } #===========================================================================
@@ -45,6 +45,7 @@ das_interpolate <- function(das,
     ok <- FALSE
     if(all(c(!is.na(mr1$Cruise), !is.na(mr2$Cruise),
              !is.na(mr1$DateTime), !is.na(mr2$DateTime),
+             !is.na(mr1$OnEffort), !is.na(mr2$OnEffort),
              !is.na(mr1$Lon), !is.na(mr2$Lon),
              !is.na(mr1$Lat), !is.na(mr2$Lat)))){
       #message('no NAs')
@@ -52,10 +53,13 @@ das_interpolate <- function(das,
         #message('same cruise')
         if(lubridate::date(mr1$DateTime) == lubridate::date(mr2$DateTime)){
           #message('same date')
-          (diffi <- as.numeric(difftime(mr2$DateTime, mr1$DateTime, units = 'secs')))
-          if(diffi > new_interval){
-            #message('long interval')
-            ok <- TRUE
+          if(any(c(mr1$OnEffort, mr2$OnEffort))){
+            #meesage('on effort')
+            (diffi <- as.numeric(difftime(mr2$DateTime, mr1$DateTime, units = 'secs')))
+            if(diffi > new_interval){
+              #message('long interval')
+              ok <- TRUE
+            }
           }
         }
       }
@@ -75,6 +79,10 @@ das_interpolate <- function(das,
 
       # Setup new dataframe
       (mri <- mr1[rep(1, times=(interps)), ])
+
+      # Change events
+      mri$Event[2:nrow(mri)] <- 'C'
+      mri$Data1[2:nrow(mri)] <- 'Interpolated_position'
 
       # Change line numbers
       #mri$line_num <- mri$line_num + head(c(0, fracs), interps)

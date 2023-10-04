@@ -24,7 +24,7 @@
 #' If this argument is `NULL` then no interpolation will occur. If it is a number, e.g., 30, `LTabundR` will
 #' interpolate the data using simple-linear methods (i.e., no great-sphere calculations) such that
 #' position updates occur every 30 seconds or less. If adjacent DAS rows are from different dates or cruises,
-#' the interpolation routine will skip to the next pair of rows.
+#' the interpolation routine will skip to the next pair of rows. Interpolation will only occur for On-Effort rows.
 #'
 #' @param max_row_interval The maximum alloweable time interval, in seconds, between rows before
 #' the function assumes that there has been a break in survey data logging. The default is 900 seconds,

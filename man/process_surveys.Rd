@@ -269,6 +269,7 @@ This function is a wrapper for several subroutines, which are executed in the fo
 \enumerate{
 \item Read and format the survey data contained in your \code{DAS} file using functions developed in the package \code{swfscDAS}
 (this step is carried out using the internal \code{LTabundR} function \code{load_das()}).
+\item Interpolate the \code{DAS} data, if instructed by settings. See \code{load_survey_settings()} for details.
 \item Determine which \code{DAS} events occur within the geo-strata
 provided by the user (using the internal \code{LTabundR} function \code{process_strata()}).
 \item Remove invalid entries, determine the ship used in each cruise,
