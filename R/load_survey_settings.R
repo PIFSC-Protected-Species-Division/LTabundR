@@ -19,12 +19,12 @@
 #' will be assigned to a stratum called `"none"`.
 #'
 #' @param interpolate This argument allows you to interpolate the `DAS` data
-#' at the onset of processing, which can be useful if your position updates are separated
+#' at the onset of processing if your position updates are separated
 #' by large time intervals, which would make spatial effort and stratum assignments less exact.
-#' If this argument is `NULL` then no interpolation will occur. If it is a number, e.g., 30, `LTabundR` will
-#' interpolate the data using simple-linear methods (i.e., no great-sphere calculations) such that
-#' position updates occur every 30 seconds or less. If adjacent DAS rows are from different dates or cruises,
-#' the interpolation routine will skip to the next pair of rows. Interpolation will only occur for On-Effort rows.
+#' If this argument is `NULL`, then no interpolation will occur. If it is a number, e.g., 30, `LTabundR` will
+#' interpolate the data using simple-linear methods (i.e., no great-circle calculations) such that
+#' position updates occur every 30 seconds or less. If adjacent `DAS` rows are from different dates or cruises,
+#' the interpolation routine will skip to the next pair of related rows. Interpolation will only occur for On-Effort rows.
 #'
 #' @param max_row_interval The maximum alloweable time interval, in seconds, between rows before
 #' the function assumes that there has been a break in survey data logging. The default is 900 seconds,
@@ -39,6 +39,7 @@
 #' @param segment_target_km If segmentizing by `"equallength"`,
 #' this field allows you to specify what that target length is, in km.
 #' If segmentizinng by `"day"`, this argument is ignored.
+#' The default is 150 km, the distance generally surveyed in one day on NOAA Fisheries surveys.
 #'
 #' @param segment_max_interval If segmentizing by `"equallength"`,
 #' this setting allows you to specify the time gaps in effort

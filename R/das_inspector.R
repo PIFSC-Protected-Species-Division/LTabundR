@@ -1,4 +1,3 @@
-#' Explore & stage edits to a `DAS` file
 #'
 #' Use a `Shiny` app to explore a `DAS` file and build up a list of edits. Those edits
 #' will be saved as a list of instructions, which can subsequently be provided as an argument to
@@ -24,7 +23,7 @@ das_inspector <- function(das_file){
     das_file <- '../test_code/eric/CNP/CenPac1986-2020_Final_alb.das'
 
     # Try it
-    das_inspector(das_file)
+    dasi <- das_inspector(das_file)
   }
 
     # ============================================================================

@@ -8,11 +8,11 @@
 #' @param verbose Print updates to the Console?
 #'
 #' @details This function allows you to interpolate the DAS position data
-#' at the onset of processing, which can be useful if your position updates are separated
+#' at the onset of processing if your position updates are separated
 #' by large time intervals, which would make spatial effort and stratum assignments less exact.
-#' `LTabundR` will interpolate the data using simple-linear methods (i.e., no great-sphere calculations) such that
-#' position updates occur every `new_interval` seconds or less. If adjacent DAS rows are from different dates or cruises,
-#' the interpolation routine will skip to the next pair of rows. Interpolation will only occur for On-Effort rows.
+#' `LTabundR` will interpolate the data using simple-linear methods (i.e., no great-circle calculations), such that
+#' position updates occur every `new_interval` seconds or less. If adjacent `DAS` rows are from different dates or cruises,
+#' the interpolation routine will skip to the next pair of related rows. Interpolation will only occur for On-Effort rows.
 #'
 #' @return An interpolated `data.frame` of the `DAS` data. No formatting has been changed.
 #' @export

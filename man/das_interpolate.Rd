@@ -22,9 +22,9 @@ The user can instruct \code{LTabundR} to interpolate \code{DAS} data in \code{lo
 }
 \details{
 This function allows you to interpolate the DAS position data
-at the onset of processing, which can be useful if your position updates are separated
+at the onset of processing if your position updates are separated
 by large time intervals, which would make spatial effort and stratum assignments less exact.
-\code{LTabundR} will interpolate the data using simple-linear methods (i.e., no great-sphere calculations) such that
-position updates occur every \code{new_interval} seconds or less. If adjacent DAS rows are from different dates or cruises,
-the interpolation routine will skip to the next pair of rows.
+\code{LTabundR} will interpolate the data using simple-linear methods (i.e., no great-circle calculations), such that
+position updates occur every \code{new_interval} seconds or less. If adjacent \code{DAS} rows are from different dates or cruises,
+the interpolation routine will skip to the next pair of related rows. Interpolation will only occur for On-Effort rows.
 }

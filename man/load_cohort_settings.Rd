@@ -20,7 +20,7 @@ load_cohort_settings(
   truncation_km = 5.5,
   beaufort_range = 0:6,
   abeam_sightings = FALSE,
-  strata_overlap_handling = c("smallest", "largest", "each"),
+  strata_overlap_handling = "smallest",
   distance_types = c("S", "F", "N"),
   distance_modes = c("P", "C"),
   distance_on_off = TRUE

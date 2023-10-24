@@ -2,7 +2,11 @@
 % Please edit documentation in R/das_inspector.R
 \name{das_inspector}
 \alias{das_inspector}
-\title{Explore & stage edits to a \code{DAS} file}
+\title{Use a \code{Shiny} app to explore a \code{DAS} file and build up a list of edits. Those edits
+will be saved as a list of instructions, which can subsequently be provided as an argument to
+\code{LTabundR::process_surveys()}, which will apply your list of edits before processing the data.
+This framework allows you to record details of required edits reproducibly without ever
+modifying the original dataset or producing modified versions of the original.}
 \usage{
 das_inspector(das_file)
 }
