@@ -45,12 +45,15 @@ process_strata <- function(das,
 
   # Handle locations that cross the Int'l Date Line
   # If effort spans the dateline, coerce all longitudes to be negative.
+  coerce_lons <- FALSE
   bads <- which(effi$Lon > 0)
   negs <- which(effi$Lon < 0)
   if(length(negs)>0 & length(bads) > 0){
   #if(length(bads)>0){
     effi$Lon[bads] <- -180 + (effi$Lon[bads] - 180)
+    coerce_lons <- TRUE
   }
+  coerce_lons
 
   # Survey strata ##############################################################
 
@@ -61,20 +64,34 @@ process_strata <- function(das,
     #effi$stratum <- 'none'
   }else{
 
+    # First see if longitudes need to be coerced to all negative
+    if(coerce_lons == FALSE){
+      (strati <- strata %>% bind_rows)
+      (any_pos <- any(strati$Lon > 0))
+      (any_neg <- any(strati$Lon <= 0))
+      if(all(c(any_pos, any_neg))){
+        coerce_lons == TRUE
+      }
+    }
+    coerce_lons
+
     # Stage summary table
     strata_summary <- data.frame()
 
     if(verbose){message('Testing whether each DAS line is in each stratum ...')}
-    i=1
+    i=3
     for(i in 1:length(strata)){
       strati <- strata[i] # get dataframe of coordinates for this stratum
       sname <- names(strati) # get name of stratum
+      sname
       strati
       if(verbose){message('--- Stratum ',i,' of ',length(strata),' :: ',sname,' ...')}
 
       suppressWarnings({suppressMessages({
-        (polygon_dataframe <- strata[[1]])
-        poli_list <- process_polygon(strati[[1]]) # convert from df to polygon (also returns area in km2)
+        (polygon_dataframe <- strati[[1]])
+        poli_list <- process_polygon(strati[[1]], coerce_lons = coerce_lons) # convert from df to polygon (also returns area in km2)
+        #poli_list$coords
+        #ggplot(poli_list$sf) + geom_sf()
         poli <- poli_list$sf # add sf object to results
         #names(poli_list)
         #st_bbox(poli)
@@ -86,11 +103,13 @@ process_strata <- function(das,
 
         # Process das
         dasloc <- effi %>% dplyr::filter(!is.na(Lon) & !is.na(Lat)) # remove invalid locations
+        #dasloc$Lon %>% hist
         # the coordinates_in_strata() function is a LTabundR function
         strata_das <- coordinates_in_strata(lon = dasloc$Lon, lat = dasloc$Lat, poli=poli)
       })})
       # returns a decision for every coordinate: 1 = in stratum, 0 = not
       table(strata_das, useNA='ifany') #checkout result (debugging)
+      #dasloc$Lon[strata_das] %>% hist
       dasloc$new_var <- strata_das # Save these decisions in a new column
       dasloc <- dasloc %>%
         dplyr::select(line_num, new_var) # create a simple df for joining
@@ -104,6 +123,7 @@ process_strata <- function(das,
     # Handle OUTS -- events that do not occur within a geo-stratum
     if(out_handling == 'remove'){
       (stratum_cols <- grep('stratum',names(effi)))
+      #names(effi)[stratum_cols]
       #as.data.frame(effi[,stratum_cols])
       ins <- apply(as.data.frame(effi[,stratum_cols]),1,any)
       #ins
@@ -111,6 +131,11 @@ process_strata <- function(das,
       #length(ins)
       effi <- effi[which(ins),]
     }
+
+    #effi$Lon %>% hist()
+    #ggplot(effi, aes(x=Lon, y=Lat, color=stratum_MISTCS)) + geom_point()
+    #ggplot(effi, aes(x=Lon, y=Lat, color=stratum_CNMI_EEZ)) + geom_point()
+    #ggplot(effi, aes(x=Lon, y=Lat, color=stratum_updatedCNP)) + geom_point()
 
   } # end of if strata are provided
 

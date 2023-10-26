@@ -9,6 +9,8 @@
 #' Other columns are allowed, but the first two need to be `Lon` and `Lat` (in that order).
 #' @param remove_land If `TRUE`, the area of land occurring within the polygon will
 #' be subtracted from the polygon's area, so that the reported area represents aquatic habitat only.
+#' @param coerce_lons If `TRUE` (not the default), all longitudes will be coerced to negative values, e.g., -185.
+#' This can avoid complications when strata or survey data span the international date line.
 #' @param toplot If `TRUE` (not the default), a map of the polygon will be plotted,
 #' and -- if `remove_land` is `TRUE` -- any land inside will be plotted in grey.
 #'
@@ -24,6 +26,7 @@
 #'
 process_polygon <- function(polygon_dataframe,
                             remove_land = TRUE,
+                            coerce_lons = FALSE,
                             toplot = FALSE){
 
   #=============================================================================
@@ -31,6 +34,7 @@ process_polygon <- function(polygon_dataframe,
   if(FALSE){
     remove_land = TRUE
     toplot = TRUE
+    coerce_lons <- FALSE
 
     data(strata_cnp)
     length(strata_cnp)
@@ -41,24 +45,25 @@ process_polygon <- function(polygon_dataframe,
     polygon_dataframe <- strata_ccs[[5]]
 
     process_polygon(polygon_dataframe, remove_land=TRUE, toplot=TRUE)$km2
+    process_polygon(polygon_dataframe, remove_land=FALSE, toplot=TRUE)$km2
+
+    polygon_dataframe <- data.frame(Lon = c(142, 142, 148, 148),
+                                    Lat = c(10, 18, 18, 10))
+    polygon_dataframe <- data.frame(Lon = c(142, 142, -170, -170),
+                                    Lat = c(10, 40, 40, 10))
+    process_polygon(polygon_dataframe, remove_land=TRUE, toplot=TRUE)$km2
+    process_polygon(polygon_dataframe, remove_land=FALSE, toplot=TRUE)$km2
   }
+
   #=============================================================================
 
   # Ensure that coordinates are numeric
   polygon_dataframe$Lon <- as.numeric(polygon_dataframe$Lon)
   polygon_dataframe$Lat <- as.numeric(polygon_dataframe$Lat)
 
-  # If polygon spans the international date line, coerce to all negative
   coords <- polygon_dataframe ; coords
   coords$Lon <- as.numeric(coords$Lon)
   coords$Lat <- as.numeric(coords$Lat)
-  bads <- which(coords$Lon > 0)
-  negs <- which(coords$Lon < 0)
-  if(length(negs)>0 & length(bads) > 0){
-    coords$Lon[bads] <- -180 + (coords$Lon[bads] - 180)
-  }
-
-  # Format as sf polygon
   coords <- data.frame(Lon = coords$Lon, Lat = coords$Lat)
   coords <- coords[complete.cases(coords),]
 
@@ -68,11 +73,16 @@ process_polygon <- function(polygon_dataframe,
   if(! closed_test){
     coords <- rbind(coords, coords[1,])
   }
+  coords
+
+  #=============================================================================
+  # PASS 1: Get area and subtract land area (if instructed)
 
   # Finalize sf formatting
   coords_mx <- as.matrix(coords[,1:2])
   poli <- sf::st_polygon(list(coords_mx))
   sf_poli <- sf::st_geometry(poli)
+  #plot(sf_poli)
 
   # Calculate area
   lng <- coords$Lon
@@ -96,6 +106,19 @@ process_polygon <- function(polygon_dataframe,
     # Bring in land dataset
     data(land, package='LTabundR')
     sf::st_crs(sfpol) <- sf::st_crs(land)
+
+    if(coerce_loni){
+      i = 1
+      for(i in 1:nrow(land)){
+        (landi <- land[i,])
+        st_geometry(landi)
+        landi$geometry
+
+      }
+      st_geometry(land) + c(-10, 0)
+      st_geometry(land) %>% length
+
+    }
 
     # Define a bounding box by which to crop land
     box <- c(xmin = min(polygon_dataframe$Lon),
@@ -121,6 +144,41 @@ process_polygon <- function(polygon_dataframe,
     }
   }
 
+  #=============================================================================
+  # PASS 2: Correct longitudes, if needed, and finalize sf return object
+
+  # If polygon spans the international date line, coerce to all negative
+  # or if coerce_lons is TRUE
+  coerce_loni <- FALSE
+  if(coerce_lons){coerce_loni <- TRUE}
+  if(coerce_loni == FALSE){
+    bads <- which(coords$Lon > 0)
+    negs <- which(coords$Lon < 0)
+    if(length(negs)>0 & length(bads) > 0){ coerce_loni <- TRUE }
+  }
+  if(coerce_loni){
+    bads <- which(coords$Lon > 0)
+    negs <- which(coords$Lon < 0)
+    coords$Lon[bads] <- -180 + (coords$Lon[bads] - 180)
+  }
+  coords
+  coerce_loni
+
+  # Make sure polygon is closed
+  (closed_test <- all(c(coords$Lon[1] == coords$Lon[nrow(coords)],
+                        coords$Lat[1] == coords$Lat[nrow(coords)])))
+  if(! closed_test){
+    coords <- rbind(coords, coords[1,])
+  }
+  coords
+
+  # Finalize sf formatting
+  coords_mx <- as.matrix(coords[,1:2])
+  poli <- sf::st_polygon(list(coords_mx))
+  sf_poli <- sf::st_geometry(poli)
+  #plot(sf_poli)
+
+  # Prepare reeturn list
   return_list <- list(coords = coords,
                       polygon = poli,
                       sf = sf_poli,

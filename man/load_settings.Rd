@@ -8,7 +8,7 @@ load_settings(strata = NULL, survey = NULL, cohorts = NULL)
 }
 \arguments{
 \item{strata}{A named list in which each slot is a \code{data.frame} of coordinates for a geostratum polygon.
-Each \code{data.frame} must have \code{Lon} and \code{Lat} as the first two columns (in that order),
+Each \code{data.frame} must have \code{Lon} and \code{Lat} as the first two columns,
 providing coordinates in decimal degrees in which West and South coordinates are negative.
 Other columns are allowed, but the first two need to be \code{Lon} and \code{Lat}.
 The name of the slot holding the \code{data.frame} will be used as a reference name for the stratum.
@@ -16,7 +16,12 @@ For an example of formatting, see \code{data(strata_cnp)}. If you are working wi
 such as the Central North Pacific (CNP), Eastern Tropical Pacific (ETP), or California Current System (CCS),
 you can use built-in polygons available in \code{data(strata_cnp)}, \code{data(strata_etp)}, or \code{data(strata_ccs)}, respectively.
 To explore and/or select strata contained within those built-in datasets, use the functions
-\code{strata_explore()} and \code{strata_select()}.}
+\code{strata_explore()} and \code{strata_select()}.
+Note that if coordinates in your data or in your collection of strata span
+the International Date Line (IDL) such that some longitudes are positive
+and some are negative, during data processing all longitudes will be coerced
+to negative degrees West.
+Also note that area calculations for strata that span the international date line may not be accurate in the current version of \code{LTabundR}.}
 
 \item{survey}{Survey-wide settings, provided as the list that is generated with the
 command \code{load_survey_settings()}. See the documentation for that function for full details.

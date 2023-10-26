@@ -73,7 +73,7 @@ summarize_sightings <- function(cruz,
       spp <-
         siti %>%
         dplyr::group_by(species) %>%
-        dplyr::summarize(dplyr::across(short_name:common_name1, unique),
+        dplyr::summarize(dplyr::across(short_name:common, unique),
                          n = dplyr::n(),
                          ss_mean = mean(best, na.rm=TRUE) %>%  round(2),
                          ss_sd = sd(best, na.rm=TRUE) %>%  round(2)) %>%
@@ -86,7 +86,7 @@ summarize_sightings <- function(cruz,
         siti %>%
         dplyr::filter(included == TRUE) %>%
         dplyr::group_by(species) %>%
-        dplyr::summarize(dplyr::across(short_name:common_name1, unique),
+        dplyr::summarize(dplyr::across(short_name:common, unique),
                          n = dplyr::n(),
                          ss_mean = mean(best, na.rm=TRUE) %>%  round(2),
                          ss_sd = sd(best, na.rm=TRUE) %>%  round(2)) %>%
@@ -98,7 +98,7 @@ summarize_sightings <- function(cruz,
       stratum_spp <-
         siti %>%
         dplyr::group_by(year, Cruise, stratum, species) %>%
-        dplyr::summarize(dplyr::across(short_name:common_name1, unique),
+        dplyr::summarize(dplyr::across(short_name:common, unique),
                          n = dplyr::n(),
                          ss_mean = mean(best, na.rm=TRUE) %>%  round(2),
                          ss_sd = sd(best, na.rm=TRUE) %>%  round(2)) %>%
@@ -111,7 +111,7 @@ summarize_sightings <- function(cruz,
         siti %>%
         dplyr::filter(included == TRUE) %>%
         dplyr::group_by(year, Cruise, stratum, species) %>%
-        dplyr::summarize(dplyr::across(short_name:common_name1, unique),
+        dplyr::summarize(dplyr::across(short_name:common, unique),
                          n = dplyr::n(),
                          ss_mean = mean(best, na.rm=TRUE) %>%  round(2),
                          ss_sd = sd(best, na.rm=TRUE) %>%  round(2)) %>%

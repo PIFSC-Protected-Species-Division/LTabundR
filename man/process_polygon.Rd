@@ -4,7 +4,12 @@
 \alias{process_polygon}
 \title{Format a CSV into a polygon for mapping}
 \usage{
-process_polygon(polygon_dataframe, remove_land = TRUE, toplot = FALSE)
+process_polygon(
+  polygon_dataframe,
+  remove_land = TRUE,
+  coerce_lons = FALSE,
+  toplot = FALSE
+)
 }
 \arguments{
 \item{polygon_dataframe}{A dataframe in which the first two columns are \code{Lon} and \code{Lat},
@@ -13,6 +18,9 @@ Other columns are allowed, but the first two need to be \code{Lon} and \code{Lat
 
 \item{remove_land}{If \code{TRUE}, the area of land occurring within the polygon will
 be subtracted from the polygon's area, so that the reported area represents aquatic habitat only.}
+
+\item{coerce_lons}{If \code{TRUE} (not the default), all longitudes will be coerced to negative values, e.g., -185.
+This can avoid complications when strata or survey data span the international date line.}
 
 \item{toplot}{If \code{TRUE} (not the default), a map of the polygon will be plotted,
 and -- if \code{remove_land} is \code{TRUE} -- any land inside will be plotted in grey.}

@@ -4,7 +4,7 @@
 #' the primary function for processing `WinCruz` data.
 #'
 #' @param strata A named list in which each slot is a `data.frame` of coordinates for a geostratum polygon.
-#' Each `data.frame` must have `Lon` and `Lat` as the first two columns (in that order),
+#' Each `data.frame` must have `Lon` and `Lat` as the first two columns,
 #' providing coordinates in decimal degrees in which West and South coordinates are negative.
 #' Other columns are allowed, but the first two need to be `Lon` and `Lat`.
 #' The name of the slot holding the `data.frame` will be used as a reference name for the stratum.
@@ -13,6 +13,11 @@
 #' you can use built-in polygons available in `data(strata_cnp)`, `data(strata_etp)`, or `data(strata_ccs)`, respectively.
 #' To explore and/or select strata contained within those built-in datasets, use the functions
 #' `strata_explore()` and `strata_select()`.
+#' Note that if coordinates in your data or in your collection of strata span
+#' the International Date Line (IDL) such that some longitudes are positive
+#' and some are negative, during data processing all longitudes will be coerced
+#' to negative degrees West.
+#' Also note that area calculations for strata that span the international date line may not be accurate in the current version of `LTabundR`.
 #'
 #' @param survey Survey-wide settings, provided as the list that is generated with the
 #' command `load_survey_settings()`. See the documentation for that function for full details.
