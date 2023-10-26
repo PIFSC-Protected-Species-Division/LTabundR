@@ -107,18 +107,18 @@ process_polygon <- function(polygon_dataframe,
     data(land, package='LTabundR')
     sf::st_crs(sfpol) <- sf::st_crs(land)
 
-    if(coerce_loni){
-      i = 1
-      for(i in 1:nrow(land)){
-        (landi <- land[i,])
-        st_geometry(landi)
-        landi$geometry
-
-      }
-      st_geometry(land) + c(-10, 0)
-      st_geometry(land) %>% length
-
-    }
+    # if(coerce_loni){
+    #   i = 1
+    #   for(i in 1:nrow(land)){
+    #     (landi <- land[i,])
+    #     st_geometry(landi)
+    #     landi$geometry
+    #
+    #   }
+    #   st_geometry(land) + c(-10, 0)
+    #   st_geometry(land) %>% length
+    #
+    # }
 
     # Define a bounding box by which to crop land
     box <- c(xmin = min(polygon_dataframe$Lon),
@@ -162,7 +162,7 @@ process_polygon <- function(polygon_dataframe,
     coords$Lon[bads] <- -180 + (coords$Lon[bads] - 180)
   }
   coords
-  coerce_loni
+  #coerce_loni
 
   # Make sure polygon is closed
   (closed_test <- all(c(coords$Lon[1] == coords$Lon[nrow(coords)],
