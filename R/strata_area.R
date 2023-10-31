@@ -82,6 +82,9 @@ strata_area <- function(strata_all,
                 strata_remove = c('Spotted_OU','Spotted_FI','Spotted_BI'))
 
     strata_area(strata_all = strata_cnp,
+                strata_keep = c('Bottlenose_KaNi','Bottlenose_OUFI','Bottlenose_BI'))
+
+    strata_area(strata_all = strata_cnp,
                 strata_keep = c('MHI','WHICEAS'),
                 strata_remove = c('Spotted_OU','Spotted_FI','Spotted_BI',
                                   'Bottlenose_OUFI', 'Bottlenose_KaNi', 'Bottlenose_BI'))
@@ -118,6 +121,7 @@ strata_area <- function(strata_all,
 
     # Process polygon as sf object
     suppressMessages({ suppressWarnings({ poli <- process_polygon(strati) }) })
+    #ggplot(poli$sf) + geom_sf()
 
     keeps[[length(keeps)+1]] <- poli
     names(keeps)[length(keeps)] <- strati_name

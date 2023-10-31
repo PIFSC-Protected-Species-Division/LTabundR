@@ -12,7 +12,7 @@
 #' processed separately then combined using `LTabundR::cruz_combine()`. URL's for
 #' online `DAS` reposities are also accepted.
 #'
-#' @param settings  An object representing the output of `load_settings()`.
+#' @param settings  An object representing the output of `load_settings()`. See that function's documentation for details.
 #'
 #' @param edits An optional list of staged edits for modifying the `DAS` data (after reading in; not the actual data files themselves)
 #' before proceeding with data processing. These edits must take the form of the input for

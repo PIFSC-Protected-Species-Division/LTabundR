@@ -10,6 +10,7 @@ load_settings(strata = NULL, survey = NULL, cohorts = NULL)
 \item{strata}{A named list in which each slot is a \code{data.frame} of coordinates for a geostratum polygon.
 Each \code{data.frame} must have \code{Lon} and \code{Lat} as the first two columns,
 providing coordinates in decimal degrees in which West and South coordinates are negative.
+It is acceptable if vertices in the eastern hemisphere are described using negative longitudes below -180, e.g., -185.
 Other columns are allowed, but the first two need to be \code{Lon} and \code{Lat}.
 The name of the slot holding the \code{data.frame} will be used as a reference name for the stratum.
 For an example of formatting, see \code{data(strata_cnp)}. If you are working with a standard NOAA survey region,

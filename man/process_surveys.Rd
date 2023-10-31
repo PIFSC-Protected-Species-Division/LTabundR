@@ -19,7 +19,7 @@ supplied as a character vector. If multiple files are supplied, each file will b
 processed separately then combined using \code{LTabundR::cruz_combine()}. URL's for
 online \code{DAS} reposities are also accepted.}
 
-\item{settings}{An object representing the output of \code{load_settings()}.}
+\item{settings}{An object representing the output of \code{load_settings()}. See that function's documentation for details.}
 
 \item{edits}{An optional list of staged edits for modifying the \code{DAS} data (after reading in; not the actual data files themselves)
 before proceeding with data processing. These edits must take the form of the input for

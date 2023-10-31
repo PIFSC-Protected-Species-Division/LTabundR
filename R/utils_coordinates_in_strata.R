@@ -47,22 +47,10 @@ coordinates_in_strata <- function(lon,lat,poli){
   suppressMessages({
     sf::sf_use_s2(FALSE)
     pt_in_poli <- sf::st_join(point_sf, poli_sf)
-    #pt_in_poli <- sf::st_join(point_sf, poli_sf, join=sf::st_within)
   })
   (ins <- dplyr::as_tibble(pt_in_poli)[,1])
   (ins <- as.numeric(ins[[1]]))
   (withins <- !is.na(ins))
-
-  # Conduct test: intersects with geostratum boundary
-  #suppressMessages({
-  #  sf::sf_use_s2(FALSE)
-  #  st_contains(point_sf, poli_sf)
-  #  pt_in_poli <- sf::st_join(point_sf, poli_sf, join=sf::st_contains)
-    #pt_in_poli <- sf::st_join(point_sf, poli_sf, join=sf::st_intersects)
-  #})
-  #(ins <- dplyr::as_tibble(pt_in_poli)[,1])
-  #(ins <- as.numeric(ins[[1]]))
-  #(inters <- !is.na(ins))
 
   # Create results
   #(tests <- data.frame(withins, inters))

@@ -6,6 +6,7 @@
 #' @param strata A named list in which each slot is a `data.frame` of coordinates for a geostratum polygon.
 #' Each `data.frame` must have `Lon` and `Lat` as the first two columns,
 #' providing coordinates in decimal degrees in which West and South coordinates are negative.
+#' It is acceptable if vertices in the eastern hemisphere are described using negative longitudes below -180, e.g., -185.
 #' Other columns are allowed, but the first two need to be `Lon` and `Lat`.
 #' The name of the slot holding the `data.frame` will be used as a reference name for the stratum.
 #' For an example of formatting, see `data(strata_cnp)`. If you are working with a standard NOAA survey region,

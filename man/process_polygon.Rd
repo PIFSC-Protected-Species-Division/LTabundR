@@ -4,23 +4,17 @@
 \alias{process_polygon}
 \title{Format a CSV into a polygon for mapping}
 \usage{
-process_polygon(
-  polygon_dataframe,
-  remove_land = TRUE,
-  coerce_lons = FALSE,
-  toplot = FALSE
-)
+process_polygon(polygon_dataframe, remove_land = TRUE, toplot = FALSE)
 }
 \arguments{
 \item{polygon_dataframe}{A dataframe in which the first two columns are \code{Lon} and \code{Lat},
 providing coordinates in decimal degrees in which South and West coordinates are negative.
+It is acceptable if vertices in the eastern hemisphere are described using negative longitudes below -180, e.g., -185.
+(The function will correct these to proper decimal degrees, e.g., -185 will become 175.)
 Other columns are allowed, but the first two need to be \code{Lon} and \code{Lat} (in that order).}
 
 \item{remove_land}{If \code{TRUE}, the area of land occurring within the polygon will
 be subtracted from the polygon's area, so that the reported area represents aquatic habitat only.}
-
-\item{coerce_lons}{If \code{TRUE} (not the default), all longitudes will be coerced to negative values, e.g., -185.
-This can avoid complications when strata or survey data span the international date line.}
 
 \item{toplot}{If \code{TRUE} (not the default), a map of the polygon will be plotted,
 and -- if \code{remove_land} is \code{TRUE} -- any land inside will be plotted in grey.}
@@ -28,9 +22,10 @@ and -- if \code{remove_land} is \code{TRUE} -- any land inside will be plotted i
 \value{
 A list with four named slots:
 \enumerate{
-\item \code{coords} The input dataframe.
+\item \code{coords} The input dataframe, with longitudes corrected to proper negative decimal degrees, e.g., longitudes supplied as -185 will become 175.
 \item \code{polygon}  The polygon created by \code{sf::st_polygon()}
 \item \code{sf}  The \code{sf} version of the polygon that will be passed to mapping functions.
+\item \code{sf_land} The \code{sf} version of the land polygons included within the polygon, if any.
 \item \code{km2}  The area of the polygon, in square kilometers.
 }
 }

@@ -45,15 +45,15 @@ process_strata <- function(das,
 
   # Handle locations that cross the Int'l Date Line
   # If effort spans the dateline, coerce all longitudes to be negative.
-  coerce_lons <- FALSE
-  bads <- which(effi$Lon > 0)
-  negs <- which(effi$Lon < 0)
-  if(length(negs)>0 & length(bads) > 0){
+  #coerce_lons <- FALSE
+  #bads <- which(effi$Lon > 0)
+  #negs <- which(effi$Lon < 0)
+  #if(length(negs)>0 & length(bads) > 0){
   #if(length(bads)>0){
-    effi$Lon[bads] <- -180 + (effi$Lon[bads] - 180)
-    coerce_lons <- TRUE
-  }
-  coerce_lons
+  #  effi$Lon[bads] <- -180 + (effi$Lon[bads] - 180)
+  #  coerce_lons <- TRUE
+  #}
+  #coerce_lons
 
   # Survey strata ##############################################################
 
@@ -65,21 +65,21 @@ process_strata <- function(das,
   }else{
 
     # First see if longitudes need to be coerced to all negative
-    if(coerce_lons == FALSE){
-      (strati <- strata %>% bind_rows)
-      (any_pos <- any(strati$Lon > 0))
-      (any_neg <- any(strati$Lon <= 0))
-      if(all(c(any_pos, any_neg))){
-        coerce_lons == TRUE
-      }
-    }
-    coerce_lons
+    #if(coerce_lons == FALSE){
+    #  (strati <- strata %>% bind_rows)
+    #  (any_pos <- any(strati$Lon > 0))
+    #  (any_neg <- any(strati$Lon <= 0))
+    #  if(all(c(any_pos, any_neg))){
+    #    coerce_lons == TRUE
+    #  }
+    #}
+    #coerce_lons
 
     # Stage summary table
     strata_summary <- data.frame()
 
     if(verbose){message('Testing whether each DAS line is in each stratum ...')}
-    i=3
+    i=1
     for(i in 1:length(strata)){
       strati <- strata[i] # get dataframe of coordinates for this stratum
       sname <- names(strati) # get name of stratum
@@ -89,7 +89,8 @@ process_strata <- function(das,
 
       suppressWarnings({suppressMessages({
         (polygon_dataframe <- strati[[1]])
-        poli_list <- process_polygon(strati[[1]], coerce_lons = coerce_lons) # convert from df to polygon (also returns area in km2)
+        poli_list <- process_polygon(strati[[1]]) # convert from df to polygon (also returns area in km2)
+        #poli_list <- process_polygon(strati[[1]], coerce_lons = coerce_lons) # convert from df to polygon (also returns area in km2)
         #poli_list$coords
         #ggplot(poli_list$sf) + geom_sf()
         poli <- poli_list$sf # add sf object to results
@@ -98,7 +99,7 @@ process_strata <- function(das,
         #plot(poli)
 
         # Add row to summary
-        summi <- data.frame(stratum = sname, area = poli_list$km2)
+        (summi <- data.frame(stratum = sname, area = poli_list$km2))
         strata_summary <- rbind(strata_summary, summi)
 
         # Process das
