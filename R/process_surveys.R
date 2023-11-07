@@ -287,8 +287,8 @@ process_surveys <- function(das_file,
     das_file <- 'data-raw/data/HICEASwinter2020.das'
     data(example_settings)
     settings <- example_settings
-    save_local=FALSE
     edits = NULL
+    save_local=FALSE
     process_sightings = TRUE
     process_subgroups = TRUE
 

@@ -200,11 +200,14 @@ das_editor <- function(edits){
           #}
           substituted
           replaci <- c()
+          #i=1
           for(i in 1:length(substituted)){
             #if(length(substituted)>2){
             #  setTxtProgressBar(pb, i)
             #}
-            replaci[i] <- fun(substituted[i])
+            #(das <- substituted[i])
+            #das_time(das, tz_adjust = 10)
+            (replaci[i] <- fun(substituted[i]))
           }
           (replacement <- replaci)
           #replacement <- as.character(sapply(substituted, fun))

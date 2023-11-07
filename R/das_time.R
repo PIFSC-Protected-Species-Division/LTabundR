@@ -23,6 +23,7 @@
 das_time <- function(das,
                      tz_adjust='from utc'){
 
+  #=============================================================================
   if(FALSE){
     tz_adjust <- -1
     tz_adjust <- 'from utc'
@@ -38,32 +39,55 @@ das_time <- function(das,
     das <- das_readtext(das_file)
     (das <- das$das[1])
 
+    # 1004 issues
+    das_file = '../LTAvignette/data/surveys/CenPac1986-2020_Final_alb.das'
+    das <- das_readtext(das_file)
+    (dasi <- das$das[435620:435630])
+    #(das <- substr(das,6,40))
+    (das <- dasi[5]) # no time in this row
+    (das <- dasi[4]) # yes time in this row
+    das # full row
+    tz_adjust = 10
+
     # Try it
-    das_time(das, tz_adjust = -1)$dt
+    das_time(das, tz_adjust = 10)$dt
+    das_time(das, tz_adjust = 10)$das
     das_time(das, tz_adjust = 'from utc')$dt
 
     das_inspector(das_file)
   }
+  #=============================================================================
 
   suppressWarnings({
 
     # Stage results
-    mr <- data.frame(raw = das)
+    (mr <- data.frame(raw = das))
 
     # Handle event in which input is a full row of DAS data
+    nchar(das)
+    das_sub <- das
     if(nchar(das) > 34){
-      das <- substr(das,6, 40)
+      das_sub <- substr(das,6, 40)
     }
-    mr$das = das
+    das_sub
+    (mr$das = das_sub)
+    (mr$dt_adj_das <- das_sub)
+    (mr$das_revised <- das)
+
+    # Check here whether this is an auxiliary line
+    nchar(gsub(' ','',das_sub)) > 2
+    if(nchar(gsub(' ','',das_sub)) > 2){
+
+      # This is a DAS row with timestamps...
 
     # Format datetime
-    (mr$dtraw <- substr(das,1,13))
-    (mo <- substr(das, 8, 9))
-    (dd <- substr(das, 10, 11))
-    (yy <- substr(das, 12, 13))
-    (hh <- substr(das, 1, 2))
-    (mm <- substr(das, 3, 4))
-    (ss <- stringr::str_pad(gsub(' ','',substr(das, 5, 6)), width=2, side='right', pad='0'))
+    (mr$dtraw <- substr(das_sub,1,13))
+    (mo <- substr(das_sub, 8, 9))
+    (dd <- substr(das_sub, 10, 11))
+    (yy <- substr(das_sub, 12, 13))
+    (hh <- substr(das_sub, 1, 2))
+    (mm <- substr(das_sub, 3, 4))
+    (ss <- stringr::str_pad(gsub(' ','',substr(das_sub, 5, 6)), width=2, side='right', pad='0'))
     (yypre <- ifelse(yy < 80, '20','19'))
     (dt <- paste0(yypre, yy, '-', mo,'-', dd,' ',hh,':', mm, ':', ss))
     mr$dt <- dt
@@ -78,14 +102,14 @@ das_time <- function(das,
       # this is the UTC adjustment scenario
 
       # Format coordinates
-      (lats <- substr(das, 15,23))
+      (lats <- substr(das_sub, 15,23))
       (hh <- ifelse(substr(lats, 1,1)=='N', 1, -1))
       (dd <- substr(lats, 2,3))
       (mm <- substr(lats, 5,9))
       (lats <- (hh*as.numeric(dd)) + (as.numeric(mm)/60))
       mr$lat <- lats
 
-      (lons <- substr(das, 25,34))
+      (lons <- substr(das_sub, 25,34))
       (hh <- ifelse(substr(lons, 1,1)=='E', 1, -1))
       (dd <- substr(lons, 2,4))
       (mm <- substr(lons, 6,10))
@@ -117,7 +141,7 @@ das_time <- function(das,
                    substr(dti, 7,8),
                    substr(dti,3,4),
                    ' ',
-                   substr(das, 15,34))) %>% head
+                   substr(das_sub, 15,34))) %>% head
     dti
     mr$dt_adj_das <- dti
 
@@ -134,9 +158,12 @@ das_time <- function(das,
                              substr(mr$raw,41, nchar(mr$raw)))
     }
 
+    }
+
     mr
     returni <- list(dt = mr$dt_adj_das,
                     das = mr$das_revised)
+    returni
   })
   return(returni)
 }
