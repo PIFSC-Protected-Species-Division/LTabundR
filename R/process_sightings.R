@@ -188,6 +188,9 @@ process_sightings <- function(cruz,
 
       sitno_i <- sitno[i] ; sitno_i # this sighting number
       siti <- sits_sp %>% dplyr::filter(SightNoDaily == sitno_i) ; siti # data for this sighting number
+      (line_num_i <- as.character(siti$line_num[1]))
+      (dti <- as.character(siti$DateTime[1]))
+      (eventnum_i <- as.character(siti$EventNum[1]))
 
       # If we can use probable identifications, update SpCodes:
       if(probable_species){
@@ -387,7 +390,7 @@ process_sightings <- function(cruz,
           grp_results$spp_max <- spp_max
         }else{
           # If no best estimates are valid/finite, flag the the school size is not valid.
-          message('--- Line = ',i,' | Species ', paste(grp_results$species, collapse=', '), ' | No group size best estimate is valid! Changing column ss_valid to FALSE *****')
+          message('--- DateTime = ', dti,', line_num = ',line_num_i, 'i = ', i,' | Species ', paste(grp_results$species, collapse=', '), ' | No group size best estimate is valid! Changing column ss_valid to FALSE *****')
         }
         grp_results
 
@@ -463,9 +466,10 @@ process_sightings <- function(cruz,
           if(!included_i){
             if(verbose & print_reason){
               message('--- SightNo = ',sitno_i,
-                      ', SpCode',grp_i,
-                      ' (line = ',siti_line,
-                      ', i= ',i,') | Excluded:  ',reason_i,'.')
+                      ', SpCode = ',grp_i,
+                      ' (DateTime = ', dti,
+                      ', line_num = ',line_num_i,
+                      ', i = ',i,') | Excluded:  ',reason_i,'.')
             }
           }
 
