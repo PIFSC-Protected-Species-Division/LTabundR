@@ -62,7 +62,7 @@ all_species <- load_cohort_settings(
   geometric_mean_group = TRUE,
   truncation_km = 7.5,
   beaufort_range = 0:6,
-  abeam_sightings = TRUE,
+  abeam_sightings = FALSE,
   strata_overlap_handling = c("smallest"),
   distance_types = c('S','F','N'),
   distance_modes = c('P','C'),
@@ -83,7 +83,8 @@ if(exists('swfsc')){rm(swfsc)}
 if(exists('pifsc')){rm(pifsc)}
 
 # First with SWFSC data
-das_file = c('../test_code/eric/data/swfsc_1986_2020.das')
+#das_file = c('../test_code/eric/data/swfsc_1986_2020.das')
+das_file = c("/Users/ekezell/Desktop/projects/noaa ltabundr/swfsc_1986_2020.das")
 swfsc <- process_surveys(das_file,
                         settings = settings,
                         process_sightings = TRUE,
@@ -92,7 +93,9 @@ swfsc <- process_surveys(das_file,
 #cruz_explorer(swfsc)
 
 # Then with PIFSC data
-das_file = '../test_code/eric/CNP/CenPac1986-2020_Final_alb.das'
+#das_file = '../test_code/eric/CNP/CenPac1986-2020_Final_alb.das'
+das_file = "/Users/ekezell/Desktop/projects/noaa ltabundr/CenPac1986-2020_Final_alb.das"
+
 data(cnp_1986_2020_edits)
 pifsc <- process_surveys(das_file,
                         settings = settings,

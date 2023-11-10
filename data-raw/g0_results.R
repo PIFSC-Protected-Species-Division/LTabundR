@@ -21,6 +21,8 @@ library(ggpubr)
 ################################################################################
 # Prep data
 
+document()
+
 # Bring in 10km-segment data from all NOAA/NMFS surveys, 1986 - 2020
 data("noaa_10km_1986_2020")
 

@@ -62,7 +62,7 @@ all_species <- load_cohort_settings(
   geometric_mean_group = TRUE,
   truncation_km = 7.5,
   beaufort_range = 0:6,
-  abeam_sightings = TRUE,
+  abeam_sightings = FALSE,
   strata_overlap_handling = c("smallest"),
   distance_types = c('S','F','N'),
   distance_modes = c('P','C'),
@@ -83,7 +83,7 @@ if(exists('swfsc')){rm(swfsc)}
 if(exists('pifsc')){rm(pifsc)}
 
 # First with SWFSC data
-das_file = c('../test_code/eric/data/swfsc_1986_2020.das')
+das_file = c("/Users/ekezell/Desktop/projects/noaa ltabundr/swfsc_1986_2020.das")
 swfsc <- process_surveys(das_file,
                          settings = settings,
                          process_sightings = TRUE,
@@ -92,7 +92,7 @@ swfsc <- process_surveys(das_file,
 #cruz_explorer(swfsc)
 
 # Then with PIFSC data
-das_file = '../test_code/eric/CNP/CenPac1986-2020_Final_alb.das'
+das_file = "/Users/ekezell/Desktop/projects/noaa ltabundr/CenPac1986-2020_Final_alb.das"
 data(cnp_1986_2020_edits)
 pifsc <- process_surveys(das_file,
                          settings = settings,
@@ -108,7 +108,39 @@ cruzes <- list(swfsc, pifsc)
 cruz <- cruz_combine(cruzes)
 
 # Verify
-#cruz_explorer(cruz)
+cruz_explorer(cruz)
+
+cruz$cohorts$all$das %>%
+  head
+
+cruz$cohorts$all$das$datum_id %>% table %>% table
+
+seg_p <-
+  pifsc$cohorts$all$segments %>%
+  group_by(Cruise) %>%
+  tally() %>%
+  rename(n_pifsc = n) %>%
+  as.data.frame
+
+seg_s <-
+  swfsc$cohorts$all$segments %>%
+  group_by(Cruise) %>%
+  tally() %>%
+  rename(n_swfsc = n) %>%
+  as.data.frame
+
+seg_c <-
+  cruz$cohorts$all$segments %>%
+  group_by(Cruise) %>%
+  tally() %>%
+  rename(n_combined = n) %>%
+  as.data.frame
+
+seg_ps <- full_join(seg_p, seg_s, by='Cruise')
+seg_ps
+
+segs <- full_join(seg_ps, seg_c, by='Cruise')
+segs
 
 # Rename
 noaa_10km_1986_2020 <- cruz

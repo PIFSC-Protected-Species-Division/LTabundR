@@ -1,6 +1,7 @@
 # Dataset of CNP edits
 
 das_file <- '../test_code/eric/CNP/CenPac1986-2020_Final_alb.das'
+das_file = "/Users/ekezell/Desktop/projects/noaa ltabundr/CenPac1986-2020_Final_alb.das"
 
 #### Cruise 1607 sighting 55 {-}
 
@@ -51,7 +52,7 @@ edit_1621_245 <-
 edit_1004_gmt10 <-
   list(das_file = das_file,
        type = 'function',
-       rows = 433327:437666,
+       rows = 433327:437665,
        chars = 6:39,
        edit = 'function(x){das_time(x, tz_adjust = 10)$dt}')
 

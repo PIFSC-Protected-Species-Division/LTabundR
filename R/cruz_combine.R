@@ -3,11 +3,14 @@
 #' This function combines processed `cruz` objects
 #' (the outputs of `LTabundR::process_surveys()`),
 #' under the assumption that the survey settings in both objects are the exact same.
-#' If a cohort name occurs in multiple `cruz` object, the contents of the instances of the cohort
-#' are checked for redundancy, and only non-redundant content is combined. If different
-#' cohorts occur in the supplied `cruz` objects,
+#' If the same cohort name occurs in multiple `cruz` objects, the contents of the instances of the cohort
+#' are checked for redundancy (using Cruise number - date combinations),
+#' and only non-redundant content is combined.
+#' If different cohorts occur in the supplied `cruz` objects,
+#' the cohorts are added without modification.
 #'
-#' @param cruzes A `list` of `cruz` objects, e.g., `list(cruz1, cruz2, cruz3)`
+#' @param cruzes A `list` of `cruz` objects, e.g., `list(cruz1, cruz2, cruz3)`.
+#' To understand `cruz` objects, see the output of the function `process_surveys()`.
 #'
 #' @return A single `cruz` object.
 #' @export
@@ -52,24 +55,15 @@ cruz_combine <- function(cruzes){
       # Create unique identifiers for each row of data in each list within the cohort
       cohorti$das$datum_id <- paste(names(cruzi$cohorts)[[ci]],
                                     cohorti$das$Cruise,
-                                    as.numeric(lubridate::as_datetime(cohorti$das$DateTime)),
-                                    cohorti$das$Lat,
-                                    cohorti$das$Lon,
-                                    cohorti$das$line_num,
+                                    lubridate::date(cohorti$das$DateTime),
                                     sep='-')
       cohorti$segments$datum_id <- paste(names(cruzi$cohorts)[[ci]],
                                          cohorti$segments$Cruise,
-                                         as.numeric(lubridate::as_datetime(cohorti$segments$DateTime1)),
-                                         cohorti$das$lat1,
-                                         cohorti$das$lon1,
-                                         cohorti$das$min_line,
+                                         lubridate::date(cohorti$segments$DateTime1),
                                          sep='-')
       cohorti$sightings$datum_id <- paste(names(cruzi$cohorts)[[ci]],
                                           cohorti$sightings$Cruise,
-                                          as.numeric(lubridate::as_datetime(cohorti$sightings$DateTime)),
-                                          cohorti$sightings$Lat,
-                                          cohorti$sightings$Lon,
-                                          cohorti$sightings$line_num,
+                                          lubridate::date(cohorti$sightings$DateTime),
                                           sep='-')
 
       if('subgroups' %in% names(cohorti)){
@@ -78,28 +72,19 @@ cruz_combine <- function(cruzes){
         if(!is.null(cohorti$subgroups$events)){
           cohorti$subgroups$events$datum_id <- paste(names(cruzi$cohorts)[[ci]],
                                                      cohorti$subgroups$events$Cruise,
-                                                     as.numeric(lubridate::as_datetime(cohorti$subgroups$events$DateTime)),
-                                                     cohorti$subgroups$events$Lat,
-                                                     cohorti$subgroups$events$Lon,
-                                                     cohorti$subgroups$events$Line,
+                                                     lubridate::date(cohorti$subgroups$events$DateTime),
                                                      sep='-')
         }
         if(!is.null(cohorti$subgroups$sightings)){
           cohorti$subgroups$sightings$datum_id <- paste(names(cruzi$cohorts)[[ci]],
                                                         cohorti$subgroups$sightings$Cruise,
-                                                        as.numeric(lubridate::as_datetime(cohorti$subgroups$sightings$DateTime)),
-                                                        cohorti$subgroups$sightings$Lat,
-                                                        cohorti$subgroups$sightings$Lon,
-                                                        1:nrow(cohorti$subgroups$sightings),
+                                                        lubridate::date(cohorti$subgroups$sightings$DateTime),
                                                         sep='-')
         }
         if(!is.null(cohorti$subgroups$subgroups)){
           cohorti$subgroups$subgroups$datum_id <- paste(names(cruzi$cohorts)[[ci]],
                                                         cohorti$subgroups$subgroups$Cruise,
-                                                        as.numeric(lubridate::as_datetime(cohorti$subgroups$subgroups$DateTime)),
-                                                        cohorti$subgroups$subgroups$Lat,
-                                                        cohorti$subgroups$subgroups$Lon,
-                                                        1:nrow(cohorti$subgroups$subgroups),
+                                                        lubridate::date(cohorti$subgroups$subgroups$DateTime),
                                                         sep='-')
         }
       }
@@ -125,23 +110,23 @@ cruz_combine <- function(cruzes){
   sgev_have <- sgsg_have <- sgsit_have <- c()
   # Loop through each cohort
   for(ci in 1:length(cruzi$cohorts)){
-    dasi <- cruzi$cohorts[[ci]]$das$datum_id
+    (dasi <- cruzi$cohorts[[ci]]$das$datum_id %>% unique)
     das_have <- c(das_have, dasi)
 
-    segi <- cruzi$cohorts[[ci]]$segments$datum_id
+    (segi <- cruzi$cohorts[[ci]]$segments$datum_id  %>% unique)
     seg_have <- c(seg_have, segi)
 
-    siti <- cruzi$cohorts[[ci]]$sightings$datum_id
+    (siti <- cruzi$cohorts[[ci]]$sightings$datum_id %>% unique)
     sit_have <- c(sit_have, siti)
 
     if('subgroups' %in% names(cruzi$cohorts[[ci]])){
-      sgev <- cruzi$cohorts[[ci]]$subgroups$events$datum_id
+      (sgev <- cruzi$cohorts[[ci]]$subgroups$events$datum_id %>% unique)
       sgev_have <- c(sgev_have, sgev)
 
-      sgev <- cruzi$cohorts[[ci]]$subgroups$sightings$datum_id
+      (sgev <- cruzi$cohorts[[ci]]$subgroups$sightings$datum_id %>% unique)
       sgsit_have <- c(sgsit_have, sgev)
 
-      sgev <- cruzi$cohorts[[ci]]$subgroups$subgroups$datum_id
+      (sgev <- cruzi$cohorts[[ci]]$subgroups$subgroups$datum_id %>% unique)
       sgsg_have <- c(sgsg_have, sgev)
     }
   }
@@ -181,9 +166,10 @@ cruz_combine <- function(cruzes){
 
           # segments
           newdat <- cohorti$segments
-          message('--- --- --- number of segments to add from new cruz object: ',nrow(newdat))
+          message('--- --- --- number of segments to add from new cruz object: ')
+          message('--- --- --- --- (before checking for redundancy: ',nrow(newdat),')')
           newdat <- newdat %>% dplyr::filter(! datum_id %in% seg_have)
-          message('--- --- --- --- (after checking for redundancy): ',nrow(newdat))
+          message('--- --- --- --- (after checking for redundancy: ',nrow(newdat),')')
           if(nrow(newdat)>0){
             # Update master cruz object
             cruz$cohorts[[master_index]]$segments <-
@@ -194,9 +180,10 @@ cruz_combine <- function(cruzes){
 
           # sightings
           newdat <- cohorti$sightings
-          message('--- --- --- number of sightings to add from new cruz object: ',nrow(newdat))
+          message('--- --- --- number of sightings to add from new cruz object: ')
+          message('--- --- --- --- (before checking for redundancy: ',nrow(newdat),')')
           newdat <- newdat %>% dplyr::filter(! datum_id %in% sit_have)
-          message('--- --- --- --- (after checking for redundancy): ',nrow(newdat))
+          message('--- --- --- --- (after checking for redundancy: ',nrow(newdat),')')
           if(nrow(newdat)>0){
             # Update master cruz object
             cruz$cohorts[[master_index]]$sightings <-
@@ -207,9 +194,10 @@ cruz_combine <- function(cruzes){
 
           # das
           newdat <- cohorti$das
-          message('--- --- --- number of DAS rows to add from new cruz object: ',nrow(newdat))
+          message('--- --- --- number of DAS rows to add from new cruz object: ')
+          message('--- --- --- --- (before checking for redundancy: ',nrow(newdat),')')
           newdat <- newdat %>% dplyr::filter(! datum_id %in% das_have)
-          message('--- --- --- --- (after checking for redundancy): ',nrow(newdat))
+          message('--- --- --- --- (after checking for redundancy: ',nrow(newdat),')')
           if(nrow(newdat)>0){
             # Update master cruz object
             cruz$cohorts[[master_index]]$das <-
@@ -223,60 +211,63 @@ cruz_combine <- function(cruzes){
                    !is.null(cohorti$sightings),
                    !is.null(cohorti$events))){
 
-            if(! 'subgroups' %in% names(cruz$cohorts[[master_index]])){
-              # the master cohort does not have subgroups yet. Just add it.
-              cruz$cohorts[[master_index]]$subgroups <- cohorti$subgroups
-            }else{
-              # the master cohort already has subgroups in this cohort.
-              # add carefully, checking for redundancy.
-              subs <- cohorti$subgroups
+              if(! 'subgroups' %in% names(cruz$cohorts[[master_index]])){
+                # the master cohort does not have subgroups yet. Just add it.
+                cruz$cohorts[[master_index]]$subgroups <- cohorti$subgroups
+              }else{
+                # the master cohort already has subgroups in this cohort.
+                # add carefully, checking for redundancy.
+                subs <- cohorti$subgroups
 
-              # subgroup subgroups
-              (newdat <- subs$subgroups)
-              if(!is.null(newdat)){
-                message('--- --- --- number of subgroups$subgroups rows to add from new cruz object: ',nrow(newdat))
-                newdat <- newdat %>% dplyr::filter(! datum_id %in% sgsg_have)
-                message('--- --- --- --- (after checking for redundancy): ',nrow(newdat))
-                if(nrow(newdat)>0){
-                  # Update master cruz object
-                  cruz$cohorts[[master_index]]$subgroups$subgroups <-
-                    rbind(cruz$cohorts[[master_index]]$subgroups$subgroups, newdat)
-                  # Update vector of data you already have
-                  sgsg_have <- c(sgsg_have, newdat$datum_id)
+                # subgroup subgroups
+                (newdat <- subs$subgroups)
+                if(!is.null(newdat)){
+                  message('--- --- --- number of subgroups$subgroups rows to add from new cruz object: ')
+                  message('--- --- --- --- (before checking for redundancy: ',nrow(newdat),')')
+                  newdat <- newdat %>% dplyr::filter(! datum_id %in% sgsg_have)
+                  message('--- --- --- --- (after checking for redundancy: ',nrow(newdat),')')
+                  if(nrow(newdat)>0){
+                    # Update master cruz object
+                    cruz$cohorts[[master_index]]$subgroups$subgroups <-
+                      rbind(cruz$cohorts[[master_index]]$subgroups$subgroups, newdat)
+                    # Update vector of data you already have
+                    sgsg_have <- c(sgsg_have, newdat$datum_id)
+                  }
                 }
-              }
 
-              # subgroups sightings
-              newdat <- subs$sightings
-              if(!is.null(newdat)){
-                message('--- --- --- number of subgroups$sightings rows to add from new cruz object: ',nrow(newdat))
-                newdat <- newdat %>% dplyr::filter(! datum_id %in% sgsit_have)
-                message('--- --- --- --- (after checking for redundancy): ',nrow(newdat))
-                if(nrow(newdat)>0){
-                  # Update master cruz object
-                  cruz$cohorts[[master_index]]$subgroups$sightings <-
-                    rbind(cruz$cohorts[[master_index]]$subgroups$sightings, newdat)
-                  # Update vector of data you already have
-                  sgsit_have <- c(sgsit_have, newdat$datum_id)
+                # subgroups sightings
+                newdat <- subs$sightings
+                if(!is.null(newdat)){
+                  message('--- --- --- number of subgroups$sightings rows to add from new cruz object: ')
+                  message('--- --- --- --- (before checking for redundancy: ',nrow(newdat),')')
+                  newdat <- newdat %>% dplyr::filter(! datum_id %in% sgsit_have)
+                  message('--- --- --- --- (after checking for redundancy: ',nrow(newdat),')')
+                  if(nrow(newdat)>0){
+                    # Update master cruz object
+                    cruz$cohorts[[master_index]]$subgroups$sightings <-
+                      rbind(cruz$cohorts[[master_index]]$subgroups$sightings, newdat)
+                    # Update vector of data you already have
+                    sgsit_have <- c(sgsit_have, newdat$datum_id)
+                  }
                 }
-              }
 
-              # subgroups events
-              newdat <- subs$events
-              if(!is.null(newdat)){
-                message('--- --- --- number of subgroups$events rows to add from new cruz object: ',nrow(newdat))
-                newdat <- newdat %>% dplyr::filter(! datum_id %in% sgev_have)
-                message('--- --- --- --- (after checking for redundancy): ',nrow(newdat))
-                if(nrow(newdat)>0){
-                  # Update master cruz object
-                  cruz$cohorts[[master_index]]$subgroups$events <-
-                    rbind(cruz$cohorts[[master_index]]$subgroups$events, newdat)
-                  # Update vector of data you already have
-                  sgev_have <- c(sgev_have, newdat$datum_id)
+                # subgroups events
+                newdat <- subs$events
+                if(!is.null(newdat)){
+                  message('--- --- --- number of subgroups$events rows to add from new cruz object: ')
+                  message('--- --- --- --- (before checking for redundancy: ',nrow(newdat),')')
+                  newdat <- newdat %>% dplyr::filter(! datum_id %in% sgev_have)
+                  message('--- --- --- --- (after checking for redundancy: ',nrow(newdat),')')
+                  if(nrow(newdat)>0){
+                    # Update master cruz object
+                    cruz$cohorts[[master_index]]$subgroups$events <-
+                      rbind(cruz$cohorts[[master_index]]$subgroups$events, newdat)
+                    # Update vector of data you already have
+                    sgev_have <- c(sgev_have, newdat$datum_id)
+                  }
                 }
-              }
 
-            } # end when master cruz already has subgroups
+              } # end when master cruz already has subgroups
             } # end when there is actually subgroups data
           } # end when this cohort object has subgroups
         } # end when this cohort is already in the master cruz
