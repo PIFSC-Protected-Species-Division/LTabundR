@@ -40,7 +40,6 @@ process_polygon <- function(polygon_dataframe,
 
     remove_land = TRUE
     toplot = TRUE
-    coerce_lons <- FALSE
 
     data(strata_cnp)
     length(strata_cnp)
@@ -117,6 +116,7 @@ process_polygon <- function(polygon_dataframe,
   }
 
   # Set CRS
+  sf_pol <- st_make_valid(sf_pol)
   st_crs(sf_pol) <- 4326
   if(toplot){
     print(ggplot(sf_pol) +
