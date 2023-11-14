@@ -7,8 +7,6 @@
 das_interpolate(das, new_interval = 120, verbose = FALSE)
 }
 \arguments{
-\item{das}{A \code{data.frame} of a \code{DAS} survey data file, created by \code{load_das()}.}
-
 \item{new_interval}{The interpolation interval, in seconds.}
 
 \item{verbose}{Print updates to the Console?}
@@ -21,6 +19,8 @@ This function is not typically called by the user directly; it is called during 
 The user can instruct \code{LTabundR} to interpolate \code{DAS} data in \code{load_survey_settings()}.
 }
 \details{
+param das  A \code{data.frame} of a \code{DAS} survey data file, created by \code{load_das()}.
+
 This function allows you to interpolate the DAS position data
 at the onset of processing if your position updates are separated
 by large time intervals, which would make spatial effort and stratum assignments less exact.
