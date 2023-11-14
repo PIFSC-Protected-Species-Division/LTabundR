@@ -90,50 +90,77 @@ das_interpolate <- function(das,
   if(nrow(mr_interp) > 0){
     if(verbose){message('\nInterpolating ...')}
 
+    # new way
+      mr_new <-
+        mr_interp %>%
+        # Stage some coordinate info
+        mutate(lon_diffi = next_lon - Lon) %>%
+        mutate(lat_diffi = next_lat - Lat) %>%
+        # Determine how many rows this row will be interpolated to
+        mutate(rows = ceiling(lag_dt / new_interval)) %>%
+        # Expand based on that
+        tidyr::uncount(rows, .remove=FALSE) %>%
+        # For each line number, perform interpolation
+        group_by(line_num) %>%
+        mutate(i = 1:n()) %>%
+        mutate(fracs = (i-1) / n()) %>%
+        mutate(Event = ifelse(i==1, Event, 'C')) %>%
+        mutate(Data1 = ifelse(i==1, Data1, 'Interpolate_position')) %>%
+        mutate(line_numi = line_numi[1]+fracs) %>%
+        mutate(DateTime = this_dt[1] + lag_dt*fracs) %>%
+        mutate(Lon = Lon[1] + lon_diffi*fracs) %>%
+        mutate(Lat = Lat[1] + lat_diffi*fracs) %>%
+        ungroup() %>%
+        # Remove background columns that were added
+        select(Event:interp_needed)
+
+      if(verbose){message('--- Interpolation added ', nrow(mr_new) - nrow(mr_interp),' rows.')}
+
+    # Way 2
     # Conduct interpolation
-    mr_new <- data.frame()
-    i=1
-    for(i in 1:nrow(mr_interp)){
-      (mri <- mr_interp[i,])
-
-      # Calculate fractional steps to take
-      (diffi <- mri$lag_dt)
-      (interps <- ceiling(diffi / new_interval))
-      (fracs <- (1:interps)/interps)
-
-      # Setup new dataframe
-      (mrii <- mri[rep(1, times=(interps)), ])
-
-      # Change events
-      mrii$Event[2:nrow(mrii)] <- 'C'
-      mrii$Data1[2:nrow(mrii)] <- 'Interpolated_position'
-
-      # Change line numbers
-      (mrii$line_numi <- mrii$line_numi + head(c(0, fracs), interps))
-
-      # Change times
-      (time_steps <- head(c(0, round((diffi*fracs))), interps))
-      (mrii$DateTime <- mrii$DateTime[1] + time_steps)
-
-      # Change longitude
-      (lon_diffi <- mri$next_lon - mri$Lon)
-      (lon_steps <- head(c(0, lon_diffi*fracs), interps))
-      (mrii$Lon <- mrii$Lon[1] + lon_steps)
-      mri$next_lon
-
-      # Change latitude
-      mri$next_lat ; mri$Lat
-      (lat_diffi <- mri$next_lat - mri$Lat)
-      (lat_steps <- head(c(0, lat_diffi*fracs), interps))
-      (mrii$Lat <- mrii$Lat[1] + lat_steps)
-      mri$next_lat
-
-      # Result
-      if(verbose){message(' --- Line number ', mri$line_num[1], ' (',round(100*(i/nrow(mr_interp))),'%): added ',
-                          (nrow(mrii)-1), ' interpolated row(s).')}
-
-      mr_new <- rbind(mr_new, mrii)
-    }
+    # mr_new <- data.frame()
+    # i=1
+    # for(i in 1:nrow(mr_interp)){
+    #   (mri <- mr_interp[i,])
+    #
+    #   # Calculate fractional steps to take
+    #   (diffi <- mri$lag_dt)
+    #   (interps <- ceiling(diffi / new_interval))
+    #   (fracs <- (1:interps)/interps)
+    #
+    #   # Setup new dataframe
+    #   (mrii <- mri[rep(1, times=(interps)), ])
+    #
+    #   # Change events
+    #   mrii$Event[2:nrow(mrii)] <- 'C'
+    #   mrii$Data1[2:nrow(mrii)] <- 'Interpolated_position'
+    #
+    #   # Change line numbers
+    #   (mrii$line_numi <- mrii$line_numi + head(c(0, fracs), interps))
+    #
+    #   # Change times
+    #   (time_steps <- head(c(0, round((diffi*fracs))), interps))
+    #   (mrii$DateTime <- mrii$DateTime[1] + time_steps)
+    #
+    #   # Change longitude
+    #   (lon_diffi <- mri$next_lon - mri$Lon)
+    #   (lon_steps <- head(c(0, lon_diffi*fracs), interps))
+    #   (mrii$Lon <- mrii$Lon[1] + lon_steps)
+    #   mri$next_lon
+    #
+    #   # Change latitude
+    #   mri$next_lat ; mri$Lat
+    #   (lat_diffi <- mri$next_lat - mri$Lat)
+    #   (lat_steps <- head(c(0, lat_diffi*fracs), interps))
+    #   (mrii$Lat <- mrii$Lat[1] + lat_steps)
+    #   mri$next_lat
+    #
+    #   # Result
+    #   if(verbose){message(' --- Line number ', mri$line_num[1], ' (',round(100*(i/nrow(mr_interp))),'%): added ',
+    #                       (nrow(mrii)-1), ' interpolated row(s).')}
+    #
+    #   mr_new <- rbind(mr_new, mrii)
+    # }
 
     if(verbose){message('\nAdding interpolated rows to survey data...')}
     # get all rows that were not interpolated
