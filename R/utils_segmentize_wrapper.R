@@ -75,6 +75,8 @@ segmentize_wrapper <- function(das,
                   type_group = EffType %in% types,
                   bft_group = Bft >= min(beaufort_range) & Bft <= max(beaufort_range))
 
+  #dassi %>% head
+
   # based on those directions, create a column deciding
   # whether this row will be used in density estimation
   dassi$use <- FALSE # initialize new column with assumption that data will be excluded
@@ -86,7 +88,7 @@ segmentize_wrapper <- function(das,
   table(dassi$use) # review
 
   # Add type-type column detailing effort type in the rows for which use == TRUE
-  dassi$type_type <- 'Off' # initiatlize column with assumption row will not be used
+  dassi$type_type <- 'Off' # initialize column with assumption row will not be used
   # modify new column for rows in which use == TRUE
   dassi$type_type[dassi$use] <- dassi$EffType[dassi$use]
   table(dassi$type_type) # review
@@ -110,7 +112,7 @@ segmentize_wrapper <- function(das,
   # Now process each split =====================================================
 
   segments <- list()   # stage results
-  spliti = 103 # for debugging
+  spliti = 1 # for debugging
   for(spliti in 1:length(dassplits)){
     if(verbose){message('--- --- segmentizing effort bloc ',spliti,' of ',length(dassplits),' . . .')}
     dasspliti <- dassplits[[spliti]] # das data for a single bloc

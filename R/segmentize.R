@@ -225,10 +225,13 @@ segmentize <- function(cruz,
     distance_on_off #%>% print
 
     # Separate out 'out' stratum events, if any
-    outs <- which(dass$stratum == 'out')
+    (outs <- which(dass$stratum == 'out'))
     if(length(outs)>0){
       dass_out <- dass[outs,] # keep to add back later
       dass <- dass[-outs,]
+      if(debug){
+        message('\n', length(outs),' DAS rows fell outside of a stratum. They will not be segmentized.\n')
+      }
     }
 
     #===========================================================================
@@ -262,6 +265,50 @@ segmentize <- function(cruz,
                                         to_plot = FALSE,
                                         verbose = verbose)
     if(verbose){message('\n')}
+
+    #===========================================================================
+    # Get diagnostics on which segments were excluded
+    if(verbose){
+
+      # Data there were "out"
+      (usefalse <-
+         cohort_list$segments %>%
+         arrange(DateTime1) %>%
+         filter(use == FALSE)
+      ) %>% head
+
+      message('START OF DIAGNOSTICS: segments with use == FALSE (n = ', nrow(usefalse),'):')
+      message('\n ---- FYI: Per your settings, use will be TRUE for this cohort in the following conditions:')
+      message(' ---- ---- column `stratum` is one of these values: ',       paste(setti$strata, collapse=', '))
+      message(' ---- ---- column `EffType` is one of these values: ', paste(distance_types, collapse=', '))
+      message(' ---- ---- column `Mode` is one of these values: ', paste(distance_modes, collapse=', '))
+      message(' ---- ---- column `OnEffort` is one of these values: ', paste(distance_on_off, collapse=', '))
+      message(' ---- ---- column `Bft` within segment, when averaged, can be rounded to one of these values: ', paste(beaufort_range, collapse=', '))
+      message('\n')
+
+      if(nrow(usefalse)>0){
+        falsi=1
+        for(falsi in 1:nrow(usefalse)){
+          (usi <- usefalse[falsi,])
+          message(' ---- Segment ID = ',usi$seg_id,' | DAS rows = ',usi$n_rows,
+                  ' (line_num ', usi$min_line,' - ', usi$max_line,', ',
+                  round(((usi$timestamp2 - usi$timestamp1)/60), 1),' minutes long) | start = ',
+                  usi$DateTime1,' | stratum = ',usi$stratum,
+                  ' | EffType = ', usi$EffType,' | Mode = ', usi$Mode,' | OnEffort = ', usi$OnEffort,
+                  ' | average Bft = ', round(usi$avgBft,1))
+        }
+        message('\n')
+        message('END OF DIAGNOSTICS: The above segments have use == FALSE (n = ', nrow(usefalse),'):')
+        message('\n ---- FYI: Per your settings, use will be TRUE for this cohort in the following conditions:')
+        message(' ---- ---- column `stratum` is one of these values: ',       paste(setti$strata, collapse=', '))
+        message(' ---- ---- column `EffType` is one of these values: ', paste(distance_types, collapse=', '))
+        message(' ---- ---- column `Mode` is one of these values: ', paste(distance_modes, collapse=', '))
+        message(' ---- ---- column `OnEffort` is one of these values: ', paste(distance_on_off, collapse=', '))
+        message(' ---- ---- column `Bft` within segment, when averaged, can be rounded to one of these values: ', paste(beaufort_range, collapse=', '))
+        message('\n')
+      }
+    }
+    #===========================================================================
 
     # Add back out events
     if(length(outs)>0){
