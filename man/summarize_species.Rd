@@ -37,7 +37,7 @@ summarize sightings for a large region but not for regions nested within it, suc
 A list with the following named slots:
 \enumerate{
 \item \code{species}: A dataframe with the codes, common names, and scientific name(s) for the specified species (as found in \code{data(species_codes)})
-\item \code{n_total}: Total number of sightings.
+\item \code{n_total}: Total number of sightings (mixed-species are only counted once; this is true for all other slots here as well).
 \item \code{n_analysis}: Number of sightings that will qualify for inclusion in the analysis (\code{included == TRUE}).
 \item \code{school_size}: Dataframe with summary metrics of school size for each species.
 \item \code{yearly_total}: Dataframe with counts and school sizes metrics for all sightings, parsed by year of sighting.

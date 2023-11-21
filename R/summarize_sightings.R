@@ -47,7 +47,7 @@ summarize_sightings <- function(cruz,
   species_codes
   names(species_codes)
 
-  # Filter down to the cohort-analysis specificed
+  # Filter down to the cohort-analysis specified
   cohorti <- cruz$cohorts[[cohort]]
   names(cohorti) # review
   survey <- cohorti
@@ -64,7 +64,10 @@ summarize_sightings <- function(cruz,
   # Join species codes to the sightings data
   siti$code <- siti$species
   siti <- dplyr::left_join(siti, species_codes, by='code')
-  siti$common_name1 %>% table
+  siti$common %>% table
+
+  siti %>% head
+  siti$SightNoDaily %>% table %>% table
 
   suppressWarnings({
     suppressMessages({

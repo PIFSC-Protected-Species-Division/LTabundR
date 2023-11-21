@@ -13,7 +13,7 @@
 #' @return A list with the following named slots:
 #' \enumerate{
 #' \item `species`: A dataframe with the codes, common names, and scientific name(s) for the specified species (as found in `data(species_codes)`)
-#' \item `n_total`: Total number of sightings.
+#' \item `n_total`: Total number of sightings (mixed-species are only counted once; this is true for all other slots here as well).
 #' \item `n_analysis`: Number of sightings that will qualify for inclusion in the analysis (`included == TRUE`).
 #' \item `school_size`: Dataframe with summary metrics of school size for each species.
 #' \item `yearly_total`: Dataframe with counts and school sizes metrics for all sightings, parsed by year of sighting.
@@ -25,6 +25,7 @@
 #' The `percent_beyond` column can be used to identify appropriate truncation distances for this species group.
 #' \item `sightings`: Dataframe with all `sightings` information for this species group.
 #' }
+#' @import dplyr
 #' @export
 #'
 summarize_species <- function(spp,
@@ -40,14 +41,29 @@ summarize_species <- function(spp,
     data(example_cruz)
     cruz <- example_cruz
     spp <- '046'
+
+    data('cnp_150km_1986_2020')
+    cruz <- cnp_150km_1986_2020
+    spp <- c('015', '018', '032')
+
     cohort = 1
-    filter_to_regions <- c('HI_EEZ')
-    exclude_regions <- 'MHI'
+    filter_to_regions <- NULL #c('WHICEAS')
+    exclude_regions <- NULL
+    #exclude_regions <- 'MHI'
     distance_restrict <- FALSE
     distance_range <- c(0,10)
     distance_interval <- .5
 
     # try it
+    summarize_species(spp, cruz) %>% names
+    summarize_species(spp, cruz)$species
+    summarize_species(spp, cruz)$n_total
+    summarize_species(spp, cruz)$n_analysis
+    summarize_species(spp, cruz)$school_size
+    summarize_species(spp, cruz)$yearly_total
+    summarize_species(spp, cruz)$regional_total
+    summarize_species(spp, cruz)$detection_distances
+
     summarize_species('046', cruz)
     summarize_species('046', cruz)$detection_distances
     summarize_species('046', cruz, distance_range=c(0,3),distance_interval=.2)$detection_distances
@@ -59,8 +75,9 @@ summarize_species <- function(spp,
   sits <- ani$sightings
 
   # Setup truncation distance steps
-  (td_range <- c(0,max(sits$PerpDistKm,na.rm=TRUE))) # truncation distance range
+  (td_range <- c(0, max(sits$PerpDistKm,na.rm=TRUE))) # truncation distance range
   (td_steps <- seq(min(td_range), (max(td_range) + distance_interval), by=distance_interval))
+  (td_steps <- c(0, td_steps))
 
   # Filter to species
   siti <- sits %>% dplyr::filter(species %in% spp) ; nrow(siti)
@@ -94,91 +111,130 @@ summarize_species <- function(spp,
   results <- list()
 
   # Species info, sought within built-in dataset, data(species_codes)
-  results$species <- species_translator(spp)[,1:4]
+  #(results$species <- species_translator(spp)[,1:4])
+  (results$species <- sapply(spp, species_translator) %>% t %>% as.data.frame)
 
   # Total sightings
-  results$n_total <- siti %>% nrow
+  #(results$n_total <- siti %>% nrow)
+  (results$n_total <-
+      siti %>%
+      pull(SightNoDaily) %>%
+      unique() %>% length)
 
   # Total sightings in analysis
-  results$n_analysis <- siti %>% dplyr::filter(included == TRUE) %>% nrow
+  (results$n_analysis <-
+    siti %>%
+    dplyr::filter(included == TRUE) %>%
+    pull(SightNoDaily) %>%
+    unique() %>% length)
 
   # School size metrics (analysis only)
-  results$school_size <-
+  (results$school_size <-
     siti %>%
     dplyr::filter(included == TRUE) %>%
     dplyr::group_by(species) %>%
     dplyr::summarize(ss_mean = mean(best, na.rm=TRUE),
                      ss_sd = sd(best, na.rm=TRUE),
-                     n = n()) %>%
+                     n = length(unique(SightNoDaily))) %>%
     dplyr::mutate(ss_se = ss_sd / sqrt(n),
-                  ss_cv = ss_sd / ss_mean)
+                  ss_cv = ss_sd / ss_mean))
 
   # Annual metrics
-  results$yearly_total <-
+  (results$yearly_total <-
     siti %>%
     dplyr::group_by(year) %>%
-    dplyr::summarize(n=n(),
+    dplyr::summarize(n=length(unique(SightNoDaily)),
                      ss_mean = mean(best, na.rm=TRUE),
                      ss_sd = sd(best, na.rm=TRUE)) %>%
     dplyr::mutate(ss_se = ss_sd / sqrt(n),
                   ss_cv = ss_sd / ss_mean) %>%
     dplyr::arrange(year) %>%
-    as.data.frame
+    as.data.frame)
 
   # Annual w/ only analysis data
-  results$yearly_analysis <-
+  (results$yearly_analysis <-
     siti %>%
     dplyr::filter(included == TRUE) %>%
     dplyr::group_by(year) %>%
-    dplyr::summarize(n=n(),
+    dplyr::summarize(n=length(unique(SightNoDaily)),
                      ss_mean = mean(best, na.rm=TRUE),
                      ss_sd = sd(best, na.rm=TRUE)) %>%
     dplyr::mutate(ss_se = ss_sd / sqrt(n),
                   ss_cv = ss_sd / ss_mean) %>%
     dplyr::arrange(year) %>%
-    as.data.frame
+    as.data.frame)
 
   # Regional
-  results$regional_total <-
+  (results$regional_total <-
     siti %>%
     dplyr::group_by(stratum) %>%
-    dplyr::summarize(n=n(),
+    dplyr::summarize(n=length(unique(SightNoDaily)),
                      ss_mean = mean(best, na.rm=TRUE),
                      ss_sd = sd(best, na.rm=TRUE)) %>%
     dplyr::mutate(ss_se = ss_sd / sqrt(n),
                   ss_cv = ss_sd / ss_mean) %>%
-    as.data.frame
+    as.data.frame)
 
   # Regional with only analysis data
-  results$regional_analysis <-
+  (results$regional_analysis <-
     siti %>%
     dplyr::filter(included == TRUE) %>%
     dplyr::group_by(stratum) %>%
-    dplyr::summarize(n=n(),
+    dplyr::summarize(n=length(unique(SightNoDaily)),
                      ss_mean = mean(best, na.rm=TRUE),
                      ss_sd = sd(best, na.rm=TRUE)) %>%
     dplyr::mutate(ss_se = ss_sd / sqrt(n),
                   ss_cv = ss_sd / ss_mean) %>%
-    as.data.frame
+    as.data.frame)
 
   # Detection distances ========================================================
 
-  sitii <- siti
+  # Get a working version with one row per sighting (not per species)
+  sitii <-
+    siti %>%
+    group_by(SightNoDaily) %>%
+    filter(row_number()==1)
+
+  # Check
+  siti %>% nrow
+  sitii %>% nrow
+
   if(distance_restrict){
     sitii <- sitii %>% dplyr::filter(included == TRUE)
   }
 
+  #td_steps
+
+  (perps <- sitii$PerpDistKm %>% sort)
+
   results$detection_distances <-
-    data.frame(km = td_steps,
-               sightings = c(hist(sitii$PerpDistKm,
-                                  breaks=td_steps, plot=FALSE)$counts,
-                             0)) %>%
+    data.frame(km_min_incl = td_steps,
+             km_max_excl = lead(td_steps),
+             sightings = c(hist(perps, breaks=td_steps, plot=FALSE)$counts,0)) %>%
+    dplyr::mutate(km_mid = km_min_incl + 0.5*(km_max_excl - km_min_incl)) %>%
     dplyr::mutate(total_within = cumsum(sightings)) %>%
     dplyr::mutate(total_beyond = sum(sightings) - total_within) %>%
     dplyr::mutate(percent_beyond = (total_beyond / sum(sightings)*100)) %>%
-    dplyr::select(km, sightings, percent_beyond, total_beyond, total_within) %>%
-    dplyr::filter(km >= min(distance_range),
-                  km <= max(distance_range))
+    dplyr::select(km_min_incl, km_max_excl, sightings, percent_beyond, total_beyond, total_within, km_mid) %>%
+    dplyr::filter(km_min_incl >= min(distance_range),
+                  km_max_excl <= max(distance_range))
+
+  #results$detection_distances
+  #sitii$PerpDistKm %>% sort
+
+  # results$detection_distances <-
+  #   data.frame(km = td_steps,
+  #              sightings = c(hist(sitii$PerpDistKm,
+  #                                 breaks=td_steps,
+  #                                 #right = FALSE,
+  #                                 plot=FALSE)$counts,
+  #                            0)) %>%
+  #   dplyr::mutate(total_within = cumsum(sightings)) %>%
+  #   dplyr::mutate(total_beyond = sum(sightings) - total_within) %>%
+  #   dplyr::mutate(percent_beyond = (total_beyond / sum(sightings)*100)) %>%
+  #   dplyr::select(km, sightings, percent_beyond, total_beyond, total_within) %>%
+  #   dplyr::filter(km >= min(distance_range),
+  #                 km <= max(distance_range))
 
   # Add raw sightings to results ===============================================
   results$sightings <- siti
