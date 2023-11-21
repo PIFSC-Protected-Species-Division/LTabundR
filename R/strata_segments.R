@@ -4,7 +4,8 @@
 #'
 #' @param cruz Your `cruz` object (produced from `LTabundR::process_surveys()`).
 #' @param cohort The cohort whose data you would like to display, provided as a number indicating which slot in `cruz$cohorts` should be referenced.
-#'
+#' @param plot_title Optional title for plot.
+
 #' @return A `ggplot2` object.
 #' @export
 #' @import dplyr
@@ -12,7 +13,8 @@
 #' @import sf
 #'
 strata_segments <- function(cruz,
-                            cohort=1){
+                            cohort=1,
+                            plot_title = 'Stratum assignments'){
 
   if(FALSE){
     data("cnp_150km_1986_2020")
@@ -61,8 +63,8 @@ strata_segments <- function(cruz,
     }
     #p
 
-    p <- p + labs(title = 'Center points of segments',
-                  subtitle = 'color-coded by stratum assignment')
+    p <- p + labs(title = plot_title,
+                  subtitle = 'Dots are center points of segments')
 
   }) })
 

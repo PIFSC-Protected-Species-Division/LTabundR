@@ -30,7 +30,7 @@ if(FALSE){ # debugging only === not run ========================================
   Rg0 <- g0_results
   #data(barlow_2015)
   #Rg0 <- barlow_2015
-  panes = 3
+  panes = 1
   legend_key = 0.4
   legend_font = 7
 

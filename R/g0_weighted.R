@@ -82,6 +82,16 @@ g0_weighted <- function(Rg0,
     (Rg0_cv <- Rg0_sd / Rg0)
     g0_weighted(Rg0, Rg0_cv, cruz, ymax = 0.3) # try it
 
+    # Test to ensure that the simple weighted g0 is always the same
+    wg0s <- c()
+    for(i in 1:100){
+      message(i)
+      goi <- g0_weighted(Rg0, Rg0_cv, cruz, ymax = 0.3, iterations=500, verbose=FALSE, toplot=FALSE)
+      wg0s[i] <- goi$g0$weighted_g0
+    }
+    wg0s
+    wg0s %>% unique
+
     # Cuvier's beaked whale (no pooling, but absolute g0 estimate at bft = 0).
     Rg0 = c(0.584,0.402,0.276,0.190,0.131,0.090,0.062)  # Jay's values, mean and SD
     Rg0_sd = c(0,0.040,0.053,0.049,0.039,0.031,0.023)
@@ -127,6 +137,10 @@ g0_weighted <- function(Rg0,
     return(returni)
   })
   (wts = weights/sum(weights))  # the effort weights, rescaled to sum to 1
+
+  # Get simple weighted mean g(0) ==============================================
+  simple_wg0 <- stats::weighted.mean(Rg0, wts)
+  if(verbose){message('Bft-weighted mean g(0) = ', round(simple_wg0, 4),'\n')}
 
   # Get g0 deets  ==============================================================
   (g0max <- max(Rg0))
@@ -356,7 +370,8 @@ g0_weighted <- function(Rg0,
   }
 
   # Prepare outputs objects
-  resulti <- list(g0 = data.frame(wt.mean = best_fit_sd$wt.mean %>% round(3),
+  resulti <- list(g0 = data.frame(weighted_g0 = simple_wg0,
+                                  wt.mean = best_fit_sd$wt.mean %>% round(3),
                                   wt.cv = best_fit_sd$wt.cv %>% round(3),
                                   wt.var = best_fit_sd$wt.var %>% round(3),
                                   wt.sd = best_fit_sd$wt.sd %>% round(3),
@@ -368,8 +383,9 @@ g0_weighted <- function(Rg0,
   if(toplot){par(mfrow=c(1,1))}
   if(verbose){
     message('\n\nFinished!')
-    message('Weighted g(0) mean: ', resulti$g0$wt.mean)
-    message('CV of weighted g(0) value: ', resulti$g0$wt.cv)
+    message('Weighted g(0): ', resulti$g0$weighted_g0)
+    #message('Weighted g(0) mean: ', resulti$g0$wt.mean)
+    message('CV of modeled weighted g(0) estimates: ', resulti$g0$wt.cv)
   }
 
   return(resulti)

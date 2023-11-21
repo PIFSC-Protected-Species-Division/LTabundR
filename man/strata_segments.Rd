@@ -4,12 +4,14 @@
 \alias{strata_segments}
 \title{Display/map stratum assignments for segments}
 \usage{
-strata_segments(cruz, cohort = 1)
+strata_segments(cruz, cohort = 1, plot_title = "Stratum assignments")
 }
 \arguments{
 \item{cruz}{Your \code{cruz} object (produced from \code{LTabundR::process_surveys()}).}
 
 \item{cohort}{The cohort whose data you would like to display, provided as a number indicating which slot in \code{cruz$cohorts} should be referenced.}
+
+\item{plot_title}{Optional title for plot.}
 }
 \value{
 A \code{ggplot2} object.

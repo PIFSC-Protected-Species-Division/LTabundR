@@ -461,7 +461,7 @@ lta <- function(cruz,
     abund_bft_range = 0:6
 
     # Try it
-    #lta(cruz, Rg0, fit_filters, df_settings, estimates)
+    lta(cruz, Rg0, fit_filters, df_settings, estimates)
 
     # To try function, use TLabundR-dev/test_code/CNP/lta_tests.R
   }
@@ -542,6 +542,10 @@ lta <- function(cruz,
     # Handle survey area
     study_area <- NULL
     if(verbose){message('--- --- building survey area polygon given `regions` and `regions_remove` specs ...')}
+    #strata_all = cruz$settings$strata
+    #strata_keep = estimati$regions
+    #strata_remove = estimati$regions_remove
+    #remove_land = estimati$remove_land
     (this_area <- strata_area(strata_all = cruz$settings$strata,
                               strata_keep = estimati$regions,
                               strata_remove = estimati$regions_remove,
@@ -611,7 +615,8 @@ lta <- function(cruz,
                                  toplot = toplot,
                                  verbose = FALSE)
               bft <- g0w$bft # save the bft proportions
-              g0i <- g0w$g0$wt.mean
+              g0i <- g0w$g0$weighted_g0
+              #g0i <- g0w$g0$wt.mean # the old method (until 11-19-23) used the mean of the modeled weighted g0s
               g0cvi <- g0w$g0$wt.cv
               g0s <- c(g0s, g0i)
               g0cvs <- c(g0cvs, g0cvi)
@@ -681,8 +686,8 @@ lta <- function(cruz,
     # Loop through each estimate
     g0_loops <- length(estimates)
     g0_loops
+    gi=1 # debugging
     for(gi in 1:g0_loops){
-      #gi=1 # debugging
       (est_filters <- estimates[[gi]])
       (g0 <- est_filters$g0)
       (g0_cv <- est_filters$g0_cv)
@@ -716,6 +721,17 @@ lta <- function(cruz,
   dist_sightings <- ani$sightings
   dist_das <- ani$das
 
+  # Filter only to data to be used in detection function fitting
+  dist_segments <- dist_segments %>% dplyr::filter(use==TRUE)
+  dist_sightings <- dist_sightings %>% dplyr::filter(use==TRUE, included == TRUE)
+  dist_das <- dist_das %>% dplyr::filter(use==TRUE)
+
+  # Double check
+  dist_segments$use %>% table
+  dist_sightings$use %>% table
+  dist_das$use %>% table
+  dist_sightings$included %>% table
+
   ##############################################################################
   ##############################################################################
   # Filter  datasets according to filters
@@ -734,7 +750,7 @@ lta <- function(cruz,
   ##############################################################################
   ##############################################################################
   # Handle 'Other' species designations for mixed-species school
-  # (species that are not the majority in a mixed sighting become Other)
+  # (species that are not the plurality in a mixed sighting become Other)
 
   if(verbose){message('\nHandling "Other" species designations ...')}
 
@@ -960,7 +976,7 @@ lta <- function(cruz,
       # This is in place to handle the random refactoring issue thrown by mrds
       try_counter <- 0 # if the analysis fails, this will count number of attempts
       try_status <- NULL # when the analysis works, this will be changed to 1
-      while(try_counter < 4 && is.null(try_status)){
+      while(try_counter < 50 && is.null(try_status)){
         if(try_counter > 0 && verbose){message('\nSomething went wrong. Trying again ...\n')}
         try({
 
@@ -1250,7 +1266,7 @@ lta <- function(cruz,
         }) # end of try
         try_counter <- try_counter + 1
       } # end of while loop
-      if(is.null(try_status)){stop('Three failed attempts to complete the analysis for this iteration!')}
+      if(is.null(try_status)){stop(try_counter,' failed attempts to complete the analysis for this iteration! Stopped trying!')}
     } # end of iter-th bootstrapping loop
   } # end of estimate/bootstrap loop
 
@@ -1292,6 +1308,11 @@ lta <- function(cruz,
                        #U95 = coxed::bca(N)[2])
     bs_summary
     RESULT$bootstrap$summary <- bs_summary
+  }
+
+  message('Finished at ', Sys.time())
+  if(try_counter > 1){
+    message(' --- FYI: during the bootstrapping process, there were ', try_counter - 1,' failed attempts.')
   }
 
   return(RESULT)
