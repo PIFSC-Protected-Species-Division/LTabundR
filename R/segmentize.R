@@ -129,17 +129,19 @@ segmentize <- function(cruz,
     # segment_target_km <- 30
 
     # try it
-    cruz_demo <- segmentize(cruz, verbose=TRUE)
-
-
-    morts <- c()
-    for(i in 1:10000){
-      morti <- (runif(10, 0, 1) < .20) %>% sum()
-      morts <- c(morts, morti)
-    }
-
-    #hist(morts, main = B)
-    (decadi <- length(which(morts == 0)) / length(morts))
+    cruz_demo <- segmentize(cruz, segment_method = 'day', verbose=TRUE)
+    cruz_demo <- segmentize(cruz, segment_method = 'equallength', segment_target_km = 5, verbose=TRUE)
+    cruz_demo <- segmentize(cruz, segment_method = 'equallength', segment_target_km = 10, verbose=TRUE)
+    cruz_demo <- segmentize(cruz, segment_method = 'equallength', segment_target_km = 50, verbose=TRUE)
+    cruz_demo <- segmentize(cruz, segment_method = 'equallength', segment_target_km = 150, verbose=TRUE)
+    cruz_demo <- segmentize(cruz, segment_method = 'equallength', segment_target_km = 20, verbose=TRUE)
+    cruz_demo <- segmentize(cruz, segment_method = 'equallength', segment_target_km = 20, segment_max_interval = 3600, verbose=TRUE)
+    cruz_demo <- segmentize(cruz, segment_method = 'equallength', segment_target_km = 20, segment_max_interval = 600, verbose=TRUE)
+    cruz_demo <- segmentize(cruz, segment_method = 'equallength', segment_target_km = 20, segment_remainder_handling = 'disperse', verbose=TRUE)
+    cruz_demo <- segmentize(cruz, segment_method = 'equallength', segment_target_km = 20, segment_remainder_handling = 'append', verbose=TRUE)
+    cruz_demo <- segmentize(cruz, segment_method = 'equallength', segment_target_km = 20, segment_remainder_handling = 'segment', verbose=TRUE)
+    cruz_demo <- segmentize(cruz, segment_method = 'equallength', segment_target_km = 20, segment_remainder_handling = c('append','segment'), verbose=TRUE)
+    cruz_demo <- segmentize(cruz, segment_method = 'equallength', segment_target_km = 20, segment_remainder_handling = c('disperse','segment'), verbose=TRUE)
 
   } # end debugging
   #=============================================================================
@@ -186,7 +188,7 @@ segmentize <- function(cruz,
   for(cohort_i in 1:length(cohorts)){
     cohorti <- cohorts[cohort_i] # get cohort data for this cohort
     cohorti_name <- names(cohorti) # get its name
-    if(verbose){message('Segmentizing data for cohort "',cohorti_name,'" . . . ')}
+    if(verbose){message('\nSegmentizing data for cohort "',cohorti_name,'" . . . ')}
     dass <- cohorti[[1]] # get data only
     head(dass)
 
@@ -245,240 +247,471 @@ segmentize <- function(cruz,
 
     # Perform segmentization for this cohort.
 
+    # accommodate NA's in `modes`
+    distance_modes <- c(distance_modes, NA)
+
+    # Setup effort blocs =====================================================
+    # (sections of survey with the same effort details / date / cruise / ship / stratum etc )
+
+    if(verbose){
+      message('--- Grouping survey data according to "effort scenario" ...')
+      message("       (stretches of effort from same cruise-ship-stratum-date,")
+      message("       split further into effort that will/won't be used in detection function modeling)")
+    }
+
+    blocs <-
+      dass %>%
+      # Create new columns indicating how to parse type/mode/onoff
+      # these booleans will inform us whether to include or exclude the segment from analysis
+      mutate(effdate = lubridate::date(DateTime)) %>%
+      mutate(mode_group = Mode %in% distance_modes,
+             onoff_group = OnEffort %in% distance_on_off,
+             type_group = EffType %in% distance_types,
+             bft_group = round(Bft) %in% beaufort_range) %>%
+      # based on those directions, create a column deciding
+      # whether this row will be used in density estimation
+      mutate(use = ifelse(mode_group &
+                            onoff_group &
+                            type_group &
+                            bft_group,
+                          TRUE, FALSE)) %>%
+      # Add type-type column detailing effort type in the rows for which use == TRUE
+      mutate(type_type = ifelse(use, EffType, 'Off' )) %>%
+      # make a column summarizing the effort scenario
+      mutate(effort_scenario = paste(Cruise,
+                                     ship,
+                                     stratum,
+                                     effdate,
+                                     use,
+                                     type_type,
+                                     sep=' - ')) %>%
+      # Determine when the scenario changes & make bloc ID
+      mutate(eff_bloc = as.numeric(factor(effort_scenario))) %>%
+      # Get distance covered within effort bloc
+      ungroup()
+
+    # End of effort bloc setup ===============================================
+
+    if(verbose){
+      message('--- --- survey was grouped into ', length(unique(blocs$eff_bloc)),' effort-scenario blocs.')
+    }
+
+    if(debug_mode){ # Double check that use was assigned correctly
+      problems <-
+        blocs %>%
+        filter(use == FALSE,
+               stratum %in% setti$strata,
+               EffType %in% distance_types,
+               Mode %in% distance_modes,
+               OnEffort %in% distance_on_off,
+               round(Bft) %in% beaufort_range) %>%
+        as.data.frame
+      problems
+    }
+
+    if(verbose){
+      message('\n--- Checking for excessive time gaps, based on setting `segment_max_interval` of ', segment_max_interval ,' seconds ...')
+    }
+
+    # further cut up eff_blocs based on time gaps
+    blocs2 <-
+      blocs %>%
+      # make simply time column
+      mutate(this_time = as.numeric(DateTime)) %>%
+
+      # in each bloc, look for instances of big time gaps
+      group_by(eff_bloc) %>%
+      mutate(next_time = lead(this_time)) %>%
+      mutate(int_time = next_time - this_time) %>%
+      mutate(int_flag = ifelse(int_time >= segment_max_interval, .01, 0)) %>%
+      mutate(int_flag = ifelse(is.na(int_flag), 0, int_flag)) %>%
+      # where big time gaps exist, make new eff bloc by adding 0.01 to bloc number
+      mutate(new_bloc = cumsum(int_flag) + eff_bloc[1]) %>%
+      ungroup() %>%
+
+      # Get distance covered within effort bloc
+      group_by(eff_bloc) %>%
+      # Make sure lines are arranged chronologically
+      arrange(DateTime) %>%
+      # Replace NAs with 0
+      mutate(km_int = tidyr::replace_na(km_int, 0)) %>%
+      # Get length logged
+      mutate(cum_bloc_km = cumsum(km_int),
+             tot_bloc_km = sum(km_int, na.rm=TRUE),
+             target_km = segment_target_km) %>%
+      ungroup()
+
+    if(verbose){
+      # Were any blocs added based on time gaps?
+      (npre <- blocs$eff_bloc %>% unique %>% length)
+      (npos <- blocs2$new_bloc %>% unique %>% length)
+      if(npos > npre){
+        message('--- --- found ', npos - npre ,' excessive time gaps; there are now ', npos ,' effort-scenario blocs.')
+      }else{
+        message('--- --- no further time gaps found. Keeping same number of effort-scenario blocs.')
+      }
+    }
+
+    # Segmentize blocs =======================================================
+
     if(FALSE){
+      # Values for debugging
+      segment_method <- 'equallength'
+      segment_method <- 'day'
+      segment_max_interval <- 60*60 # 60 minutes
+      segment_target_km <- 20
+      segment_remainder_handling <- c('disperse', 'segment')
+    }
 
-      # accommodate NA's in `modes`
-      distance_modes <- c(distance_modes, NA)
+    # If segment_remainder_handling is length one, duplicate it
+    if(length(segment_remainder_handling)==1){
+      segment_remainder_handling <- c(segment_remainder_handling,
+                                      segment_remainder_handling)
+    }
+    segment_remainder_handling
 
-      # Setup effort blocs =====================================================
-      # (sections of survey with the same effort details / date / cruise / ship / stratum etc )
-      blocs <-
-        dass %>%
+    if(segment_method == 'day'){ #============================================
+      if(verbose){ message('\n--- Segmentizing by day...') }
+      segs <-
+        blocs2 %>%
+        arrange(Cruise, DateTime) %>%
+        mutate(seg_id = eff_bloc) %>%
+        group_by(seg_id) %>%
+        mutate(tot_seg_km = sum(km_int, na.rm=TRUE)) %>%
+        as.data.frame
+      if(verbose){ message('--- --- Finished!') }
+    }  #======================================================================
 
-        # Create new columns indicating how to parse type/mode/onoff
-        # these booleans will inform us whether to include or exclude the segment from analysis
-        mutate(effdate = lubridate::date(DateTime)) %>%
-        mutate(mode_group = Mode %in% distance_modes,
-               onoff_group = OnEffort %in% distance_on_off,
-               type_group = EffType %in% distance_types,
-               bft_group = round(Bft) %in% beaufort_range) %>%
+    if(segment_method == 'equallength'){ #====================================
+      if(verbose){
+        message('\n--- Segmentizing into stretches of equal length...')
+        message('\n--- --- Determining the remainder for each bloc...')
+      }
 
-        # based on those directions, create a column deciding
-        # whether this row will be used in density estimation
-        mutate(use = ifelse(mode_group &
-                              onoff_group &
-                              type_group &
-                              bft_group,
-                            TRUE, FALSE)) %>%
-        # Add type-type column detailing effort type in the rows for which use == TRUE
-        mutate(type_type = ifelse(use, EffType, 'Off' )) %>%
-
-        # make a column summarizing the effort scenario
-        mutate(effort_scenario = paste(Cruise,
-                                       ship,
-                                       stratum,
-                                       effdate,
-                                       use,
-                                       type_type,
-                                       sep=' - ')) %>%
-
-        # Determine when the scenario changes & make bloc ID
-        #mutate(next_scenario = lead(effort_scenario)) %>%
-        #mutate(count_scenario = ifelse(effort_scenario == next_scenario, 0, 1)) %>%
-        #mutate(count_scenario = ifelse(is.na(count_scenario), 0, count_scenario)) %>%
-        #mutate(eff_bloc = cumsum(count_scenario) + 1) %>%
-        mutate(eff_bloc = as.numeric(factor(effort_scenario))) %>%
-
-        # Get distance covered within effort bloc
+      blocs3 <-
+        blocs2 %>%
+        # For each bloc...
+        group_by(new_bloc) %>%
+        # Based on target_km, get n_segments & remainder
+        mutate(n_seg_raw = tot_bloc_km / target_km) %>%
+        mutate(remainder = tot_bloc_km %% target_km) %>%
+        # Determine how to handle the remainder
+        mutate(handling = ifelse(remainder <= (target_km/2),
+                                 segment_remainder_handling[1],
+                                 segment_remainder_handling[2])) %>%
         ungroup()
 
-      # End of effort bloc setup ===============================================
+      #=======================================================================
+      # Segmentize by one of the remainder handling methods
 
-      # Review
-      blocs %>%
-        select(-(Lat:yday), -(ship:bft_group)) %>%
-        as.data.frame() %>%
-        #head(10)
-        tail(10)
+      (disperse_blocs <- blocs3 %>% filter(handling == 'disperse')) %>% nrow
+      (segment_blocs <- blocs3 %>% filter(handling == 'segment')) %>% nrow
+      (append_blocs <- blocs3 %>% filter(handling == 'append')) %>% nrow
 
+      segs <- data.frame() # put segmentized data here
 
-      # Segmentize blocs =======================================================
+      # If handling is disperse ... ==========================================
+      if(nrow(disperse_blocs)>0){
+        if(verbose){
+          message('\n--- --- Segmentizing ', nrow(disperse_blocs),' rows of data using the "disperse" method ...')
+        }
 
-      # Remind
-      segment_method
-      segment_target_km
-      segment_max_interval
-      segment_remainder_handling
-      segment_target_km <- 20
-      #segment_remainder_handling <- c('append', 'segment')
-      segment_remainder_handling <- c('disperse')
-
-      # If segment_remainder_handling is length one, duplicate it
-      if(length(segment_remainder_handling)==1){
-        segment_remainder_handling <- c(segment_remainder_handling,
-                                        segment_remainder_handling)
-      }
-      segment_remainder_handling
-
-      if(segment_method == 'day'){ #============================================
-
-        dasseg <-
-          blocs %>%
-          mutate(seg_id = eff_bloc)
-
-        dasseg %>% as.data.frame %>% head
-        dasseg %>% as.data.frame %>% tail
-
-      }  #======================================================================
-
-      if(segment_method == 'equallength'){ #====================================
-
-        segment_max_interval
-
-        # further cut up eff_blocs based on time gaps
-        new_blocs <-
-          blocs %>%
-          # make simply time column
-          mutate(this_time = as.numeric(DateTime)) %>%
-
-          # in each bloc, look for instances of big time gaps
-          group_by(eff_bloc) %>%
-          mutate(next_time = lead(this_time)) %>%
-          mutate(int_time = next_time - this_time) %>%
-          mutate(int_flag = ifelse(int_time >= segment_max_interval, .01, 0)) %>%
-          mutate(int_flag = ifelse(is.na(int_flag), 0, int_flag)) %>%
-          # where big time gaps exist, make new eff bloc by adding 0.01 to bloc number
-          mutate(new_bloc = cumsum(int_flag) + eff_bloc[1]) %>%
-          ungroup() %>%
-
-          # Get distance covered within effort bloc
-          group_by(eff_bloc) %>%
-          mutate(bloc_km = cumsum(km_int)) %>%
-          ungroup()
-
-        # Were any blocs added based on time gaps?
-        blocs$eff_bloc %>% unique %>% length
-        new_blocs$new_bloc %>% unique %>% length
-
-        # Get the remainder details for each bloc
-        segs <-
-          new_blocs %>%
+        segi <-
+          disperse_blocs %>%
           # For each bloc...
           group_by(new_bloc) %>%
-
-          # Make sure lines are arranged chronologically
-          arrange(DateTime) %>%
-
-          # Get total length logged
-          mutate(tot_bloc_km = sum(km_int, na.rm=TRUE)) %>%
-
-          # Based on target_km, get n_segments & remainder
-          mutate(target_km = segment_target_km) %>%
-          mutate(n_seg_raw = tot_bloc_km / target_km) %>%
-          mutate(remainder = tot_bloc_km %% target_km) %>%
-
-          # Determine how to handle the remainder
-          mutate(handling = ifelse(remainder <= (target_km/2),
-                                   segment_remainder_handling[1],
-                                   segment_remainder_handling[2])) %>%
-
-          # If handling is disperse...
           # Adjust the target_km to perfectly fit bloc km
-          mutate(n_seg = floor(n_seg_raw)) %>%
+          mutate(remainder_seg = NA) %>% # placeholder so that seg methods can be combined
           mutate(target_km = ifelse(handling == 'disperse',
-                                    tot_bloc_km / n_seg,
+                                    tot_bloc_km / floor(n_seg_raw),
                                     target_km)) %>%
           # Assign segment IDs within bloc...
-          mutate(bloc_seg_id = ceiling(bloc_km / target_km)) %>%
+          mutate(bloc_seg_id = ceiling(cum_bloc_km / target_km)) %>%
           # then make sure they are globally unique
-          mutate(seg_id_char = paste0(new_bloc,'-', bloc_seg_id)) %>%
+          mutate(seg_id_char = paste0(handling,'-',new_bloc,'-', bloc_seg_id)) %>%
+          ungroup()
 
-          # Ungroup and turn seg_id into a number
+        segs <- rbind(segs, segi)
+        if(verbose){ message('--- --- Finished!') }
+      }
+
+      # If handling is segment ... ===========================================
+      if(nrow(segment_blocs)>0){
+        if(verbose){
+          message('\n--- --- Segmentizing ', nrow(segment_blocs),' rows of data using the "segment" method ...')
+        }
+
+        # use one of the longest use blocs as an example
+        #segment_blocs %>% filter(use == TRUE) %>% arrange(desc(tot_bloc_km)) %>% as.data.frame %>% head
+
+        # This is the function that will assign each row to a segment
+        seg_assign <- function(cum_bloc_km, target_km, remainder, remainder_seg, n_seg_raw){
+          # Stage a vector of km breaks; each break is a multiple of target length
+          # make this vector one longer than the number of full-length segments, to make a placeholder for the remainder
+          (km_breaks_raw <- rep(target_km,times=floor(n_seg_raw) + 1))
+          # Replace one of these breaks with the remainder
+          (km_breaks_raw[remainder_seg] <- remainder)
+          # Convert to cumulative sum
+          (km_breaks <- km_breaks_raw %>% cumsum)
+          if(length(km_breaks)>1){km_breaks <- km_breaks[1:(length(km_breaks)-1)]}
+          km_breaks
+          # Decide which segment this cum_bloc_km belongs to
+          (good_breaks <- which(km_breaks >= cum_bloc_km))
+          if(length(good_breaks) > 0){
+            seg_assi <- good_breaks[1]
+          }else{
+            seg_assi <- length(km_breaks) + 1
+          }
+          seg_assi
+          return(seg_assi)
+        }
+
+        # Code for testing the seg_assign function
+        if(FALSE){
+          for(i in 0:202){
+            message('km ',i,' goes in segment ',
+                    seg_assign(cum_bloc_km = i, target_km = 20, remainder = 2.708868, remainder_seg = 3, n_seg_raw = 10.13544)
+            )}
+          # Test what happens with length 0 segments
+          seg_assign(0, 20, 0, 0, 0)
+        }
+
+        # Segmentize
+        segi <-
+          segment_blocs %>%
+          #filter(eff_bloc == 97) %>% # use this as a test bloc during debugging
+          # For each bloc...
+          group_by(new_bloc) %>%
+          # randomly select a segment in which to place the remainder
+          mutate(remainder_seg = sample(1:(floor(n_seg_raw[1])+1), 1)) %>%
+          # Assign each row to a segment ID
+          rowwise() %>%
+          mutate(bloc_seg_id = seg_assign(cum_bloc_km, target_km, remainder, remainder_seg, n_seg_raw)) %>%
+          # Ungroup and convert seg id into universally unique number
           ungroup() %>%
-          mutate(seg_id = seg_id_char %>% factor %>% as.numeric) %>%
+          ungroup() %>%
+          arrange(DateTime) %>%
+          mutate(seg_id_char = paste0(handling,'-',new_bloc,' plus ', bloc_seg_id)) %>%
+          ungroup()
 
-          # Get distance covered by each segment
-          group_by(seg_id) %>%
-          mutate(tot_seg_km = cumsum(km_int)) %>%
+        segs <- rbind(segs, segi)
+        if(verbose){ message('--- --- Finished!') }
+      }
 
-          as.data.frame #%>%
-          #pull(target_km) %>% round %>% unique
-          #pull(tot_seg_km) %>% hist
-          head
+      # If handling is append ... ============================================
+      if(nrow(append_blocs)>0){
+        if(verbose){
+          message('\n--- --- Segmentizing ', nrow(append_blocs),' rows of data using the "append" method ...')
+        }
+        # use one of the longest use blocs as an example
+        #segment_blocs %>% filter(use == TRUE) %>% arrange(desc(tot_bloc_km)) %>% as.data.frame %>% head
 
-          segs %>% head
-          segs$tot_seg_km
-          segs %>% select(bloc_km, target_km, bloc_seg_id) %>% head(100)
-          segs %>% filter(use == TRUE) %>% pull(tot_seg_km) %>% hist
-          segs$remainder %>% hist
-          segs$n_seg_raw %>% hist
-          segs$n_seg %>% hist
-          segs$bloc_km %>% plot(type='l')
+        # This is the function that will assign each row to a segment
+        seg_assign <- function(cum_bloc_km, target_km, remainder, remainder_seg, n_seg_raw){
+          # Stage a vector of km breaks; each break is a multiple of target length
+          # make this vector one longer than the number of full-length segments, to make a placeholder for the remainder
+          (km_breaks_raw <- rep(target_km,times=floor(n_seg_raw)))
+          # Append one of these breaks with the remainder
+          (km_breaks_raw[remainder_seg] <- km_breaks_raw[remainder_seg] + remainder)
+          # Convert to cumulative sum
+          (km_breaks <- km_breaks_raw %>% cumsum)
+          if(length(km_breaks)>1){km_breaks <- km_breaks[1:(length(km_breaks)-1)]}
+          km_breaks
+          # Decide which segment this cum_bloc_km belongs to
+          (good_breaks <- which(km_breaks >= cum_bloc_km))
+          if(length(good_breaks) > 0){
+            seg_assi <- good_breaks[1]
+          }else{
+            seg_assi <- length(km_breaks) + 1
+          }
+          seg_assi
+          return(seg_assi)
+        }
 
-          segs %>% filter(new_bloc == 2)
+        if(FALSE){ # Code for testing the seg_assign function
+          for(i in 0:202){
+            message('km ',i,' goes in segment ', seg_assign(cum_bloc_km = i,
+                                                            target_km = 20,
+                                                            remainder = 2.708868,
+                                                            remainder_seg = 3,
+                                                            n_seg_raw = 10.13544))
+          }
+          # Test what happens with length 0 segments
+          seg_assign(0, 20, 0, 0, 0)
+        }
 
-        # disperse
+        # Segmentize
+        segi <-
+          append_blocs %>%
+          #filter(eff_bloc == 97) %>% # use this as a test bloc during debugging
+          # For each bloc...
+          group_by(new_bloc) %>%
+          # randomly select a segment in which to place the remainder
+          mutate(remainder_seg = sample(1:(floor(n_seg_raw[1])), 1)) %>%
+          # Assign each row to a segment ID
+          rowwise() %>%
+          mutate(bloc_seg_id = seg_assign(cum_bloc_km, target_km, remainder, remainder_seg, n_seg_raw)) %>%
+          # Ungroup and convert seg id into universally unique number
+          ungroup() %>%
+          ungroup() %>%
+          arrange(DateTime) %>%
+          mutate(seg_id_char = paste0(handling,'-',new_bloc,' plus ', bloc_seg_id)) %>%
+          ungroup()
 
-        # append
+        segs <- rbind(segs, segi)
+        if(verbose){ message('--- --- Finished!') }
+      }
 
-        # segment
+      # Finalize formatting!
+      segs <-
+        segs %>%
+        # Assign segment IDs
+        mutate(seg_id = seg_id_char %>% factor %>% as.numeric) %>%
+        # Get distance covered by each segment
+        group_by(seg_id) %>%
+        mutate(tot_seg_km = sum(km_int, na.rm=TRUE)) %>%
+        ungroup() %>%
+        as.data.frame
 
+    } # end equal length =====================================================
 
+    # Status report
+    if(verbose){
+      message('\n--- Segmentizing complete!')
+      message('--- --- unique segments created = ', segs$seg_id %>% unique %>% length)
+      message('--- --- mean length = ', segs$tot_seg_km %>% mean(na.rm=TRUE) %>% round(2),' km')
+      message('--- --- median length = ', segs$tot_seg_km %>% median(na.rm=TRUE) %>% round(2),' km')
+    }
 
-      } #=======================================================================
+    if(to_plot){
+      par(mfrow=c(2,1), mar=c(4.2,4,3,1))
+      segs %>%
+        group_by(seg_id) %>%
+        filter(use == TRUE) %>%
+        filter(row_number() == 1) %>%
+        pull(tot_seg_km) %>%
+        hist(breaks=20, main='use == TRUE', xlab='Segment length (km)')
+      segs %>%
+        group_by(seg_id) %>%
+        filter(use == FALSE) %>%
+        filter(row_number() == 1) %>%
+        pull(tot_seg_km) %>%
+        hist(breaks=20, main='use == FALSE', xlab='Segment length (km)')
+      par(mfrow=c(1,1), mar=c(4.2,4,3,1))
+    }
 
+    # End segmentize blocs ===================================================
 
-      # End segmentize blocs ===================================================
+    # Summarize segments =======================================================
 
+    if(verbose){message('\n--- Summarizing each segment ...')}
 
+    seg_summary <-
+      segs %>%
+      group_by(seg_id) %>%
+      summarize(Cruise = Cruise[1],
+                ship = ship [1],
+                stratum = stratum[1],
+                use = paste(use %>% unique, collapse='-'),
+                Mode = paste(Mode %>% unique, collapse='-'),
+                EffType = paste(EffType %>% unique, collapse='-'),
+                OnEffort = paste(OnEffort %>% unique, collapse='-'),
+               ESWsides = ESWsides[1],
+                 dist = tot_seg_km[1],
+                 minutes = round(sum(int_time)/60, 3),
+                 n_rows = n(),
+                 min_line = line_num[1],
+                 max_line = line_num[n()],
+                 year = year[1],
+                 month = month[1],
+                 day = day[1],
+                 lat1 = Lat[1],
+                 lon1 = Lon[1],
+                 DateTime1 = DateTime[1],
+                 timestamp1 = as.numeric(DateTime[1]),
+                 yday1 = yday[1],
+                 lat2 = Lat[n()],
+                 lon2 = Lon[n()],
+                 DateTime2 = DateTime[n()],
+                 timestamp2 = as.numeric(DateTime[n()]),
+                 yday2 = yday[n()],
+                 mlat = Lat[mean(1:n())],
+                 mlon = Lon[mean(1:n())],
+                 mDateTime = DateTime[mean(1:n())],
+                 mtimestamp = as.numeric(DateTime[mean(1:n())]),
+                 avgBft = stats::weighted.mean(Bft, km_int, na.rm=TRUE),
+                 avgSwellHght = stats::weighted.mean(SwellHght, km_int, na.rm=TRUE),
+                 avgHorizSun = stats::weighted.mean(HorizSun, km_int, na.rm=TRUE),
+                 avgVertSun = stats::weighted.mean(VertSun, km_int, na.rm=TRUE),
+                 avgGlare = stats::weighted.mean(Glare, km_int, na.rm=TRUE),
+                 avgVis = stats::weighted.mean(Vis, km_int, na.rm=TRUE),
+                 avgCourse = stats::weighted.mean(Course, km_int, na.rm=TRUE),
+                avgSpdKt = stats::weighted.mean(SpdKt, km_int, na.rm=TRUE))
 
+    if(verbose){message('--- --- Finished!')}
 
+    # end summarize segments ===================================================
 
+    seg_summary %>% nrow
+    seg_summary %>% as.data.frame %>% head
 
+    seg_summary$use %>% table
+    seg_summary$OnEffort %>% table
+    seg_summary$Mode %>% table
+    seg_summary$EffType %>% table
 
+    # Confirm that all segments occurred on the same day
+    same_day_test <- seg_summary %>% filter(yday1 != yday2)
+    if(nrow(same_day_test)>0){
+      message('\n ******* WARNING! Some segments spanned dates. See printed rows below! *******')
+      print(same_day_test)
 
+      print(same_day_test %>% as.data.frame)
+    }
 
+    # Clean up data (remove all the columns you added during intermediate steps
+    segs_clean <- segs %>% select(Event:stratum, use, eff_bloc, seg_id)
 
+    # Prepare this cohort's list
+    cohort_list <- list(segments = seg_summary,
+                        das = segs_clean)
 
-
-    } # end false, not use
-
+    # end summarize segments =======================================================
 
     # segmentize_wrapper is a LTabundR function.-- see its documentation: ?segmentize_wrapper()
-    segments <- segmentize_wrapper(dass,
-                                   segment_method = segment_method,
-                                   segment_target_km = segment_target_km,
-                                   segment_max_interval = segment_max_interval,
-                                   segment_remainder_handling = segment_remainder_handling,
-                                   beaufort_range = beaufort_range,
-                                   types = distance_types,
-                                   modes = distance_modes,
-                                   on_off = distance_on_off,
-                                   debug_mode = FALSE,
-                                   verbose = verbose)
+    # segments <- segmentize_wrapper(dass,
+    #                                segment_method = segment_method,
+    #                                segment_target_km = segment_target_km,
+    #                                segment_max_interval = segment_max_interval,
+    #                                segment_remainder_handling = segment_remainder_handling,
+    #                                beaufort_range = beaufort_range,
+    #                                types = distance_types,
+    #                                modes = distance_modes,
+    #                                on_off = distance_on_off,
+    #                                debug_mode = FALSE,
+    #                                verbose = verbose)
 
     # Summarize segments
     # also using a LTabundR function: ?segmentize_summarize()
-    if(verbose){message('--- --- calculating details for each segment ...')}
-    cohort_list <- segmentize_summarize(segments,
-                                        dass,
-                                        debug_mode = FALSE,
-                                        to_plot = FALSE,
-                                        verbose = verbose)
-    if(verbose){message('\n')}
+    # if(verbose){message('--- --- calculating details for each segment ...')}
+    # cohort_list <- segmentize_summarize(segments,
+    #                                     dass,
+    #                                     debug_mode = FALSE,
+    #                                     to_plot = FALSE,
+    #                                     verbose = verbose)
+    # if(verbose){message('\n')}
 
     #===========================================================================
     # Get diagnostics on which segments were excluded
-    if(verbose){
+    if(debug_mode){
 
-      # Data there were "out"
       (usefalse <-
          cohort_list$segments %>%
          arrange(DateTime1) %>%
          filter(use == FALSE)
       ) %>% head
 
-      message('START OF DIAGNOSTICS: segments with use == FALSE (n = ', nrow(usefalse),'):')
+      message('\nSTART OF DIAGNOSTICS: segments with use == FALSE (n = ', nrow(usefalse),'):')
       message('\n ---- FYI: Per your settings, use will be TRUE for this cohort in the following conditions:')
       message(' ---- ---- column `stratum` is one of these values: ',       paste(setti$strata, collapse=', '))
       message(' ---- ---- column `EffType` is one of these values: ', paste(distance_types, collapse=', '))
@@ -488,15 +721,16 @@ segmentize <- function(cruz,
       message('\n')
 
       if(nrow(usefalse)>0){
+
         falsi=1
         for(falsi in 1:nrow(usefalse)){
           (usi <- usefalse[falsi,])
           message(' ---- Segment ID = ',usi$seg_id,' | DAS rows = ',usi$n_rows,
-                  ' (line_num ', usi$min_line,' - ', usi$max_line,', ',
-                  round(((usi$timestamp2 - usi$timestamp1)/60), 1),' minutes long) | start = ',
+                  ' (line_num ', usi$min_line,'-', usi$max_line,', ',
+                  round(((usi$timestamp2 - usi$timestamp1)/60)),' mins) | start = ',
                   usi$DateTime1,' | stratum = ',usi$stratum,
-                  ' | EffType = ', usi$EffType,' | Mode = ', usi$Mode,' | OnEffort = ', usi$OnEffort,
-                  ' | average Bft = ', round(usi$avgBft,1))
+                  ' | EffType(s) = ', usi$EffType,' | Mode(s) = ', usi$Mode,' | OnEffort(s) = ', usi$OnEffort,
+                  ' | avg Bft = ', round(usi$avgBft))
         }
         message('\n')
         message('END OF DIAGNOSTICS: The above segments have use == FALSE (n = ', nrow(usefalse),'):')
@@ -531,7 +765,6 @@ segmentize <- function(cruz,
 
     # Now rename the cohort list that you've been building, with the cohort's name
     names(cohorts_new)[which(names(cohorts_new) == 'new')] <- cohorti_name
-    #if(verbose){message('---')}
 
   } # end of cohort loop
 
@@ -541,5 +774,6 @@ segmentize <- function(cruz,
   # Replace cohorts with newly segmentized cohorts
   cruz_new <- cruz
   cruz_new$cohorts <- cohorts_new
+  if(verbose){message('\nFinished!')}
   return(cruz_new)
 }
