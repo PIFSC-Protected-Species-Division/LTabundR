@@ -15,6 +15,7 @@ lta(
   abund_eff_types = c("S"),
   abund_bft_range = 0:6,
   bootstraps = 0,
+  results_file = NULL,
   toplot = TRUE,
   verbose = TRUE
 )
@@ -230,6 +231,10 @@ but in some surveys/cases you may wish to use fine-scale effort (\code{"F"}) too
 (for density / abundance estimation). The default is \code{0:6}.}
 
 \item{bootstraps}{The number of bootstrap iterations. If 0 or 1, no bootstrapping will be carried out.}
+
+\item{results_file}{If not \code{NULL}, this input will be taken as the name of the file
+in which to save the results as this function works. This can be a handy way of saving
+results as you go, in the event of a major error or system crash.}
 
 \item{toplot}{Boolean, with default \code{TRUE}, indicating whether detection function plots (\code{Distance::plot.ds()})
 should be displayed as the candidate models are tested.}

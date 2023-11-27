@@ -218,6 +218,10 @@
 #' @param toplot Boolean, with default `TRUE`, indicating whether detection function plots (`Distance::plot.ds()`)
 #' should be displayed as the candidate models are tested.
 #'
+#' @param results_file If not `NULL`, this input will be taken as the name of the file
+#' in which to save the results as this function works. This can be a handy way of saving
+#' results as you go, in the event of a major error or system crash.
+#'
 #' @param verbose Boolean, with default `TRUE`, indicating whether or not updates should be printed to the Console.
 #'
 #' @details
@@ -405,6 +409,7 @@ lta <- function(cruz,
                 abund_eff_types = c('S'),
                 abund_bft_range = 0:6,
                 bootstraps = 0,
+                results_file = NULL,
                 toplot=TRUE,
                 verbose=TRUE){
 
@@ -1262,6 +1267,12 @@ lta <- function(cruz,
           #continue <- readline(paste0("Continue? 1 = yes, 0 = no"))
           #if(continue == 0){break}
 
+          # Update results file
+          if(!is.null(results_file)){
+            results <- RESULT
+            saveRDS(results, file=results_file)
+          }
+
           try_status <- 1 # if the code got to here, try_status should no longer be NULL
         }) # end of try
         try_counter <- try_counter + 1
@@ -1308,6 +1319,12 @@ lta <- function(cruz,
                        #U95 = coxed::bca(N)[2])
     bs_summary
     RESULT$bootstrap$summary <- bs_summary
+
+    # Update results file
+    if(!is.null(results_file)){
+      results <- RESULT
+      saveRDS(results, file=results_file)
+    }
   }
 
   message('Finished at ', Sys.time())
