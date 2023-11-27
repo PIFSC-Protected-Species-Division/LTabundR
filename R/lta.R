@@ -468,6 +468,11 @@ lta <- function(cruz,
     # Try it
     lta(cruz, Rg0, fit_filters, df_settings, estimates)
 
+    #ltas <- lta_enlist("/Users/ekezell/Desktop/projects/noaa ltabundr/marianas/lta_barlow/")
+    #ltas[[2]]$estimate
+    #ltas[[2]]$bootstrap$summary
+    #hist(ltas[[2]]$bootstrap$details$g0_est, breaks=20, main='g(0) values in bootstraps (sperm whale)')
+
     # To try function, use TLabundR-dev/test_code/CNP/lta_tests.R
   }
 
@@ -966,6 +971,7 @@ lta <- function(cruz,
   loops <- c('estimate')
   if(bootstraps > 1){ loops <- c(loops, 'bootstrap') }
   loopi <- loops[1] # for debugging
+  loopi <- loops[2] # for debugging
 
   for(loopi in loops){
     # if this is just the estimate loop, iter is 1
@@ -1056,9 +1062,17 @@ lta <- function(cruz,
           fitted_sightings$esw
           fit_sit_to_join <- fitted_sightings %>% dplyr::select(SightNoDaily, esw)
 
+
           # Now assign the ESW for each unique sighting number to each species within that sighting
-          new_sightings <- dplyr::left_join(dist_sightings, fit_sit_to_join, by='SightNoDaily')
+          new_sightings <- dplyr::left_join(sightings, fit_sit_to_join,
+                                            by='SightNoDaily', relationship = 'many-to-many')
+          #new_sightings <- dplyr::left_join(dist_sightings, fit_sit_to_join, by='SightNoDaily')
           # This effectively 'ungroups' the sightings that were previously grouped and made Other (if any)
+
+          #sightings$SightNoDaily %>% unique %>% sort
+          #fitted_sightings$SightNoDaily %>% unique %>% sort
+          #new_sightings$SightNoDaily %>% unique %>% sort
+          #new_sightings$esw
 
           # Remove Other sightings, EVEN from the abundance estimation stage
           if(other_species == 'remove' & length(other_sits)>0){
@@ -1113,7 +1127,7 @@ lta <- function(cruz,
 
           # Loop through estimates
           (abund_loops <- length(estimates))
-          abund_loopi <- 1 # debugging
+          abund_loopi <- 2 # debugging
           for(abund_loopi in 1:abund_loops){
             (est_filters <- estimates[[abund_loopi]])
 
