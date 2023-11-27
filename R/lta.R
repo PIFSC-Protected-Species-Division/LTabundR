@@ -459,7 +459,7 @@ lta <- function(cruz,
 
     use_g0 = TRUE
     ss_correction = 1
-    bootstraps = 5
+    bootstraps = 10000
     toplot=TRUE
     verbose=TRUE
     abund_eff_types = c('S')
@@ -1269,8 +1269,7 @@ lta <- function(cruz,
 
           # Update results file
           if(!is.null(results_file)){
-            results <- RESULT
-            saveRDS(results, file=results_file)
+            saveRDS(RESULT, file=results_file)
           }
 
           try_status <- 1 # if the code got to here, try_status should no longer be NULL
@@ -1322,8 +1321,7 @@ lta <- function(cruz,
 
     # Update results file
     if(!is.null(results_file)){
-      results <- RESULT
-      saveRDS(results, file=results_file)
+      saveRDS(RESULT, file=results_file)
     }
   }
 
