@@ -38,7 +38,7 @@ prep_bootstrap_datasets <- function(segments,
     (bs_strata <- segments$stratum %>% unique) # get strata represented in segments data
     segment_picks <- c() # this vector will hold the re-sampled seg_ids to be used to prep bs versions of the datasets
 
-    # Loop through each geostratum
+    # Loop through each geostratum & resample segment id's based on relative effort
     i=1
     for(i in 1:length(bs_strata)){
       (strati <- bs_strata[i]) # stratum name
@@ -51,39 +51,99 @@ prep_bootstrap_datasets <- function(segments,
   }
   segment_picks %>% sort
 
-  # Now loop through each seg_id selected in segment_picks,
-  # and build re-sampled segments and sightings table
-  bs_segments <- bs_sightings <- data.frame() # stage dataframes
-  fake_id <- 1 # create a fake segment identifier
-  j=1
-  for(j in 1:length(segment_picks)){
-    (bs_segj <- segment_picks[j]) # get seg_id for this resampled segment
 
-    # Add this bs segment to the master bs segments table
-    (segi <- segments %>% dplyr::filter(seg_id == bs_segj))
-    segments$seg_id %>% sort
-    segi$seg_bs <- fake_id
-    bs_segments <- rbind(bs_segments, segi)
+  # Setup a key that links the original seg_id to a new fake_id ================
 
-    # Add sightings in this bs segment to the master bs sightings table
-    (siti <- sightings %>% dplyr::filter(seg_id == bs_segj))
-    if(nrow(siti)>0){
-      siti$seg_bs <- fake_id
-      bs_sightings <- rbind(bs_sightings, siti)
-    }
+  (seg_id_picks <- segment_picks %>% sort)
+  (fake_id_key <-
+      data.frame(seg_id = unique(seg_id_picks)) %>%
+      mutate(fake_id = as.numeric(factor(seg_id))))
 
-    fake_id <- fake_id + 1 # Update fake_id
-  } # end loop through bs segment IDs
 
-  # Review
-  table(segments$stratum)
-  table(bs_segments$stratum)
+  # Make bootstrapped segments =================================================
 
-  table(sightings$stratum)
-  table(bs_sightings$stratum)
+  segments_global <<- segments
+  (seg_id_picks_i <- sapply(seg_id_picks,
+                            function(i){which(segments_global$seg_id == i)}))
+  bs_segments <- segments[seg_id_picks_i,]
+  bs_segments <- left_join(bs_segments, fake_id_key, by='seg_id')
+  rm(segments_global)
 
-  table(sightings$stratum) %>% sum
-  table(bs_sightings$stratum) %>% sum
+  # Tests
+  segments %>% nrow # make sure total number of segments is the same
+  bs_segments %>% nrow
+
+  segments$stratum %>% table # make sure n segments from each stratum is same
+  bs_segments$stratum %>% table
+
+  segments$seg_id %>% table %>% table    # make sure resampling happened
+  bs_segments$seg_id %>% table %>% table # there should be no replicated in og segments,
+  # but there should be replicated segments in bs_segments
+
+
+  # Make bootstrapped sightings  ===============================================
+
+  sightings_global <<- sightings
+  (sit_id_picks_i <- sapply(seg_id_picks,
+                            function(i){which(sightings_global$seg_id == i)}) %>% unlist)
+  bs_sightings <- sightings[sit_id_picks_i,]
+  bs_sightings <- left_join(bs_sightings, fake_id_key, by='seg_id')
+  bs_sightings$fake_id
+  rm(sightings_global)
+
+  # Tests
+  sightings %>% nrow # total number of sightings need not be the same
+  bs_sightings %>% nrow
+
+  sightings$stratum %>% table # distributon of sightings in strata need not be the same
+  bs_sightings$stratum %>% table
+
+  sightings$seg_id %>% table %>% table # these numbers should be different
+  bs_sightings$seg_id %>% table %>% table
+
+
+  # =============================================================================
+  # This was the old way of doing this -- valid but slower and more confusing
+
+  if(FALSE){
+
+    # Now loop through each seg_id selected in segment_picks,
+    # and build re-sampled segments and sightings table
+    bs_segments <- bs_sightings <- data.frame() # stage dataframes
+    fake_id <- 1 # create a fake segment identifier
+    j=1
+    for(j in 1:length(segment_picks)){
+      (bs_segj <- segment_picks[j]) # get seg_id for this resampled segment
+
+      # Add this bs segment to the master bs segments table
+      (segi <- segments %>% dplyr::filter(seg_id == bs_segj))
+      segments$seg_id %>% sort
+      segi$seg_bs <- fake_id
+      bs_segments <- rbind(bs_segments, segi)
+
+      # Add sightings in this bs segment to the master bs sightings table
+      (siti <- sightings %>% dplyr::filter(seg_id == bs_segj))
+      if(nrow(siti)>0){
+        siti$seg_bs <- fake_id
+        bs_sightings <- rbind(bs_sightings, siti)
+      }
+
+      fake_id <- fake_id + 1 # Update fake_id
+    } # end loop through bs segment IDs
+
+    # Review
+    table(segments$stratum)
+    table(bs_segments$stratum)
+
+    table(sightings$stratum)
+    table(bs_sightings$stratum)
+
+    table(sightings$stratum) %>% sum
+    table(bs_sightings$stratum) %>% sum
+
+  } # end of old way of doing things
+
+  # =============================================================================
 
   # Return list as output
   return(list(segments = bs_segments,

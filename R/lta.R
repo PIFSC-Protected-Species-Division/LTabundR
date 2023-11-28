@@ -468,10 +468,32 @@ lta <- function(cruz,
     # Try it
     lta(cruz, Rg0, fit_filters, df_settings, estimates)
 
-    #ltas <- lta_enlist("/Users/ekezell/Desktop/projects/noaa ltabundr/marianas/lta_barlow/")
-    #ltas[[2]]$estimate
-    #ltas[[2]]$bootstrap$summary
-    #hist(ltas[[2]]$bootstrap$details$g0_est, breaks=20, main='g(0) values in bootstraps (sperm whale)')
+    # debugging
+    ltas <- lta_enlist("/Users/ekezell/Desktop/projects/noaa ltabundr/marianas/lta_barlow/")
+    ltas[[1]]$estimate
+    ltas[[1]]$bootstrap$summary %>% as.data.frame
+    hist(ltas[[2]]$bootstrap$details$g0_est, breaks=20, main='g(0) values in bootstraps')
+
+    #n <-
+    df <- ltas[[1]]$bootstrap$details %>% filter(title == 'Bottlenose dolphin')
+    df %>% head
+    length(which(df$n == 0))
+    length(which(df$n > 1))
+    plot(df$N ~ df$g0_est)
+    hist(df$n)
+    ggplot(df, aes(x=g0_est, y=N, color=factor(n))) + geom_point()
+    n <- df %>% filter(n < 10) %>% pull(N)
+    n <- n[n > 0]
+    sd(n) / mean(n)
+    hist(n)
+
+    # Produce diagnostic plot
+    results %>% head
+    ggplot(results,
+           aes(x=n)) +
+      geom_histogram(alpha=.5, col='white', fill='darkblue') +
+      facet_wrap(~title + Region + year)
+
 
     # To try function, use TLabundR-dev/test_code/CNP/lta_tests.R
   }
@@ -877,6 +899,9 @@ lta <- function(cruz,
 
   sample_size
 
+  # Add unique identifier for each row
+  fit_sightings$i_fit <- 1:nrow(fit_sightings)
+
   ##############################################################################
   ##############################################################################
   # Simplify cue or bino?
@@ -1018,10 +1043,35 @@ lta <- function(cruz,
             bs_data <- prep_bootstrap_datasets(segments,sightings)
             segments <- bs_data$segments
             sightings <- bs_data$sightings
+            sightings$i_fit <- 1:nrow(sightings) # Replace unique identifier
             segment_picks <- bs_data$segment_picks
 
             # Re-factor sightings
             #sightings <- refactor_covariates(sightings, covar_levels)$data
+
+            if(FALSE){ # NOT RUN
+              # For development only
+              # tests to make sure bootstrap resampling is working well
+              sitis <- c()
+              for(i in 1:10000){
+                segments <- dist_segments
+                sightings <- fit_sightings
+                bs_data <- prep_bootstrap_datasets(segments,sightings)
+                siti <- bs_data$sightings
+                siti <- siti %>% dplyr::filter(OnEffort == TRUE,
+                                               EffType %in% abund_eff_types,
+                                               round(Bft) %in% abund_bft_range,
+                                               PerpDistKm <= truncation_distance,
+                                               species == '046',
+                                               year == 2021,
+                                               stratum == 'CNMI_EEZ')
+                siti %>% nrow
+                sitis <- c(sitis, nrow(siti))
+                message(i)
+              }
+              hist(sitis)
+              length(which(sitis == 0))
+            }
           }
 
           if(loopi == 'bootstrap' & verbose){message('Fitting detection function ...')}
@@ -1060,19 +1110,24 @@ lta <- function(cruz,
           # Get esw column from df_fit() results, then join to sightings
           fitted_sightings <- df$sightings
           fitted_sightings$esw
-          fit_sit_to_join <- fitted_sightings %>% dplyr::select(SightNoDaily, esw)
-
+          (fit_sit_to_join <- fitted_sightings %>% dplyr::select(i_fit, esw))
+          #fit_sit_to_join <- fitted_sightings %>% dplyr::select(SightNoDaily, esw)
 
           # Now assign the ESW for each unique sighting number to each species within that sighting
           new_sightings <- dplyr::left_join(sightings, fit_sit_to_join,
-                                            by='SightNoDaily', relationship = 'many-to-many')
-          #new_sightings <- dplyr::left_join(dist_sightings, fit_sit_to_join, by='SightNoDaily')
-          # This effectively 'ungroups' the sightings that were previously grouped and made Other (if any)
+                                            by='i_fit', relationship = 'many-to-many')
+          #new_sightings <- dplyr::left_join(sightings, fit_sit_to_join,
+          #                                  by='SightNoDaily', relationship = 'many-to-many')
+          # new_sightings <- dplyr::left_join(dist_sightings, fit_sit_to_join,
+          #                                   by='SightNoDaily', relationship = 'many-to-many')
+          # # This effectively 'ungroups' the sightings that were previously grouped and made Other (if any)
 
+          dist_sightings$SightNoDaily %>% unique %>% sort
           #sightings$SightNoDaily %>% unique %>% sort
           #fitted_sightings$SightNoDaily %>% unique %>% sort
           #new_sightings$SightNoDaily %>% unique %>% sort
-          #new_sightings$esw
+          new_sightings$esw
+          which(is.na(new_sightings$esw)) %>% length
 
           # Remove Other sightings, EVEN from the abundance estimation stage
           if(other_species == 'remove' & length(other_sits)>0){
@@ -1274,6 +1329,7 @@ lta <- function(cruz,
             curvi <- mod_curve %>% t %>% as.data.frame()
             curvi
             df_curves <- rbind(df_curves, curvi)
+
           }
 
           # for debugging bootstraps:
