@@ -303,7 +303,8 @@ df_fit <- function(sightings,
       esws
 
       (esw_df <- rbind(esw_df, esws))
-      best_aics <- c(best_aics, MuMIn::AICc(dso)) #stats::AIC(dfi)$AIC)
+      #best_aics <- c(best_aics, MuMIn::AICc(dso)) #stats::AIC(dfi)$AIC)
+      best_aics <- c(best_aics, MuMIn::AICc(dfi)) #stats::AIC(dfi)$AIC)
     }
     nrow(esw_df)
     esw_df

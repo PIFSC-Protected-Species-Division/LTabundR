@@ -129,7 +129,10 @@ segmentize <- function(cruz,
     # segment_target_km <- 30
 
     # try it
-    cruz_demo <- segmentize(cruz, segment_method = 'day', verbose=TRUE)
+    cruz_demo <- segmentize(cruz, segment_method = 'day', segment_max_interval = 2, verbose=TRUE)
+    cruz_demo <- segmentize(cruz, segment_method = 'day', segment_max_interval = 6, verbose=TRUE)
+    cruz_demo <- segmentize(cruz, segment_method = 'day', segment_max_interval = 24, verbose=TRUE)
+    cruz_demo <- segmentize(cruz, segment_method = 'day', segment_max_interval = 48, verbose=TRUE)
     cruz_demo <- segmentize(cruz, segment_method = 'equallength', segment_target_km = 5, verbose=TRUE)
     cruz_demo <- segmentize(cruz, segment_method = 'equallength', segment_target_km = 10, verbose=TRUE)
     cruz_demo <- segmentize(cruz, segment_method = 'equallength', segment_target_km = 50, verbose=TRUE)
@@ -281,7 +284,7 @@ segmentize <- function(cruz,
       mutate(effort_scenario = paste(Cruise,
                                      ship,
                                      stratum,
-                                     effdate,
+                                     #effdate,
                                      use,
                                      type_type,
                                      sep=' - ')) %>%
@@ -329,7 +332,9 @@ segmentize <- function(cruz,
       mutate(new_bloc = cumsum(int_flag) + eff_bloc[1]) %>%
       ungroup() %>%
 
-      # Get distance covered within effort bloc
+      # Replace eff_bloc
+      mutate(eff_bloc = new_bloc) %>%
+      # Get distance covered within new effort bloc
       group_by(eff_bloc) %>%
       # Make sure lines are arranged chronologically
       arrange(DateTime) %>%
@@ -344,7 +349,7 @@ segmentize <- function(cruz,
     if(verbose){
       # Were any blocs added based on time gaps?
       (npre <- blocs$eff_bloc %>% unique %>% length)
-      (npos <- blocs2$new_bloc %>% unique %>% length)
+      (npos <- blocs2$eff_bloc %>% unique %>% length)
       if(npos > npre){
         message('--- --- found ', npos - npre ,' excessive time gaps; there are now ', npos ,' effort-scenario blocs.')
       }else{
@@ -374,11 +379,19 @@ segmentize <- function(cruz,
       if(verbose){ message('\n--- Segmentizing by day...') }
       segs <-
         blocs2 %>%
-        arrange(Cruise, DateTime) %>%
-        mutate(seg_id = eff_bloc) %>%
+        group_by(eff_bloc, effdate) %>%
+        mutate(seg_id = cur_group_id()) %>%
+        ungroup() %>%
+        #arrange(Cruise, DateTime) %>%
+        #mutate(seg_id = eff_bloc) %>%
         group_by(seg_id) %>%
         mutate(tot_seg_km = sum(km_int, na.rm=TRUE)) %>%
+        ungroup() %>%
         as.data.frame
+
+      segs$seg_id %>% unique %>% length
+      #segs$seg_id %>% table
+      #segs$tot_seg_km %>% hist
       if(verbose){ message('--- --- Finished!') }
     }  #======================================================================
 
@@ -616,36 +629,36 @@ segmentize <- function(cruz,
                 Mode = paste(Mode %>% unique, collapse='-'),
                 EffType = paste(EffType %>% unique, collapse='-'),
                 OnEffort = paste(OnEffort %>% unique, collapse='-'),
-               ESWsides = ESWsides[1],
-                 dist = tot_seg_km[1],
-                 minutes = round(sum(int_time)/60, 3),
-                 n_rows = n(),
-                 min_line = line_num[1],
-                 max_line = line_num[n()],
-                 year = year[1],
-                 month = month[1],
-                 day = day[1],
-                 lat1 = Lat[1],
-                 lon1 = Lon[1],
-                 DateTime1 = DateTime[1],
-                 timestamp1 = as.numeric(DateTime[1]),
-                 yday1 = yday[1],
-                 lat2 = Lat[n()],
-                 lon2 = Lon[n()],
-                 DateTime2 = DateTime[n()],
-                 timestamp2 = as.numeric(DateTime[n()]),
-                 yday2 = yday[n()],
-                 mlat = Lat[mean(1:n())],
-                 mlon = Lon[mean(1:n())],
-                 mDateTime = DateTime[mean(1:n())],
-                 mtimestamp = as.numeric(DateTime[mean(1:n())]),
-                 avgBft = stats::weighted.mean(Bft, km_int, na.rm=TRUE),
-                 avgSwellHght = stats::weighted.mean(SwellHght, km_int, na.rm=TRUE),
-                 avgHorizSun = stats::weighted.mean(HorizSun, km_int, na.rm=TRUE),
-                 avgVertSun = stats::weighted.mean(VertSun, km_int, na.rm=TRUE),
-                 avgGlare = stats::weighted.mean(Glare, km_int, na.rm=TRUE),
-                 avgVis = stats::weighted.mean(Vis, km_int, na.rm=TRUE),
-                 avgCourse = stats::weighted.mean(Course, km_int, na.rm=TRUE),
+                ESWsides = ESWsides[1],
+                dist = tot_seg_km[1],
+                minutes = round(sum(int_time)/60, 3),
+                n_rows = n(),
+                min_line = line_num[1],
+                max_line = line_num[n()],
+                year = year[1],
+                month = month[1],
+                day = day[1],
+                lat1 = Lat[1],
+                lon1 = Lon[1],
+                DateTime1 = DateTime[1],
+                timestamp1 = as.numeric(DateTime[1]),
+                yday1 = yday[1],
+                lat2 = Lat[n()],
+                lon2 = Lon[n()],
+                DateTime2 = DateTime[n()],
+                timestamp2 = as.numeric(DateTime[n()]),
+                yday2 = yday[n()],
+                mlat = Lat[mean(1:n())],
+                mlon = Lon[mean(1:n())],
+                mDateTime = DateTime[mean(1:n())],
+                mtimestamp = as.numeric(DateTime[mean(1:n())]),
+                avgBft = stats::weighted.mean(Bft, km_int, na.rm=TRUE),
+                avgSwellHght = stats::weighted.mean(SwellHght, km_int, na.rm=TRUE),
+                avgHorizSun = stats::weighted.mean(HorizSun, km_int, na.rm=TRUE),
+                avgVertSun = stats::weighted.mean(VertSun, km_int, na.rm=TRUE),
+                avgGlare = stats::weighted.mean(Glare, km_int, na.rm=TRUE),
+                avgVis = stats::weighted.mean(Vis, km_int, na.rm=TRUE),
+                avgCourse = stats::weighted.mean(Course, km_int, na.rm=TRUE),
                 avgSpdKt = stats::weighted.mean(SpdKt, km_int, na.rm=TRUE))
 
     if(verbose){message('--- --- Finished!')}
@@ -663,7 +676,7 @@ segmentize <- function(cruz,
     # Confirm that all segments occurred on the same day
     same_day_test <- seg_summary %>% filter(yday1 != yday2)
     if(nrow(same_day_test)>0){
-      message('\n ******* WARNING! Some segments spanned dates. See printed rows below! *******')
+      message('\n ******* FYI: Some segments spanned dates. See printed rows below. This is not necessarily bad, just an FYI. *******')
       print(same_day_test)
 
       print(same_day_test %>% as.data.frame)

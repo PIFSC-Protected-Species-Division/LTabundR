@@ -468,33 +468,6 @@ lta <- function(cruz,
     # Try it
     lta(cruz, Rg0, fit_filters, df_settings, estimates)
 
-    # debugging
-    ltas <- lta_enlist("/Users/ekezell/Desktop/projects/noaa ltabundr/marianas/lta_barlow/")
-    ltas[[1]]$estimate
-    ltas[[1]]$bootstrap$summary %>% as.data.frame
-    hist(ltas[[2]]$bootstrap$details$g0_est, breaks=20, main='g(0) values in bootstraps')
-
-    #n <-
-    df <- ltas[[1]]$bootstrap$details %>% filter(title == 'Bottlenose dolphin')
-    df %>% head
-    length(which(df$n == 0))
-    length(which(df$n > 1))
-    plot(df$N ~ df$g0_est)
-    hist(df$n)
-    ggplot(df, aes(x=g0_est, y=N, color=factor(n))) + geom_point()
-    n <- df %>% filter(n < 10) %>% pull(N)
-    n <- n[n > 0]
-    sd(n) / mean(n)
-    hist(n)
-
-    # Produce diagnostic plot
-    results %>% head
-    ggplot(results,
-           aes(x=n)) +
-      geom_histogram(alpha=.5, col='white', fill='darkblue') +
-      facet_wrap(~title + Region + year)
-
-
     # To try function, use TLabundR-dev/test_code/CNP/lta_tests.R
   }
 
@@ -1013,7 +986,23 @@ lta <- function(cruz,
       try_counter <- 0 # if the analysis fails, this will count number of attempts
       try_status <- NULL # when the analysis works, this will be changed to 1
       while(try_counter < 50 && is.null(try_status)){
-        if(try_counter > 0 && verbose){message('\nSomething went wrong. Trying again ...\n')}
+        if(try_counter > 0 && verbose){
+          message('\nSomething went wrong. Trying again ...\n')
+          # Save some diagnostics
+          if(!is.null(results_file)){
+            (new_fn <- paste0('Diagnostics --- iteration ',iter,' try ',try_counter,'.rds'))
+            truncation_distance = fit_filters$truncation_distance
+            covariates = covariates
+            detection_function_base = detection_function_base
+            base_model = base_model
+            delta_aic = delta_aic
+            toplot=toplot
+            save(segments, sightings, segment_picks, das, df,
+                 truncation_distance, covariates, detection_function_base,
+                 base_model, delta_aic, toplot,
+                 file=new_fn)
+          }
+          }
         try({
 
           if(niter > 1 & verbose){
@@ -1315,27 +1304,61 @@ lta <- function(cruz,
             # Handle result for bootstrapped data
             # Saving only the output for specific regions/years
             # and adding to building dataframe
-            (results_iter <- abund_results)
-
             results_iter <-
-              results_iter %>%
+              abund_results %>%
               dplyr::mutate(i = iter) %>%
               dplyr::select(i, title, species, Region, year, km, ESW_mean, g0_est, n, ER, D, size_mean, N)
 
             results <- rbind(results, results_iter)
+            message('--- Min abundance: ', min(round(results$N)))
+            message('--- Max abundance: ', max(round(results$N)))
+            message('--- Min g(0): ', min(round(results$g0_est, 4)))
+            message('--- Max g(0): ', max(round(results$g0_est, 4)))
 
             # Add df curve to growing dataframe archiving the curves for each bootstrap
             mod_curve$km <- NULL
-            curvi <- mod_curve %>% t %>% as.data.frame()
-            curvi
+            (curvi <- mod_curve %>% t %>% as.data.frame())
             df_curves <- rbind(df_curves, curvi)
 
-          }
+            # Update bootstrap object in output
+            RESULT$bootstrap <- list(summary = NULL,
+                                     details = results,
+                                     df = df_curves)
+            # RESULT %>% names
+            # RESULT$bootstrap
+            # head(results)
+            suppressMessages({
+              bs_summary <-
+              results %>%
+              dplyr::filter(is.finite(N) == TRUE) %>%
+              dplyr::group_by(title, Region, year) %>%
+              dplyr::summarize(species = paste(unique(species), collapse=', '),
+                               iterations = dplyr::n(),
+                               ESW_mean = mean(ESW_mean, na.rm=TRUE),
+                               g0_mean = mean(g0_est, na.rm=TRUE),
+                               g0_cv = sd(g0_est, na.rm=TRUE) / mean(g0_est, na.rm=TRUE),
+                               km = mean(km, na.rm=TRUE),
+                               ER = mean(ER, na.rm=TRUE),
+                               D = mean(D, na.rm=TRUE),
+                               size = mean(size_mean, na.rm=TRUE),
+                               Nmean = mean(N, na.rm=TRUE),
+                               Nmedian = median(N, na.rm=TRUE),
+                               Nsd = sd(N, na.rm=TRUE),
+                               CV = Nsd / Nmean,
+                               L95 = lta_ci(Nmean, N)$bca_lognormal[1],
+                               U95 = lta_ci(Nmean, N)$bca_lognormal[2])
+            })
 
-          # for debugging bootstraps:
-          # message('Max abundance = ',format(round(max(abund_results$N)), big.mark=','))
-          #continue <- readline(paste0("Continue? 1 = yes, 0 = no"))
-          #if(continue == 0){break}
+            #bs_summary
+            message('--- Running CVs of bootstraps: ', paste(round(bs_summary$CV,2), collapse=', '), '')
+            RESULT$bootstrap$summary <- bs_summary
+
+            # for debugging bootstraps:
+            # message('Max abundance = ',format(round(max(abund_results$N)), big.mark=','))
+            #continue <- readline(paste0("Continue? 1 = yes, 0 = no"))
+            #if(continue == 0){break}
+
+            } # end if niter > 1
 
           # Update results file
           if(!is.null(results_file)){
@@ -1352,48 +1375,9 @@ lta <- function(cruz,
 
   ##############################################################################
   ##############################################################################
-  # Handle bootstrap results
 
   RESULT %>% names
   RESULT$estimate
-
-  if(niter > 1){
-    RESULT$bootstrap <- list(summary = NULL,
-                             details = results,
-                             df = df_curves)
-    RESULT %>% names
-    RESULT$bootstrap
-
-    head(results)
-    bs_summary <-
-      results %>%
-      dplyr::filter(is.finite(N) == TRUE) %>%
-      dplyr::group_by(title, Region, year) %>%
-      dplyr::summarize(species = paste(unique(species), collapse=', '),
-                       iterations = dplyr::n(),
-                       ESW_mean = mean(ESW_mean, na.rm=TRUE),
-                       g0_mean = mean(g0_est, na.rm=TRUE),
-                       g0_cv = sd(g0_est, na.rm=TRUE) / mean(g0_est, na.rm=TRUE),
-                       km = mean(km, na.rm=TRUE),
-                       ER = mean(ER, na.rm=TRUE),
-                       D = mean(D, na.rm=TRUE),
-                       size = mean(size_mean, na.rm=TRUE),
-                       Nmean = mean(N, na.rm=TRUE),
-                       Nmedian = median(N, na.rm=TRUE),
-                       Nsd = sd(N, na.rm=TRUE),
-                       CV = Nsd / Nmean,
-                       L95 = lta_ci(Nmean, N)$bca_lognormal[1],
-                       U95 = lta_ci(Nmean, N)$bca_lognormal[2])
-                       #L95 = coxed::bca(N)[1],
-                       #U95 = coxed::bca(N)[2])
-    bs_summary
-    RESULT$bootstrap$summary <- bs_summary
-
-    # Update results file
-    if(!is.null(results_file)){
-      saveRDS(RESULT, file=results_file)
-    }
-  }
 
   message('Finished at ', Sys.time())
   if(try_counter > 1){
