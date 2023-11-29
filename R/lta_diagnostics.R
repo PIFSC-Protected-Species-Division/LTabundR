@@ -13,6 +13,7 @@ lta_diagnostics <- function(lta_result){
     # debugging
     ltas <- lta_enlist("/Users/ekezell/Desktop/projects/noaa ltabundr/marianas/lta_barlow/")
     lta_result <- ltas[[1]]
+    lta_result <- ltas[[2]]
     lta_result <- ltas[[3]]
 
     # try it
@@ -40,6 +41,7 @@ lta_diagnostics <- function(lta_result){
            ER = round(ER, 4),
            D = round(D, 4),
            N = round(N)) %>%
+    as.data.frame %>%
     print
 
   if(!is.null(lta_result$bootstrap)){
@@ -47,6 +49,7 @@ lta_diagnostics <- function(lta_result){
     # ============================================================================
     message('\nBootstrap summary:')
     lta_result$bootstrap$summary %>%
+      as.data.frame %>%
       print
 
     # ============================================================================
@@ -67,7 +70,6 @@ lta_diagnostics <- function(lta_result){
       ylab('')
 
     print(p)
-
     readline(prompt="Press [enter] to continue")
 
     # ============================================================================
