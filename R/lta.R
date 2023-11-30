@@ -714,6 +714,8 @@ lta <- function(cruz,
     }
   }
 
+  g0_tables
+
   ##############################################################################
   ##############################################################################
   # Setup datasets
@@ -1105,16 +1107,9 @@ lta <- function(cruz,
           # Now assign the ESW for each unique sighting number to each species within that sighting
           new_sightings <- dplyr::left_join(sightings, fit_sit_to_join,
                                             by='i_fit', relationship = 'many-to-many')
-          #new_sightings <- dplyr::left_join(sightings, fit_sit_to_join,
-          #                                  by='SightNoDaily', relationship = 'many-to-many')
-          # new_sightings <- dplyr::left_join(dist_sightings, fit_sit_to_join,
-          #                                   by='SightNoDaily', relationship = 'many-to-many')
           # # This effectively 'ungroups' the sightings that were previously grouped and made Other (if any)
 
           dist_sightings$SightNoDaily %>% unique %>% sort
-          #sightings$SightNoDaily %>% unique %>% sort
-          #fitted_sightings$SightNoDaily %>% unique %>% sort
-          #new_sightings$SightNoDaily %>% unique %>% sort
           new_sightings$esw
           which(is.na(new_sightings$esw)) %>% length
 
@@ -1142,7 +1137,6 @@ lta <- function(cruz,
           if(verbose){message('Estimating density & abundance ...\n')}
 
           # Filter sightings to strictly systematic effort
-          abund_sightings <- new_sightings
           abund_sightings$id <- 1:nrow(abund_sightings) # add an id row
           abund_sightings <-
             abund_sightings %>%

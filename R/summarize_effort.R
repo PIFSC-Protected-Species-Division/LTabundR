@@ -58,34 +58,34 @@ summarize_effort <- function(cruz,
         eff %>%
         dplyr::group_by(Cruise, year, stratum, use) %>%
         dplyr::summarize(km = round(sum(dist, na.rm=TRUE)),
-                         days = length(unique(yday)))
+                         days = length(unique(c(yday1, yday2))))
 
       # Group by Cruise, year use/not usre
       eff_eff <-
         eff %>%
         dplyr::group_by(Cruise, year, use) %>%
         dplyr::summarize(km = round(sum(dist, na.rm=TRUE)),
-                         days = length(unique(yday)))
+                         days = length(unique(c(yday1, yday2))))
 
       # Group by Cruise and year
       eff_cruise <-
         eff %>%
         dplyr::group_by(Cruise, year) %>%
         dplyr::summarize(km = round(sum(dist, na.rm=TRUE)),
-                         days = length(unique(yday)))
+                         days = length(unique(c(yday1, yday2))))
 
       # Group by year
       eff_year <-
         eff %>%
         dplyr::group_by(year) %>%
         dplyr::summarize(km = round(sum(dist, na.rm=TRUE)),
-                         days = length(unique(yday)))
+                         days = length(unique(c(yday1, yday2))))
 
       # Total effort
       eff_tot <-
         eff %>%
         dplyr::summarize(km = round(sum(dist, na.rm=TRUE)),
-                         days = length(unique(paste0(Cruise,'-',year,'-',yday))))
+                         days = length(unique(c(yday1, yday2))))
 
     })
   })
