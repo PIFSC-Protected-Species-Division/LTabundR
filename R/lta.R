@@ -1137,6 +1137,7 @@ lta <- function(cruz,
           if(verbose){message('Estimating density & abundance ...\n')}
 
           # Filter sightings to strictly systematic effort
+          abund_sightings <- new_sightings
           abund_sightings$id <- 1:nrow(abund_sightings) # add an id row
           abund_sightings <-
             abund_sightings %>%
