@@ -3,7 +3,7 @@
 \docType{data}
 \name{lta_result}
 \alias{lta_result}
-\title{Example of LTA results for Striped Dolphin, 2010 and 2017}
+\title{Example of LTA results for three delphinids in 2010 and 2017}
 \format{
 An object of class \code{list} of length 5.
 }
@@ -11,9 +11,77 @@ An object of class \code{list} of length 5.
 lta_result
 }
 \description{
-Example of LTA results for Striped Dolphin, 2010 and 2017
+Example of LTA results for three delphinids in 2010 and 2017
 }
 \details{
-Details to come.
+This dataset was processed using the following code:
+
+\if{html}{\out{<div class="sourceCode">}}\preformatted{data("cnp_150km_1986_2020")
+cruz <- cnp_150km_1986_2020
+cruz$strata
+
+data('g0_results')
+Rg0 <- g0_results
+
+fit_filters = list(spp = c('013', '026', '031'), # striped, frasers, melon-headed
+                   pool = 'Multi-species pool 1',
+                   cohort = 'all',
+                   truncation_distance = 5,
+                   other_species = 'remove',
+                   years = 1986:2017,
+                   regions = NULL,
+                   not_regions = NULL)
+
+df_settings = list(covariates = c('bft','lnsstot','cruise','year','ship','species'),
+                   covariates_factor = c(FALSE, FALSE, TRUE, TRUE, TRUE, TRUE),
+                   covariates_levels = 2,
+                   covariates_n_per_level = 10,
+                   detection_function_base = 'hn',
+                   base_model = '~1',
+                   delta_aic = 2)
+
+estimates <-
+  list(
+    list(spp = '013',
+         title = 'Striped dolphin',
+         years = 2010,
+         regions = 'HI_EEZ',
+         g0 = 0.33, g0_cv = 0.20),
+    list(spp = '013',
+         title = 'Striped dolphin',
+         years = 2017,
+         regions = 'HI_EEZ',
+         g0 = 0.32, g0_cv = 0.21),
+    list(spp = '026',
+         title = "Fraser's dolphin",
+         years = 2010,
+         regions = 'HI_EEZ',
+         g0 = 0.33, g0_cv = 0.20),
+    list(spp = '026',
+         title = "Fraser's dolphin",
+         years = 2017,
+         regions = 'HI_EEZ',
+         g0 = 0.32, g0_cv = 0.21),
+    list(spp = '031',
+         title = 'Melon-headed whale',
+         years = 2010,
+         regions = 'HI_EEZ',
+         g0 = 0.33, g0_cv = 0.20),
+    list(spp = '031',
+         title = 'Melon-headed whale',
+         years = 2017,
+         regions = 'HI_EEZ',
+         g0 = 0.32, g0_cv = 0.21))
+
+result <- lta(cruz,
+              Rg0,
+              fit_filters,
+              df_settings,
+              estimates,
+              use_g0 = TRUE,
+              bootstraps = 100,
+              toplot=TRUE,
+              verbose=TRUE)
+}\if{html}{\out{</div>}}
 }
 \keyword{datasets}

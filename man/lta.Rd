@@ -258,7 +258,7 @@ This \code{data.frame} contains the following fields:
 \item \code{Area_covered}: The Area surveyed, according to \code{km} and \code{ESW_mean} (see next column).
 \item \code{ESW_mean}: Mean effective strip width, in kw, calculated as the mean probability of detection for all detections.
 \item \code{n}: The number of detections in the data.
-\item \code{g0_est}: The mean \code{g(0)} estimate.
+\item \code{g0_est}: The mean \code{g(0)} estimate of detections, which may differ by group due to group size.
 \item \code{ER_clusters}: The encounter rate for detections (schools) (\code{n / km})
 \item \code{D_clusters}: The density of detections (schools).
 \item \code{N_clusters}: The abundance of schools.
@@ -267,6 +267,10 @@ This \code{data.frame} contains the following fields:
 \item \code{ER}: Animal encounter rate.
 \item \code{D}: Animal density.
 \item \code{N}: Animal abundance.
+\item \code{g0_small}: the weighted \emph{g(0)} for small group sizes in this estimate.
+\item \code{g0_large}: the weighted \emph{g(0)} for large group sizes in this estimate.
+\item \code{g0_cv_small}: the CV of weighted \emph{g(0)} for small group sizes in this estimate.
+\item \code{g0_cv_large}: the CV of weighted \emph{g(0)} for large group sizes in this estimate.
 }
 
 \item \code{df}: A named list with details for the detection function.
@@ -287,11 +291,14 @@ and the \code{truncation_distance} (two columns: \code{km} and \code{p}, the pro
 at that distance).
 }
 
+\item \code{g0_tables}: A list with \emph{g(0)} estimation parameters for each sublist in \code{estimates}.
+
 \item \code{bootstrap}: A named list with results from the bootstrap process, only
 returned if the \code{bootstraps} input is greater than \code{1}.
 \enumerate{
 \item \code{summary}: a \code{data.frame} with a row for each species/region/year combination for which density/abundance was estimated.
-Notable columns include \code{g0_mean} and \code{g0_cv} (the mean and CV of g(0) values across parametric bootstrap iterations);
+Notable columns include \code{g0_mean} and \code{g0_cv} (the mean and CV of g(0) values across parametric bootstrap iterations,
+which may differ slightly from the non-bootstrapped \code{g0_} estimates provided in the \code{estimate} slot above.);
 \code{Nmean} (the mean abundance, based on bootstrap re-sampling);
 \code{Nmedian} (median abundance); \code{Nsd} (standard-deviation of abundance);
 \code{CV} (coefficient of variation, which applies to both density and abundance);

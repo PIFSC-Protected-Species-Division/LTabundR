@@ -4,10 +4,23 @@
 \alias{lta_diagnostics}
 \title{Run diagnostics on a LTA result}
 \usage{
-lta_diagnostics(lta_result)
+lta_diagnostics(
+  lta_result,
+  options = 1:8,
+  describe_options = FALSE,
+  wait = TRUE
+)
 }
 \arguments{
 \item{lta_result}{The result of \code{lta()} for a single species pool.}
+
+\item{options}{Numeric vector indicating which output options to return.
+These options are printed for the user when \code{describe_options} is \code{TRUE}.}
+
+\item{describe_options}{Boolean; if \code{TRUE}, the function will print a list of output options for the user.
+This helps the user determine which numbers to request with the input \code{options}.}
+
+\item{wait}{Boolean; if \code{TRUE}, the function will wait for the user to press \verb{<Enter>} in between each output option.}
 }
 \value{
 A series of printed tables and plots, which the user can step through using the \code{Enter} key.

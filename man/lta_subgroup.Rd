@@ -8,10 +8,11 @@ lta_subgroup(
   df_sits,
   truncation_distance,
   ss,
-  cruz10,
-  g0_spp,
-  g0_truncation,
-  g0_pool_bft = NULL,
+  cruz10 = NULL,
+  Rg0 = NULL,
+  g0_spp = NULL,
+  g0_truncation = NULL,
+  g0_constrain_shape = FALSE,
   g0_jackknife_fraction = 0.1,
   density_segments,
   density_das,
@@ -19,7 +20,7 @@ lta_subgroup(
   abundance_area = NULL,
   iterations = 5000,
   density_bootstraps = 10000,
-  output_dir = "",
+  output_dir = NULL,
   toplot = FALSE,
   verbose = TRUE
 )
@@ -43,17 +44,25 @@ These estimates are the geometric mean of repeat estimates from separate observe
 This \code{cruz} object will be used to estimate \code{Rg(0)}, i.e., the relative trackline detection probability.
 Consider using the built-in dataset \code{"noaa_10km_1986_2020"}.}
 
+\item{Rg0}{A \code{data.frame} with estimates of Relative \emph{g(0)} and its CV at each Bft state.
+If this input is left \code{NULL}, then these estimates will be produced by the function using the subsequent \code{g0_} inputs.
+If this input is not supplied and any of the subsequent \code{g0_} inputs are missing, then \emph{g(0)} will be assumed to be 1.0 with CV of 0.0.
+If supplied, this \code{data.frame} has three required columns:
+\code{bft} (Beaufort sea state, numbers between 0 and 7),
+\code{Rg0} (\emph{Rg(0)} estimates for each Beaufort state),
+and \code{Rg0_CV} (the CV of the \emph{Rg(0)} estimate in each Beaufort state). Other columns are allowed but will be ignored.}
+
 \item{g0_spp}{A character vector of species codes to use to estimate \code{Rg(0)}.
-In most cases this will be a single species, e.g., '033' for false killer whales.}
+In most cases this will be a single species, e.g., '033' for false killer whales.
+Not required if the \code{Rg0} input is supplied.}
 
 \item{g0_truncation}{The truncation distance to use when estimating \code{Rg(0)}.
 In Bradford et al. (2020) this is 5.5 km.}
 
-\item{g0_pool_bft}{A way to specify that low Beaufort sea states, which are typically rare in open-ocean
-surveys, should be pooled. This step may be needed in order to achieve a monotonic decline
-in the \code{g(0) ~ Bft} relationship, but the default is \code{NULL}, i.e., no pooling.
-If \code{g0_pool_bft} is the character string \code{"01"}, Beaufort states 1 will be pooled into state 0.
-If \code{g0_pool_bft} is the character string \code{"012"}, Beaufort states 1 and 2 will be pooled into state 0.}
+\item{g0_constrain_shape}{Some \emph{Rg(0)} curves will not decline monotonically
+due to sample size issues at low Bft (0-2) or high Bft (5-6) states.
+To coerce monotonic decline, set this input to \code{TRUE}, and the function will use a shape-constrained GAM
+(\code{scam()} from package \code{scam}) instead of a classic \code{mgcv::gam()}.}
 
 \item{g0_jackknife_fraction}{The proportion of data to leave out within each jackknife permutation for
 estimating the CV of \emph{g(0)}. The default is 0.1 (i.e., 10\% of the data, yielding 10 jackknife loops), after Barlow (2015).}
@@ -87,8 +96,8 @@ school size CV estimation, weighted \code{g(0)} CV estimation, and encounter rat
 the CV estimate of density and abundance specifically. This input allows this final step
 to use a different (typically larger) iteration size than the \code{iterations} input above.}
 
-\item{output_dir}{The path in which results \code{RData} files should be stored. If left \code{""},
-the current working directory will be used.}
+\item{output_dir}{The path in which results \code{RData} files should be stored. If left \code{NULL}, no results will be stored.
+To use your current working directory, simply provide \code{""}.}
 
 \item{toplot}{A Boolean, with default \code{FALSE}, indicating whether to plot various
 aspects of the analysis.}
