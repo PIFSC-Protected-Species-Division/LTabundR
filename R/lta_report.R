@@ -52,6 +52,7 @@ lta_report <- function(lta_result,
     x <- lta_result %>% lta_report(cruz)
     x <- lta_report(ltas, cruz)
     x$table1a %>% View
+    x$table3
   } # end debugging staging area  ==============================================
 
   lta_result %>% names
@@ -264,7 +265,7 @@ lta_report <- function(lta_result,
   table1b <- table3 <- table4 <- tibble()
 
   # Loop through each species ==================================================
-  title_i <- 1 # debugging
+  title_i <- 3 # debugging
   for(title_i in 1:length(estimate_titles)){
     (titi <- estimate_titles[title_i]) # get the species
     (spp_estimates <- estimates %>% dplyr::filter(title == titi)) # filter to its estimates
@@ -279,7 +280,7 @@ lta_report <- function(lta_result,
     }
 
     # Loop through each year-region estimates (which are columns) ==============
-    coli <- 4 # debugging
+    coli <- 1 # debugging
     for(coli in 1:length(cols)){
       (yr <- cols[coli])
       (yeari <- strsplit(yr,' ')[[1]][1])
@@ -329,17 +330,47 @@ lta_report <- function(lta_result,
       # Prepare table 3 ========================================================
 
       (tabi <- tibble(`Species or category` = titi,
-                      `Mean ESW` = '-', `Mean s` = '-', `g(0)` = '-', `(CV)` = '-'))
+                      `Mean ESW` = '-', `Mean s` = '-',
+                      `g(0) small` = '-', `g(0) large` = '-',
+                      `(CV small)` = '-', `(CV large)` = '-'))
       if(nrow(estimati) > 0 && any(estimati$D > 0)){
         (tabi <- tibble(`Species or category` = titi,
                         `Mean ESW` = ifelse(!is.na(estimati$ESW_mean),
                                             as.character(round(estimati$ESW_mean, 2)), '-'),
                         `Mean s` = ifelse(!is.na(estimati$size_mean),
                                           as.character(round(estimati$size_mean,1)), '-'),
-                        `g(0)` = estimati$g0_est %>% round(2),
-                        `(CV)` = '-'))
-        if(nrow(booti)>0){if(!is.na(booti$g0_cv)){ tabi$`(CV)` <- booti$g0_cv %>% round(2) }}
+                        `g(0) small` = '-',
+                        `(CV small)` = '-',
+                        `g(0) large` = '-',
+                        `(CV large)` = '-'))
+                        #`g(0)` = estimati$g0_est %>% round(2),
+                        #`(CV)` = '-'))
+
+        if('g0_small' %in% names(estimati)){
+          tabi$`g(0) small` <- estimati$g0_small %>% round(2)
+        }else{
+          tabi$`g(0) small` <- estimati$g0_est %>% round(2)
+        }
+
+        if('g0_large' %in% names(estimati)){
+          tabi$`g(0) large` <- estimati$g0_large %>% round(2)
+        }else{
+          tabi$`g(0) large` <- estimati$g0_est %>% round(2)
+        }
+
+        if('g0_cv_small' %in% names(estimati)){
+          tabi$`(CV small)` <- estimati$g0_cv_small %>% round(2)
+        }else{
+          if(nrow(booti)>0){if(!is.na(booti$g0_cv)){ tabi$`(CV)` <- booti$g0_cv %>% round(2) }}
+        }
+
+        if('g0_cv_large' %in% names(estimati)){
+          tabi$`(CV large)` <- estimati$g0_cv_large %>% round(2)
+        }else{
+            if(nrow(booti)>0){if(!is.na(booti$g0_cv)){ tabi$`(CV)` <- booti$g0_cv %>% round(2) }}
+        }
       }
+
       tabi
       tabform <- tabi
       if(title_i == 1){
@@ -350,7 +381,7 @@ lta_report <- function(lta_result,
       }
       tabform
       names(tabform) <- c(paste0('var',coli,'.2'), yeari, regioni,
-                          paste0('var',coli,'.5'), paste0('var',coli,'.6'))
+                          paste0('var',coli,'.5'), paste0('var',coli,'.6'), paste0('var',coli,'.7'), paste0('var',coli,'.8'))
       tabform
       if(coli > 1){
         tabform <- tabform %>% dplyr::select(2:ncol(tabform))

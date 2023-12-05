@@ -354,7 +354,7 @@
 #' \item `Area_covered`: The Area surveyed, according to `km` and `ESW_mean` (see next column).
 #' \item `ESW_mean`: Mean effective strip width, in kw, calculated as the mean probability of detection for all detections.
 #' \item `n`: The number of detections in the data.
-#' \item `g0_est`: The mean `g(0)` estimate.
+#' \item `g0_est`: The mean `g(0)` estimate of detections, which may differ by group due to group size.
 #' \item `ER_clusters`: The encounter rate for detections (schools) (`n / km`)
 #' \item `D_clusters`: The density of detections (schools).
 #' \item `N_clusters`: The abundance of schools.
@@ -363,6 +363,10 @@
 #' \item `ER`: Animal encounter rate.
 #' \item `D`: Animal density.
 #' \item `N`: Animal abundance.
+#' \item `g0_small`: the weighted *g(0)* for small group sizes in this estimate.
+#' \item `g0_large`: the weighted *g(0)* for large group sizes in this estimate.
+#' \item `g0_cv_small`: the CV of weighted *g(0)* for small group sizes in this estimate.
+#' \item `g0_cv_large`: the CV of weighted *g(0)* for large group sizes in this estimate.
 #' }
 #'
 #' \item `df`: A named list with details for the detection function.
@@ -383,11 +387,14 @@
 #' at that distance).
 #' }
 #'
+#' \item `g0_tables`: A list with *g(0)* estimation parameters for each sublist in `estimates`.
+#'
 #' \item `bootstrap`: A named list with results from the bootstrap process, only
 #' returned if the `bootstraps` input is greater than `1`.
 #' \enumerate{
 #' \item `summary`: a `data.frame` with a row for each species/region/year combination for which density/abundance was estimated.
-#' Notable columns include `g0_mean` and `g0_cv` (the mean and CV of g(0) values across parametric bootstrap iterations);
+#' Notable columns include `g0_mean` and `g0_cv` (the mean and CV of g(0) values across parametric bootstrap iterations,
+#' which may differ slightly from the non-bootstrapped `g0_` estimates provided in the `estimate` slot above.);
 #' `Nmean` (the mean abundance, based on bootstrap re-sampling);
 #' `Nmedian` (median abundance); `Nsd` (standard-deviation of abundance);
 #' `CV` (coefficient of variation, which applies to both density and abundance);
@@ -459,6 +466,7 @@ lta <- function(cruz,
 
     use_g0 = TRUE
     ss_correction = 1
+    bootstraps = 10
     bootstraps = 10000
     toplot=TRUE
     verbose=TRUE
@@ -466,7 +474,12 @@ lta <- function(cruz,
     abund_bft_range = 0:6
 
     # Try it
-    lta(cruz, Rg0, fit_filters, df_settings, estimates)
+    lta_result <- lta(cruz, Rg0, fit_filters, df_settings, estimates, bootstraps=10)
+
+    lta_result$estimate
+    lta_result$bootstrap$summary
+    lta_result$bootstrap$details
+
 
     # To try function, use TLabundR-dev/test_code/CNP/lta_tests.R
   }
@@ -965,7 +978,8 @@ lta <- function(cruz,
                                use_g0 = use_g0,
                                ss_correction = ss_correction),
                  estimate = data.frame(), # stage result
-                 df = list())
+                 df = list(),
+                 g0_tables = g0_tables)
 
   # Prepare instructions for estimates/bootstrap loop(s)
   loops <- c('estimate')
@@ -1275,9 +1289,11 @@ lta <- function(cruz,
             #abundi %>% print
             if(!is.null(abundi)){
               if(is.null(sppi)){sppi <- 'Other'}
-              abundi <- data.frame(title = est_filters$title,
+              (abundi <- data.frame(title = est_filters$title,
                                    species = paste(sppi, collapse='-'),
-                                   abundi) ; abundi
+                                   abundi,
+                                   g0_cv_small = g0_cvi[1],
+                                   g0_cv_large = g0_cv[2]))
               abund_results <- rbind(abund_results, abundi)
             } # end of if abundi is NULL
             message('')

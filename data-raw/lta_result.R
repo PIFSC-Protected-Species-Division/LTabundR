@@ -83,7 +83,7 @@ result <- lta(cruz,
               df_settings,
               estimates,
               use_g0 = TRUE,
-              bootstraps = 20,
+              bootstraps = 100,
               toplot=TRUE,
               verbose=TRUE)
 

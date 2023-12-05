@@ -290,6 +290,8 @@ abundance <- function(segments,
           # Calculate abundance / density
           summi <- summarize_density(summi, dati)
           if(is.na(summi$g0_est)){summi$g0_est <- g0[1]}
+          summi$g0_small <- g0[1]
+          summi$g0_large <- g0[2]
           summi
           output_summ <- rbind(output_summ, summi)
         } # year loop
