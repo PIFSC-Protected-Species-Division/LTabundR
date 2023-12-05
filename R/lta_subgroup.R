@@ -28,17 +28,25 @@
 #' This `cruz` object will be used to estimate `Rg(0)`, i.e., the relative trackline detection probability.
 #' Consider using the built-in dataset `"noaa_10km_1986_2020"`.
 #'
+#' @param Rg0 A `data.frame` with estimates of Relative *g(0)* and its CV at each Bft state.
+#' If this input is left `NULL`, then these estimates will be produced by the function using the subsequent `g0_` inputs.
+#' If this input is not supplied and any of the subsequent `g0_` inputs are missing, then *g(0)* will be assumed to be 1.0 with CV of 0.0.
+#' If supplied, this `data.frame` has three required columns:
+#' `bft` (Beaufort sea state, numbers between 0 and 7),
+#' `Rg0` (*Rg(0)* estimates for each Beaufort state),
+#' and `Rg0_CV` (the CV of the *Rg(0)* estimate in each Beaufort state). Other columns are allowed but will be ignored.
+#'
 #' @param g0_spp A character vector of species codes to use to estimate `Rg(0)`.
 #' In most cases this will be a single species, e.g., '033' for false killer whales.
+#' Not required if the `Rg0` input is supplied.
 #'
 #' @param g0_truncation The truncation distance to use when estimating `Rg(0)`.
 #' In Bradford et al. (2020) this is 5.5 km.
 #'
-#' @param g0_pool_bft A way to specify that low Beaufort sea states, which are typically rare in open-ocean
-#' surveys, should be pooled. This step may be needed in order to achieve a monotonic decline
-#' in the `g(0) ~ Bft` relationship, but the default is `NULL`, i.e., no pooling.
-#' If `g0_pool_bft` is the character string `"01"`, Beaufort states 1 will be pooled into state 0.
-#' If `g0_pool_bft` is the character string `"012"`, Beaufort states 1 and 2 will be pooled into state 0.
+#' @param g0_constrain_shape Some *Rg(0)* curves will not decline monotonically
+#' due to sample size issues at low Bft (0-2) or high Bft (5-6) states.
+#' To coerce monotonic decline, set this input to `TRUE`, and the function will use a shape-constrained GAM
+#' (`scam()` from package `scam`) instead of a classic `mgcv::gam()`.
 #'
 #' @param g0_jackknife_fraction The proportion of data to leave out within each jackknife permutation for
 #' estimating the CV of *g(0)*. The default is 0.1 (i.e., 10% of the data, yielding 10 jackknife loops), after Barlow (2015).
@@ -72,8 +80,8 @@
 #' the CV estimate of density and abundance specifically. This input allows this final step
 #' to use a different (typically larger) iteration size than the `iterations` input above.
 #'
-#' @param output_dir The path in which results `RData` files should be stored. If left `""`,
-#' the current working directory will be used.
+#' @param output_dir The path in which results `RData` files should be stored. If left `NULL`, no results will be stored.
+#' To use your current working directory, simply provide `""`.
 #'
 #' @param toplot A Boolean, with default `FALSE`, indicating whether to plot various
 #' aspects of the analysis.
@@ -131,14 +139,16 @@
 #' See the [online vignette](https://emk-noaa.github.io/LTAvignette/subgroup-based-analysis.html) for more details
 #'
 #' @export
+#' @import dplyr
 #'
 lta_subgroup <- function(df_sits, # DateTime, Lat, Lon, Cruise, PerpDistKm
                          truncation_distance,
                          ss, # numeric vector of sightings
-                         cruz10, # if NULL, load the built-in dataset
-                         g0_spp,
-                         g0_truncation,
-                         g0_pool_bft = NULL,
+                         cruz10 = NULL, # if NULL, load the built-in dataset
+                         Rg0 = NULL,
+                         g0_spp = NULL,
+                         g0_truncation = NULL,
+                         g0_constrain_shape = FALSE,
                          g0_jackknife_fraction = 0.1,
                          density_segments, # already filtered to population
                          density_das,
@@ -146,7 +156,7 @@ lta_subgroup <- function(df_sits, # DateTime, Lat, Lon, Cruise, PerpDistKm
                          abundance_area = NULL,
                          iterations = 5000,
                          density_bootstraps = 10000,
-                         output_dir = '', # end with forward slash
+                         output_dir = NULL,
                          toplot = FALSE,
                          verbose = TRUE){
 
@@ -156,17 +166,18 @@ lta_subgroup <- function(df_sits, # DateTime, Lat, Lon, Cruise, PerpDistKm
   if(FALSE){ # to develop/debug, use Pelagic population in 2017
 
     #document()
+    library(dplyr)
 
     # prep cruz  ===============================================================
-    data("cnp_1986_2020_150km")
-    cruz <- cnp_1986_2020_150km
-    cruz$cohorts$most$sightings$stratum %>% table
+    data("cnp_150km_1986_2020")
+    cruz <- cnp_150km_1986_2020
+    cruz$cohorts$all$sightings$stratum %>% table
 
     # df_sits ==================================================================
 
     # For 1986 - 2010, assume all detections are Phase 1
     sits1  <-
-      cruz$cohorts$most$sightings %>%
+      cruz$cohorts$all$sightings %>%
       filter(OnEffort == TRUE,
              year < 2011,
              Lat >= 5, Lat <= 40, Lon >= -185, Lon <= -120,
@@ -174,15 +185,19 @@ lta_subgroup <- function(df_sits, # DateTime, Lat, Lon, Cruise, PerpDistKm
              mixed == FALSE) %>%
       select(DateTime, Lat, Lon, Cruise, PerpDistKm)
 
+    sits1 %>% nrow
+
     # For 2011 on, use subgroups data and filter to Phase 1 only
     sits2  <-
-      cruz$cohorts$most$subgroups$subgroups %>%
+      cruz$cohorts$all$subgroups$subgroups %>%
       filter(OnEffort == TRUE,
              lubridate::year(DateTime) >= 2011,
              Lat >= 5, Lat <= 40, Lon >= -185, Lon <= -120,
              Species == '033',
              Phase == 1) %>%
       select(DateTime, Lat, Lon, Cruise, PerpDistKm = PerpDist)
+
+    sits2 %>% nrow
 
     # Combine
     df_sits <- rbind(sits1, sits2)
@@ -199,49 +214,61 @@ lta_subgroup <- function(df_sits, # DateTime, Lat, Lon, Cruise, PerpDistKm
     # not doing any phase 1 / phase 2 GLMM for now -- assume phase 1 and phase 2 are eqwally unbiased
 
     ss  <-
-      cruz$cohort$most$subgroups$subgroups %>%
+      cruz$cohort$all$subgroups$subgroups %>%
       filter(lubridate::year(DateTime) >= 2011,
              Lat >= 5, Lat <= 40, Lon >= -185, Lon <= -120,
              Species == '033') %>%
-      select(DateTime, Lat, Lon, Cruise, PerpDistKm = PerpDist, ss=GSBest_geom)
-    ss %>% nrow
-    (ss <- ss$ss %>% as.numeric)
+      pull(GSBest_geom)
+
+    ss %>% length
 
     # g0 params ================================================================
 
+    data(barlow_2015)
+    barlow_2015 %>% pull(title) %>% unique
+
+    Rg0_fkw <- data.frame(title = 'False killer whale',
+                          scientific = 'Pseudorca crassidens',
+                          spp = '033',
+                          truncation = NA,
+                          pooling = 'none',
+                          regions = 'none',
+                          bft = 0:6,
+                          Rg0 = c(1, 1, .72, .51, .37, .26, .19),
+                          Rg0_CV = c(0, 0, 0.11, 0.22, 0.34, 0.46, 0.59),
+                          ESW = c(3.64, 3.37, 3.10, 2.82, 2.56, 2.30, 2.07),
+                          ESW_CV = c(.23, .19, .14, .07, .07, .15, .24))
+    Rg0_fkw
+    Rg0 <- Rg0_fkw
+
     g0_spp <- '033'
     g0_truncation <- 5.5
-    g0_pool_bft = NULL
+    g0_constrain_shape = FALSE
     g0_jackknife_fraction = 0.1
 
-    data("cnp_1986_2020_10km")
-    data("ccs_1986_2020_10km")
-
-    cruzes <- list(cnp_1986_2020_10km,
-                   ccs_1986_2020_10km)
-
-    cruz10 <- cruz_combine(cruzes)
+    data("noaa_10km_1986_2020")
+    cruz10 <- noaa_10km_1986_2020
 
     # density_segments =========================================================
 
     cruz$strata
-    cruzi <- filter_cruz2(cruz = cruz,
-                          analysis_only = TRUE,
-                          years = 2017,
-                          cruises = c(1705, 1706),
-                          regions = 'HI_EEZ',
-                          bft_range = 0:6,
-                          eff_types = 'S',
-                          on_off = TRUE)
+    cruzi <- filter_cruz(cruz = cruz,
+                         analysis_only = TRUE,
+                         years = 2017,
+                         cruises = c(1705, 1706),
+                         regions = 'HI_EEZ',
+                         bft_range = 0:6,
+                         eff_types = 'S',
+                         on_off = TRUE)
     # simplify_strata
-    cruzi$cohorts$most$segments$stratum <- 'HI-EEZ'
-    density_segments <- cruzi$cohorts$most$segments
-    density_das <- cruz$cohorts$most$das
+    cruzi$cohorts$all$segments$stratum <- 'HI-EEZ'
+    density_segments <- cruzi$cohorts$all$segments
+    density_das <- cruz$cohorts$all$das
 
     # density_sightings ========================================================
 
     density_sightings  <-
-      cruz$cohorts$most$subgroups$subgroups %>%
+      cruz$cohorts$all$subgroups$subgroups %>%
       filter(EffType == 'S',
              OnEffort == TRUE,
              lubridate::year(DateTime) == 2017,
@@ -257,31 +284,33 @@ lta_subgroup <- function(df_sits, # DateTime, Lat, Lon, Cruise, PerpDistKm
     # final params
     iterations <- 20
     output_dir <- '../test_code/subgroup/'
+    output_dir <- "/Users/ekezell/Desktop"
     toplot = TRUE
     verbose = TRUE
     density_bootstraps <- 10000
 
-    cruz <- cruzi
+    # cruz <- cruzi
 
     # try it ===================================================================
-    lta_subgroup(cruz,
-                 df_sits,
+    lta_subgroup(df_sits,
                  truncation_distance,
                  ss,
                  cruz10,
+                 Rg0 = Rg0,
                  g0_spp,
                  g0_truncation,
-                 g0_pool_bft,
+                 g0_constrain_shape,
                  g0_jackknife_fraction,
                  density_segments,
                  density_das,
                  density_sightings,
                  abundance_area,
-                 iterations,
+                 iterations = 20,
                  density_bootstraps,
                  output_dir,
                  toplot,
                  verbose)
+
   } # end of debugging staging area
 
   ##############################################################################
@@ -300,13 +329,15 @@ lta_subgroup <- function(df_sits, # DateTime, Lat, Lon, Cruise, PerpDistKm
   esw_boots <- c()
   i = 1
   for(i in 1:iterations){
-      resamples <- sample(1:nrow(df_sits), size=nrow(df_sits), replace=TRUE)
-      siti <- df_sits[resamples, ]
-      dfi <- df_fit(sightings = siti, truncation_distance = truncation_distance, toplot=FALSE, verbose=FALSE)
-      (eswi <- predict(dfi$best_objects[[1]], esw=TRUE)$fitted[1] %>% as.numeric)
-      message('--- --- ',i,' :: re-sampled ESW estimate = ',round(eswi,3), ' km')
-      esw_boots <- c(esw_boots, eswi)
-      saveRDS(esw_boots, file=paste0(output_dir,'esw_boots.RData'))
+    resamples <- sample(1:nrow(df_sits), size=nrow(df_sits), replace=TRUE)
+    siti <- df_sits[resamples, ]
+    dfi <- df_fit(sightings = siti, truncation_distance = truncation_distance, toplot=FALSE, verbose=FALSE)
+    (eswi <- predict(dfi$best_objects[[1]], esw=TRUE)$fitted[1] %>% as.numeric)
+    message('--- --- ',
+            stringr::str_pad(i, width=4, pad=' ', side='left'),
+            ' :: re-sampled ESW estimate = ',round(eswi,3), ' km')
+    esw_boots <- c(esw_boots, eswi)
+    if(!is.null(output_dir)){saveRDS(esw_boots, file=paste0(output_dir,'esw_boots.RData'))}
   }
   esw_boots
 
@@ -331,18 +362,35 @@ lta_subgroup <- function(df_sits, # DateTime, Lat, Lon, Cruise, PerpDistKm
   ##############################################################################
   # Rg(0) estimation with bootstrap CV
 
-  if(verbose){message('\n--- estimating Rg0 ...')}
-  g0_result <-
-    g0_model(
-      spp = g0_spp,
-      truncation_distance = g0_truncation,
-      cruz = cruz10,
-      pool_bft = g0_pool_bft,
-      jackknife_fraction = g0_jackknife_fraction,
-      toplot = toplot,
-      verbose = verbose)
+  if(!is.null(Rg0) & is.data.frame(Rg0)){
+    if(verbose){message('\n--- using supplied Rg0 values & skipping Rg0 modeling ....')}
+    # Do not generate new estimates of Rg0. Just use the input.
+    # but place that input within a fabricated result of g0_model(), to comply with downstream code
+    g0_result <- list(summary = Rg0)
 
-  saveRDS(g0_result, file=paste0(output_dir,'g0_result.RData'))
+  }else{
+    # Try modeling Rg0
+    # First make sure all inputs are there
+    if(all(!sapply(c(g0_spp, g0_truncation, cruz10, g0_constrain_shape, g0_jackknife_fraction),
+                   is.null))){
+      if(verbose){message('\n--- estimating Rg0 ...')}
+      g0_result <-
+        g0_model(
+          spp = g0_spp,
+          truncation_distance = g0_truncation,
+          cruz = cruz10,
+          constrain_shape = g0_constrain_shape,
+          jackknife_fraction = g0_jackknife_fraction,
+          toplot = toplot,
+          verbose = verbose)
+      if(!is.null(output_dir)){saveRDS(g0_result, file=paste0(output_dir,'g0_result.RData'))}
+    }else{
+      if(verbose){message('\n--- No Rg0 input supplied, and at least one g0_ input is missing.\n--- *** Skipping Rg0 modeling and just using g0=1, CV=0 for all sea states! ***')}
+      # Not enough inputs to model Rg0
+      g0_result <- list(summary = data.frame(bft = 0:6, Rg0 = 1, Rg0_CV = 0))
+    }
+  }
+
 
   ##############################################################################
   # Encounter rate
@@ -350,7 +398,7 @@ lta_subgroup <- function(df_sits, # DateTime, Lat, Lon, Cruise, PerpDistKm
   if(verbose){message('\n--- estimating the encounter rate ...')}
   (n <- density_sightings %>% nrow)
   (L <- density_segments$dist %>% sum)
-  er_estimate <- n/L
+  (er_estimate <- n/L)
 
   er_boots <- c()
   i = 1
@@ -360,10 +408,15 @@ lta_subgroup <- function(df_sits, # DateTime, Lat, Lon, Cruise, PerpDistKm
     (Li <- boot_data$segments$dist %>% sum)
     (ni <- boot_data$sightings %>% nrow)
     (eri <- ni / Li)
-    message('--- --- ',i,' :: re-sampled encounter rate estimate = ',round(eri*100,3), ' subgroups / 100 km2')
+    message('--- --- ',
+            stringr::str_pad(i, width=4, pad=' ', side='left'),
+            ' :: re-sampled encounter rate estimate = ',
+            stringr::str_pad(round(eri*100,3), width=5, pad='0', side='right'),
+            ' subgroups / 100 km2')
     er_boots <- c(er_boots, eri)
-    saveRDS(er_boots, file=paste0('er_boots.RData'))
+    if(!is.null(output_dir)){saveRDS(er_boots, file=paste0(output_dir, 'er_boots.RData'))}
   }
+
 
   ##############################################################################
   # Weighted g(0) and weighted CV
@@ -445,7 +498,7 @@ lta_subgroup <- function(df_sits, # DateTime, Lat, Lon, Cruise, PerpDistKm
                                     N = its$N),
                   iterations = iterations,
                   density_bootstraps = density_bootstraps)
-  saveRDS(results, file=paste0(output_dir,'lta_subgroup_results.RData'))
+  if(!is.null(output_dir)){saveRDS(results, file=paste0(output_dir,'lta_subgroup_results.RData'))}
 
   if(verbose){message('\nFinished!\n')}
 
