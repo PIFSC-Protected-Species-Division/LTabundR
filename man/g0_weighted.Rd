@@ -13,7 +13,7 @@ g0_weighted(
   beta_range = c(-1.5, 0),
   beta_step = 0.001,
   beta_sd_range = c(0, 0.3),
-  beta_sd_step = 0.0001,
+  beta_sd_step = 1e-04,
   ymax = 0.2,
   toplot = TRUE,
   verbose = TRUE

@@ -101,7 +101,7 @@ nrow(result$bootstrap$details)
 
 #lta_report(result)$table4
 
-#lta_result <- result
+lta_result <- result
 getwd()
 setwd("/Users/ekezell/repos/LTabundR")
 usethis::use_data(lta_result, overwrite = TRUE)

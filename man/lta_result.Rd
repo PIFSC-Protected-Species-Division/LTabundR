@@ -5,7 +5,7 @@
 \alias{lta_result}
 \title{Example of LTA results for three delphinids in 2010 and 2017}
 \format{
-An object of class \code{list} of length 5.
+An object of class \code{list} of length 6.
 }
 \usage{
 lta_result
