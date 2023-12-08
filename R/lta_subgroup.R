@@ -10,7 +10,7 @@
 #' as a function of Beaufort sea state (using `LTabndR` function `g0_model()`),
 #' then a weighted `g(0)` and its CV are estimated using `LTabundR` function `g0_weighted()`.
 #'
-#' @param df_sits A `data.frame` of sightings you want to use to fit the detection function model.
+#' @param df_sits (Required.) A `data.frame` of sightings you want to use to fit the detection function model.
 #' For false killer whales in Bradford et al. (2020), this is a combination of systematic sightings
 #' prior to 2010 and Phase 1 sightings from 2010 onwards (using the PC protocol).
 #' This `dataframe` must have a column named `PerpDistKM` with detection distances in km.
@@ -18,15 +18,29 @@
 #' so make sure you provide the data pre-filtered. Bradford et al. (2020) used a
 #' single detection function for all populations of false killer whale.
 #'
-#' @param truncation_distance The truncation distance, in km, to apply during detection function model fitting.
+#' @param truncation_distance (Required.) The truncation distance, in km, to apply during detection function model fitting.
 #'
-#' @param ss A numeric vector of subgroup school sizes to use to find its mean and bootstrapped CV.
+#' @param ss (Required.) A numeric vector of subgroup school sizes to use to find its mean and bootstrapped CV.
 #' In Bradford et al. (2020), data come from all Phase 1 and Phase 2 estimates of subgroup sizes from 2010 onwards.
 #' These estimates are the geometric mean of repeat estimates from separate observers.
 #'
-#' @param cruz10 A processed `cruz` object with short segment lengths, ideally 10 km or less (hence the 10 in the input name).
-#' This `cruz` object will be used to estimate `Rg(0)`, i.e., the relative trackline detection probability.
-#' Consider using the built-in dataset `"noaa_10km_1986_2020"`.
+#' @param density_segments (Required.) The survey segments to be used in density/abundance estimation.
+#' For example, Bradford et al. (2020) used 150-km segments to estimate false killer whale
+#' density in the Hawaiian EEZ in 2017 (these data are available in the built-in dataset
+#' `"cnp_150km_1986_2020"`). No filtering will be applied to these segments,
+#' so make sure only the segments you wish to use are included and nothing more.
+#' For example, in the case above, make sure you are only providing systematic segments for the
+#' Hawaiian EEZ in 2017.
+#'
+#' @param density_das (Required.) The complete survey data corresponding to the above segments.
+#' These data will be used to determine the proportion of survey effort occurring in each Beaufort
+#' sea state during Relative `g(0)` estimation.
+#'
+#' @param density_sightings (Required.) The encounters to use in density/abundance estimation.
+#' In Bradford et al. (2020), these were the Phase 1 detections of false killer whales
+#' within the population-region-year of interest, e.g., Northwest Hawaiian Island population sightings
+#' within the Hawaiian EEZ in 2017. No filtering will be applied to these sightings,
+#' so make sure only the sightings you wish to use are included and nothing more.
 #'
 #' @param Rg0 A `data.frame` with estimates of Relative *g(0)* and its CV at each Bft state.
 #' If this input is left `NULL`, then these estimates will be produced by the function using the subsequent `g0_` inputs.
@@ -35,6 +49,10 @@
 #' `bft` (Beaufort sea state, numbers between 0 and 7),
 #' `Rg0` (*Rg(0)* estimates for each Beaufort state),
 #' and `Rg0_CV` (the CV of the *Rg(0)* estimate in each Beaufort state). Other columns are allowed but will be ignored.
+#'
+#' @param cruz10 A processed `cruz` object with short segment lengths, ideally 10 km or less (hence the 10 in the input name).
+#' This `cruz` object will be used to estimate `Rg(0)`, i.e., the relative trackline detection probability.
+#' Consider using the built-in dataset `"noaa_10km_1986_2020"`.
 #'
 #' @param g0_spp A character vector of species codes to use to estimate `Rg(0)`.
 #' In most cases this will be a single species, e.g., '033' for false killer whales.
@@ -50,24 +68,6 @@
 #'
 #' @param g0_jackknife_fraction The proportion of data to leave out within each jackknife permutation for
 #' estimating the CV of *g(0)*. The default is 0.1 (i.e., 10% of the data, yielding 10 jackknife loops), after Barlow (2015).
-#'
-#' @param density_segments The survey segments to be used in density/abundance estimation.
-#' For example, Bradford et al. (2020) used 150-km segments to estimate false killer whale
-#' density in the Hawaiian EEZ in 2017 (these data are available in the built-in dataset
-#' `"cnp_150km_1986_2020"`). No filtering will be applied to these segments,
-#' so make sure only the segments you wish to use are included and nothing more.
-#' For example, in the case above, make sure you are only providing systematic segments for the
-#' Hawaiian EEZ in 2017.
-#'
-#' @param density_das The complete survey data corresponding to the above segments.
-#' These data will be used to determine the proportion of survey effort occurring in each Beaufort
-#' sea state during Relative `g(0)` estimation.
-#'
-#' @param density_sightings The encounters to use in density/abundance estimation.
-#' In Bradford et al. (2020), these were the Phase 1 detections of false killer whales
-#' within the population-region-year of interest, e.g., Northwest Hawaiian Island population sightings
-#' within the Hawaiian EEZ in 2017. No filtering will be applied to these sightings,
-#' so make sure only the sightings you wish to use are included and nothing more.
 #'
 #' @param abundance_area The area in square km of the region of interest. The density
 #' estimate will be scaled by this area.
@@ -127,8 +127,8 @@
 #' \item `n`: Number of sightings used in density estimation.
 #' \item `L`: Survey effort, in km, used in density estimation.
 #' \item `n_segments`: Number of effort segments used in density estimation.
-#' \item `g0`: The weighted mean of Rg(0), based on sightings conditions in `density_segments`.
-#' \item `g0_cv`: The CV of this estimate.
+#' \item `g0`: The weighted mean of *g(0)* for the point estimate, based on sightings conditions in `density_segments`.
+#' \item `g0_cv`: The CV of this estimate of the point estimate of the weighted mean of *g(0)*, as estimated by an MCMC routine.
 #' \item `g0_details`: A `list` with detailed results from `Rg(0)` estimation (see output details in `?g0_model`).
 #' \item `df`: A `list` with detailed results from detection function estimation (see output details in `?df_fit`).
 #' \item `bootstraps`: A named `list` with the bootstrapped values for `esw` (effective strip half-width),
@@ -144,15 +144,15 @@
 lta_subgroup <- function(df_sits, # DateTime, Lat, Lon, Cruise, PerpDistKm
                          truncation_distance,
                          ss, # numeric vector of sightings
-                         cruz10 = NULL, # if NULL, load the built-in dataset
+                         density_segments, # already filtered to population
+                         density_das,
+                         density_sightings,
                          Rg0 = NULL,
+                         cruz10 = NULL, # if NULL, load the built-in dataset
                          g0_spp = NULL,
                          g0_truncation = NULL,
                          g0_constrain_shape = FALSE,
                          g0_jackknife_fraction = 0.1,
-                         density_segments, # already filtered to population
-                         density_das,
-                         density_sightings,
                          abundance_area = NULL,
                          iterations = 5000,
                          density_bootstraps = 10000,
@@ -436,8 +436,9 @@ lta_subgroup <- function(df_sits, # DateTime, Lat, Lon, Cruise, PerpDistKm
   (g0_wt_cv <- g0w$g0$wt.cv)
 
   # Model g0 as a logit-transformed deviate
-  (g0_param <- g0_optimize(g0_wt_mn, g0_wt_cv, try_count = 20, verbose = TRUE)$bestFit)
-  g0_boots <- plogis(rnorm(5000,g0_param[1],g0_param[2]))
+  if(verbose){message('\n--- creating bootstrap distribution of weighted g(0) values ...')}
+  (g0_param <- g0_optimize(g0_wt_mn, g0_wt_cv, try_count = 20, verbose = FALSE)$bestFit)
+  g0_boots <- plogis(rnorm(iterations,g0_param[1],g0_param[2]))
   if(toplot){hist(g0_boots)}
 
   ##############################################################################
@@ -485,9 +486,11 @@ lta_subgroup <- function(df_sits, # DateTime, Lat, Lon, Cruise, PerpDistKm
                   N_U95 = coxed::bca(its$N)[2],
                   ER = er_estimate,
                   ss = ss_estimate,
-                  n = nrow(density_sightings), L = L,
+                  n = nrow(density_sightings),
+                  L = L,
                   n_segments = nrow(density_segments),
-                  g0 = g0_wt_mn, g0_cv = g0_wt_cv,
+                  g0 = g0_wt_mn,
+                  g0_cv = g0_wt_cv,
                   g0_details = g0_result,
                   df = df,
                   bootstraps = list(esw = esw_boots,

@@ -18,8 +18,10 @@
 #' \item `subgroups`, in which each row is a single phase for a single subgroup, with all school size estimates averaged together (both arithmetically and geometrically);
 #' \item `sightings`, in which each row is a school size estimate for a single phase for a single sighting, with all subgroup school sizes summed together.
 #' }
+#' Phase is determined simply according to the `OnEffort` column. If it is `TRUE`, `Phase` is 1; if not, `Phase` is 2.
 #'
 #' @export
+#' @import dplyr
 #'
 process_subgroups <- function(cruz,
                               verbose=TRUE){
@@ -34,6 +36,7 @@ process_subgroups <- function(cruz,
     cruz <- segmentize(cruz)
     cruz <- process_sightings(cruz)
     verbose=TRUE
+    cohorts_i = 1
   } #===========================================================================
 
   # save a safe copy of the input data
@@ -65,8 +68,10 @@ process_subgroups <- function(cruz,
       subs %>% head
 
       # Assign Off-Effort rows as Phase 2
-      subs$phase <- 1
-      subs$phase[subs$EffType != 'S'] <- 2
+      subs$phase <- 2
+      subs$phase[subs$OnEffort == TRUE] <- 1
+      # subs$phase <- 1
+      # subs$phase[subs$EffType != 'S'] <- 2
       subs$phase %>% table
       subs$sgid %>% table %>% table
 
@@ -77,18 +82,24 @@ process_subgroups <- function(cruz,
       # Loop through each unique date-sightings
       usits <- subs$sitid %>% unique
       usits
-      i=2
+      i=9
       for(i in 1:length(usits)){
         usiti <- usits[i]
         subi <- subs[subs$sitid == usiti,] ; subi
 
+        # Loop through each subgroup in this sighting
         usg <- subi$SubGrp %>% unique ; usg
-        j=2
+        j=2 # for debugging
         for(j in 1:length(usg)){
           usgj <- usg[j]
           subij <- subi[subi$SubGrp == usgj,] ; subij
+          subij
+          #message('sighting i = ', i, ' subgroup j = ', j,' nrow = ',nrow(subij))
           sub_result <-
             subij %>%
+            dplyr::rename(GSBest_raw = GSBest,
+                   GSH_raw = GSH,
+                   GSL_raw = GSL) %>%
             dplyr::group_by(phase) %>%
             dplyr::summarize(Cruise = Cruise[1],
                              Date = Date[1],
@@ -96,12 +107,14 @@ process_subgroups <- function(cruz,
                              SubGrp = SubGrp[1],
                              dplyr::across(Angle:seg_id,mean),
                              PerpDist = mean(PerpDist),
-                             GSBest = round(mean(GSBest, na.rm=TRUE),2),
-                             GSH = round(mean(GSH, na.rm=TRUE),2),
-                             GSL = round(mean(GSL, na.rm=TRUE),2),
-                             GSBest_geom = round(exp(mean(log(GSBest))),2),
-                             GSH_geom = round(exp(mean(log(GSH))),2),
-                             GSL_geom = round(exp(mean(log(GSL))),2),
+                             GSBest = round(mean(GSBest_raw, na.rm=TRUE),2),
+                             GSH = round(mean(GSH_raw, na.rm=TRUE),2),
+                             GSL = round(mean(GSL_raw, na.rm=TRUE),2),
+                             GSBest_geom = round(exp(mean(log(GSBest_raw), na.rm=TRUE)),2),
+                             GSH_geom = round(exp(mean(log(GSH_raw), na.rm=TRUE)),2),
+                             GSL_geom = round(exp(mean(log(GSL_raw), na.rm=TRUE)),2),
+                             GSBest_valid = ifelse(!is.na(GSBest), TRUE, FALSE),
+                             GSBest_geom_valid = ifelse(!is.na(GSBest_geom), TRUE, FALSE),
                              seg_id = seg_id[1],
                              use = use[1],
                              sgid = sgid[1],
@@ -109,7 +122,7 @@ process_subgroups <- function(cruz,
                              dplyr::across(grep('stratum',names(subij)),function(x){x[1]})) %>%
             as.data.frame
 
-          #sub_result # review
+          sub_result # review
 
           # Make sure group size estimates are valid
           if(!is.finite(sub_result$GSBest)){sub_result$GSBest <- sub_result$GSL}
@@ -135,7 +148,8 @@ process_subgroups <- function(cruz,
       # get column indces of stratum columns
       (stratum_cols <- names(results)[grep('stratum',names(results))])
 
-      # Combine into single sighting
+      # Combine into single phase-sighting
+      # add all subgroups together in each phase
       sitsum <-
         results %>%
         dplyr::group_by(Cruise,Date,SightNo,Phase) %>%
@@ -145,6 +159,8 @@ process_subgroups <- function(cruz,
                          across(Angle:PerpDist,mean),
                          GSBest = sum(GSBest, na.rm=TRUE),
                          GSBest_geom = sum(GSBest_geom, na.rm=TRUE),
+                         GSBest_allvalid = all(GSBest_valid == TRUE),
+                         GSBest_geom_allvalid = all(GSBest_geom_valid == TRUE),
                          seg_id = seg_id[1],
                          EffType = EffType[1],
                          OnEffort = OnEffort[1],
@@ -156,13 +172,14 @@ process_subgroups <- function(cruz,
       sitsum %>% head
 
       # prepare results list
-      subgroups <- list(sightings = sitsum, # one row per sighting
-                        subgroups = results, # one row per subgroup
+      subgroups <- list(sightings = sitsum, # one row per phase-sighting
+                        subgroups = results, # one row per phase-subgroup
                         events = subs) # one row per G event in DAS data
 
       # review
       subgroups$sightings %>% head
       subgroups$subgroups %>% head
+      subgroups$subgroups %>% dplyr::select(GSBest, GSBest_geom, GSBest_valid, GSBest_geom_valid)
       subgroups$events %>% head
 
       # Add subgroups table to new slot in cohort's list

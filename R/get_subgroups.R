@@ -13,6 +13,8 @@
 #' (effectively, the 'raw' data for subgroups within the `das` data).
 #'
 #' @export
+#' @import dplyr
+#' @import tidyr
 #'
 get_subgroups <- function(das,
                           species_filter = '033'){
@@ -22,6 +24,7 @@ get_subgroups <- function(das,
     das_file <- "https://raw.githubusercontent.com/ericmkeen/capstone/master/HICEASwinter2020.das"
     cruz <- process_surveys(das_file)
     das <- cruz$cohorts$all$das
+    das <- cruz$cohorts$default$das
     species_filter = '033'
   } # ==========================================================================
 
@@ -48,13 +51,24 @@ get_subgroups <- function(das,
 
       # Compile data.frame
       mri_core <- data.frame(Cruise = dasg$Cruise,
+                             ship = dasg$ship,
                              Date = substr(dasg$DateTime,1,10),
                              DateTime = dasg$DateTime,
                              Lat = dasg$Lat,
                              Lon = dasg$Lon,
                              OnEffort = dasg$OnEffort,
-                             Bft = dasg$Bft,
                              EffType = dasg$EffType,
+                             Bft = dasg$Bft,
+                             SwellHght = dasg$SwellHght,
+                             RainFog = dasg$RainFog,
+                             HorizSun = dasg$HorizSun,
+                             VertSun = dasg$VertSun,
+                             Glare = dasg$Glare,
+                             Vis = dasg$Vis,
+                             ObsL = dasg$ObsL,
+                             Rec = dasg$Rec,
+                             ObsR = dasg$ObsR,
+                             ObsInd = dasg$ObsInd,
                              SightNo = dasg$Data1,
                              Species = dasa$Data5,
                              Line = dasg$line_num,
@@ -67,7 +81,7 @@ get_subgroups <- function(das,
                              Angle = dasg$Data5 %>% as.numeric,
                              RadDist = dasg$Data7 %>% as.numeric,
                              seg_id = dasg$seg_id,
-                             use = dasg$use,
+                             #use = dasg$use,
                              dasg[,grep('stratum',names(dasg))])
       mri_core
 
@@ -96,6 +110,15 @@ get_subgroups <- function(das,
     mr$Angle[mr$Angle > 180] <- 360 - mr$Angle[mr$Angle > 180]
     mr$RadDist <- mr$RadDist/0.53996
     mr$PerpDist <- mr$RadDist*sin(mr$Angle*pi/180)
+
+    # Check to see if the observer is standard
+    mr <-
+      mr %>%
+      rowwise() %>%
+      mutate(ObsStd = ifelse(Obs %in% c(ObsL, ObsR), TRUE, FALSE)) %>%
+      ungroup() %>%
+      as.data.frame
+    mr
 
     # Filter to species?
     nrow(mr)
