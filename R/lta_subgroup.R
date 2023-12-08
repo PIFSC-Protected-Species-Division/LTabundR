@@ -172,6 +172,8 @@ lta_subgroup <- function(df_sits, # DateTime, Lat, Lon, Cruise, PerpDistKm
     data("cnp_150km_1986_2020")
     cruz <- cnp_150km_1986_2020
     cruz$cohorts$all$sightings$stratum %>% table
+    cruz$cohorts$pseudorca$subgroups$sightings
+    cruz$cohorts$pseudorca$subgroups$subgroups %>% names
 
     # df_sits ==================================================================
 
@@ -194,6 +196,8 @@ lta_subgroup <- function(df_sits, # DateTime, Lat, Lon, Cruise, PerpDistKm
              lubridate::year(DateTime) >= 2011,
              Lat >= 5, Lat <= 40, Lon >= -185, Lon <= -120,
              Species == '033',
+             Angle <= 90,
+             ObsStd == TRUE,
              Phase == 1) %>%
       select(DateTime, Lat, Lon, Cruise, PerpDistKm = PerpDist)
 
@@ -217,6 +221,7 @@ lta_subgroup <- function(df_sits, # DateTime, Lat, Lon, Cruise, PerpDistKm
       cruz$cohort$all$subgroups$subgroups %>%
       filter(lubridate::year(DateTime) >= 2011,
              Lat >= 5, Lat <= 40, Lon >= -185, Lon <= -120,
+             GSBest_geom_valid == TRUE,
              Species == '033') %>%
       pull(GSBest_geom)
 
@@ -295,15 +300,15 @@ lta_subgroup <- function(df_sits, # DateTime, Lat, Lon, Cruise, PerpDistKm
     lta_subgroup(df_sits,
                  truncation_distance,
                  ss,
-                 cruz10,
+                 density_segments,
+                 density_das,
+                 density_sightings,
                  Rg0 = Rg0,
+                 cruz10,
                  g0_spp,
                  g0_truncation,
                  g0_constrain_shape,
                  g0_jackknife_fraction,
-                 density_segments,
-                 density_das,
-                 density_sightings,
                  abundance_area,
                  iterations = 20,
                  density_bootstraps,
@@ -416,7 +421,6 @@ lta_subgroup <- function(df_sits, # DateTime, Lat, Lon, Cruise, PerpDistKm
     er_boots <- c(er_boots, eri)
     if(!is.null(output_dir)){saveRDS(er_boots, file=paste0(output_dir, 'er_boots.RData'))}
   }
-
 
   ##############################################################################
   # Weighted g(0) and weighted CV

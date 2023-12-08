@@ -36,6 +36,9 @@
 #' it has a `seg_id` column indicating the segment IDs pertaining to eligible rows of data.
 #' Those segment IDs are then used to filter `segments`, `sightings`, and `subgroups`.
 #'
+#' Note that the `analysis_only` filter is **ignored** for `subgroups` sightings/subgroups/events,
+#' since those are often case-by-case-specific.
+#'
 #' Note that when arguments are `NULL`, they are ignored and no filtering by the associated variable occurs.
 #' Also note that subgroups are not filtered at this time.
 #'
@@ -149,11 +152,11 @@ filter_cruz <- function(cruz,
       segments <- segments %>% dplyr::filter(use == TRUE)
       sightings <- sightings %>% dplyr::filter(included == TRUE)
       das <- das %>% dplyr::filter(use == TRUE)
-      if(!is.null(sg_sightings)){
-        sg_sightings <- sg_sightings %>% dplyr::filter(use==TRUE)
-        sg_subgroups <- sg_subgroups %>% dplyr::filter(use==TRUE)
-        sg_events <- sg_events %>% dplyr::filter(use==TRUE)
-      }
+      #if(!is.null(sg_sightings)){
+      #  sg_sightings <- sg_sightings %>% dplyr::filter(use==TRUE)
+      #  sg_subgroups <- sg_subgroups %>% dplyr::filter(use==TRUE)
+      #  sg_events <- sg_events %>% dplyr::filter(use==TRUE)
+      #}
     }
 
     # Filtering by species
