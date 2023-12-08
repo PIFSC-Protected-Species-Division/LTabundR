@@ -24,10 +24,16 @@ cruz_proc <- process_surveys(das_file,
                              process_subgroups = TRUE,
                              save_local = FALSE)
 
-# Test cruz object with downstream functions
+if(FALSE){
+  # Test cruz object with downstream functions
 cruz_structure(cruz_proc)
 #cruz_explorer(cruz_proc)
 #summarize_effort(cruz_proc)
+
+cruz_proc$cohorts$default$subgroups$sightings
+cruz_proc$cohorts$default$subgroups$subgroups %>%
+  filter(SightNo == 102)
+}
 
 example_cruz <- cruz_proc
 usethis::use_data(example_cruz, overwrite = TRUE)

@@ -108,7 +108,9 @@ cruzes <- list(swfsc, pifsc)
 cruz <- cruz_combine(cruzes)
 
 # Verify
-cruz_explorer(cruz)
+#cruz_explorer(cruz)
+
+cruz_structure(cruz)
 
 cruz$cohorts$all$das %>%
   head

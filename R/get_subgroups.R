@@ -70,11 +70,11 @@ get_subgroups <- function(das,
                              ObsR = dasg$ObsR,
                              ObsInd = dasg$ObsInd,
                              SightNo = dasg$Data1,
+                             Obs_Sight = dasg$Data3,
                              Species = dasa$Data5,
                              Line = dasg$line_num,
                              SubGrp = dasg$Data2,
                              Event = NA,
-                             Obs = NA, #dasg$Data3,
                              GSBest = NA, #dasg$Data4 %>% as.numeric,
                              GSH = NA,
                              GSL = NA,
@@ -83,6 +83,15 @@ get_subgroups <- function(das,
                              seg_id = dasg$seg_id,
                              #use = dasg$use,
                              dasg[,grep('stratum',names(dasg))])
+      mri_core
+
+      # Check to see if the observer is standard
+      mri_core <-
+        mri_core %>%
+        rowwise() %>%
+        mutate(ObsStd = ifelse(Obs_Sight %in% c(ObsL, ObsR), TRUE, FALSE)) %>%
+        ungroup() %>%
+        as.data.frame
       mri_core
 
       # Get group size estimates
@@ -110,15 +119,6 @@ get_subgroups <- function(das,
     mr$Angle[mr$Angle > 180] <- 360 - mr$Angle[mr$Angle > 180]
     mr$RadDist <- mr$RadDist/0.53996
     mr$PerpDist <- mr$RadDist*sin(mr$Angle*pi/180)
-
-    # Check to see if the observer is standard
-    mr <-
-      mr %>%
-      rowwise() %>%
-      mutate(ObsStd = ifelse(Obs %in% c(ObsL, ObsR), TRUE, FALSE)) %>%
-      ungroup() %>%
-      as.data.frame
-    mr
 
     # Filter to species?
     nrow(mr)

@@ -155,6 +155,7 @@ process_subgroups <- function(cruz,
         dplyr::group_by(Cruise,Date,SightNo,Phase) %>%
         dplyr::summarize(across(DateTime:Lon,mean),
                          dplyr::across(Bft:ObsInd,function(x){x[1]}),
+                         Obs_Sight = Obs_Sight[1],
                          Species = Species[1],
                          across(Angle:PerpDist,mean),
                          GSBest = sum(GSBest, na.rm=TRUE),
