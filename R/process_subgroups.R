@@ -115,8 +115,8 @@ process_subgroups <- function(cruz,
                              GSL_geom = round(exp(mean(log(GSL_raw), na.rm=TRUE)),2),
                              GSBest_valid = ifelse(!is.na(GSBest), TRUE, FALSE),
                              GSBest_geom_valid = ifelse(!is.na(GSBest_geom), TRUE, FALSE),
+                             ObsStd = ObsStd[1],
                              seg_id = seg_id[1],
-                             #use = use[1],
                              sgid = sgid[1],
                              sitid = sitid[1],
                              dplyr::across(grep('stratum',names(subij)),function(x){x[1]})) %>%
@@ -155,17 +155,16 @@ process_subgroups <- function(cruz,
         dplyr::group_by(Cruise,Date,SightNo,Phase) %>%
         dplyr::summarize(across(DateTime:Lon,mean),
                          dplyr::across(Bft:ObsInd,function(x){x[1]}),
-                         #Bft = Bft[1],
                          Species = Species[1],
                          across(Angle:PerpDist,mean),
                          GSBest = sum(GSBest, na.rm=TRUE),
                          GSBest_geom = sum(GSBest_geom, na.rm=TRUE),
                          GSBest_allvalid = all(GSBest_valid == TRUE),
                          GSBest_geom_allvalid = all(GSBest_geom_valid == TRUE),
+                         ObsStd = ObsStd[1],
                          seg_id = seg_id[1],
                          EffType = EffType[1],
                          OnEffort = OnEffort[1],
-                         #use = use[1],
                          dplyr::across(all_of(stratum_cols),function(x){x[1]})) %>%
         as.data.frame()
 

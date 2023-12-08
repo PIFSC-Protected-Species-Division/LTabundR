@@ -20,6 +20,7 @@ This \code{subgroups} slot holds a list with three dataframes:
 \item \code{subgroups}, in which each row is a single phase for a single subgroup, with all school size estimates averaged together (both arithmetically and geometrically);
 \item \code{sightings}, in which each row is a school size estimate for a single phase for a single sighting, with all subgroup school sizes summed together.
 }
+Phase is determined simply according to the \code{OnEffort} column. If it is \code{TRUE}, \code{Phase} is 1; if not, \code{Phase} is 2.
 }
 \description{
 Subgroups are found based on \code{DAS} event code "\code{G}" and associated events.
