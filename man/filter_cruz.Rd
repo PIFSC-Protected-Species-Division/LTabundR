@@ -78,6 +78,9 @@ meet all criteria; since that \code{DAS} dataframe comes from within the process
 it has a \code{seg_id} column indicating the segment IDs pertaining to eligible rows of data.
 Those segment IDs are then used to filter \code{segments}, \code{sightings}, and \code{subgroups}.
 
+Note that the \code{analysis_only} filter is \strong{ignored} for \code{subgroups} sightings/subgroups/events,
+since those are often case-by-case-specific.
+
 Note that when arguments are \code{NULL}, they are ignored and no filtering by the associated variable occurs.
 Also note that subgroups are not filtered at this time.
 

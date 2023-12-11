@@ -318,11 +318,13 @@ df_fit <- function(sightings,
       if(verbose){message('Averaging each sighting ESW across top-candidate detection functions ...')}
       esw_df
       (w <<- exp(-0.5*best_aics)) # mirroring Jay's code
+      if(all(w==0)){w <<- c(1,1)} # handle if weights are both 0
       esw_df
       (esw_avg <- apply(esw_df,2,function(x){weighted.mean(x,w)}) %>% as.numeric)
     }else{
       esw_avg <- esw_df %>% as.numeric()
     }
+    esw_avg
 
     # Add ESW to sightings dataframe
     sightings$esw <- esw_avg
