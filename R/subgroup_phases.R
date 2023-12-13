@@ -27,7 +27,13 @@ subgroup_phases <- function(cruz,
     cruz <- cnp_150km_1986_2020
     cohort = 1
 
+    edits <- subgroup_phases(cruz, 'all')
+    #save(edits, file="/Users/ekezell/repos/LTAvignette/data/phase_edits.rds")
+
   } #=== end debugging code ====================================================
+
+  # Stage return object
+  edits_return <- NULL
 
   # Filter to correct cohort and analysis
   cohorti <- cruz$cohorts[[cohort]] ; names(cohorti)
@@ -248,15 +254,26 @@ subgroup_phases <- function(cruz,
     # how to pass this to the user in a productive way?
 
     if(nrow(edits)>0){
+      sg_return <-
+        sg$events %>%
+        select(row, phase, SubGrp, Event, Cruise, Species, Line) %>%
+        rename(old_phase = phase)
 
+      edits_return <-
+        left_join(sg_return, edits, by='row') %>%
+        mutate(new_phase = as.numeric(new_phase)) %>%
+        mutate(cohort = cohort) %>%
+        filter(!is.na(new_phase)) %>%
+        select(-row) %>%
+        select(cohort, Cruise, Species, Line, SubGrp, Event, old_phase, new_phase)
+
+      edits_return
     }
-
-
-    return(edits)
 
   }else{
     message('\n**** No subgroup data found in this cohort! Exiting now. ****')
   }
+  return(edits_return)
 }
 
 #subgroup_phases(cruz, cohort='pseudorca')

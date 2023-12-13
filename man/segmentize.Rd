@@ -36,7 +36,7 @@ will be divided into segments of approximately equal length.}
 this field allows you to specify what that target length is, in km.}
 
 \item{segment_max_interval}{If segmentizing by \code{"equallength"},
-this setting allows you to specify the time gaps in effort
+this setting allows you to specify the time gaps in effort (in hours)
 that are allowed to be contained within a single segment.
 For example, if your goal is a few large segments of equal length
 (e.g., 150-km segments, for bootstrap estimation of density variance),

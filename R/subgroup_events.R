@@ -9,14 +9,14 @@
 #' The default is for false killer whales, *Pseudorca crassidens*, for whom the subgroup
 #' data collection protocol was developed (see [Bradford et al. 2018](https://www.int-res.com/abstracts/esr/v36/p297-313/]).
 #'
-#' @return A dataframe in which each row is a school size estimate for a single subgroup within a single phase of a single sighting
+#' @return A `data.frame` in which each row is a single school size estimate for a single subgroup within a single phase of a single sighting
 #' (effectively, the 'raw' data for subgroups within the `das` data).
 #'
 #' @export
 #' @import dplyr
 #' @import tidyr
 #'
-get_subgroups <- function(das,
+subgroup_events <- function(das,
                           species_filter = '033'){
   if(FALSE){ # debugging only  -- not run! =====================================
     data(example_settings)

@@ -8,6 +8,15 @@
 #' It is the final processing subroutine called within `process_surveys()`, after the subroutine `process_sightings()`.
 #'
 #' @param cruz A `cruz` object passed from `process_surveys()`.
+#' @param phase_edits An optional input: a `data.frame` indicating manual adjustments to the protocol phase that data are assigned to.
+#' This `data.frame` is produced by the `LTabundR` function `subgroup_phases()`; see its documentation for formatting.
+#' If this input is supplied, the `process_subgroups()` function will first automatically assign data to phases,
+#' then redact those assignments using this input. The recommended workflow here is:
+#' (1) process your survey data without supplying `phase_edits`;
+#' (2) review the automatic phase assignments using the `subgroup_phases()` function;
+#' (3) if revisions are needed, stage those edits using the same function.
+#' (4) re-run `process_subgroups()`, this time supplying the `phase_edits` input.
+#'
 #' @param verbose Boolean, with default `TRUE`, indicating whether or not updates should be printed to the Console.
 #'
 #' @return A finalized `cruz` object.
@@ -24,6 +33,7 @@
 #' @import dplyr
 #'
 process_subgroups <- function(cruz,
+                              phase_edits = NULL,
                               verbose=TRUE){
 
   if(FALSE){ # debugging materials -- not run! =================================
@@ -36,7 +46,11 @@ process_subgroups <- function(cruz,
     cruz <- segmentize(cruz)
     cruz <- process_sightings(cruz)
     verbose=TRUE
-    cohorts_i = 1
+    cohorts_i = 4
+
+    phase_edits <- subgroup_phases(cruz, cohort='pseudorca')
+    phase_edits
+
   } #===========================================================================
 
   # save a safe copy of the input data
@@ -47,6 +61,7 @@ process_subgroups <- function(cruz,
   # Loop through each cohort
   for(cohorts_i in 1:length(cruzi$cohorts)){
     cohorti <- cruzi$cohorts[[cohorts_i]] # get cohort data
+    (cohort_name <- names(cruzi$cohorts)[[cohorts_i]])
     ani <- cohorti # rename for convenience
     ani %>% names
 
@@ -57,134 +72,77 @@ process_subgroups <- function(cruz,
     if(verbose){message('Cohort "',names(cruzi$cohorts)[cohorts_i],
                         '": processing subgroups ...')}
 
-    # Find subgroups using a LTabundR function
+    # Find subgroup events using a LTabundR function
     dass <- ani$das
-    subs <- get_subgroups(dass, species_filter)
-    subs %>% head
-    subs %>% tail
+    events <- subgroup_events(dass, species_filter)
 
-    if(nrow(subs)>0){
+    if(nrow(events)>0){
+      # the events dataframe:
+      events %>% head
+      # each row is a single school size estimate for a single subgroup
+      # within a single phase of a single sighting
+      # (effectively, the 'raw' data for subgroups within the `das` data).
 
-      subs %>% head
+      # Attempt automated phase assignment
+      events$phase <- 2
+      events$phase[events$OnEffort == TRUE] <- 1
+      events$phase %>% table
+      events$sgid %>% table %>% table
 
-      # Assign Off-Effort rows as Phase 2
-      subs$phase <- 2
-      subs$phase[subs$OnEffort == TRUE] <- 1
-      # subs$phase <- 1
-      # subs$phase[subs$EffType != 'S'] <- 2
-      subs$phase %>% table
-      subs$sgid %>% table %>% table
+      # Modify using the phase_edits input, if needed ==========================
+      old_events <- events # store old version of events
+      if(!is.null(phase_edits)){
 
-      # Determine phase & calculate geometric means
-      # Stage results
-      results <- data.frame()
-
-      # Loop through each unique date-sightings
-      usits <- subs$sitid %>% unique
-      usits
-      i=9
-      for(i in 1:length(usits)){
-        usiti <- usits[i]
-        subi <- subs[subs$sitid == usiti,] ; subi
-
-        # Loop through each subgroup in this sighting
-        usg <- subi$SubGrp %>% unique ; usg
-        j=2 # for debugging
-        for(j in 1:length(usg)){
-          usgj <- usg[j]
-          subij <- subi[subi$SubGrp == usgj,] ; subij
-          subij
-          #message('sighting i = ', i, ' subgroup j = ', j,' nrow = ',nrow(subij))
-          sub_result <-
-            subij %>%
-            dplyr::rename(GSBest_raw = GSBest,
-                   GSH_raw = GSH,
-                   GSL_raw = GSL) %>%
-            dplyr::group_by(phase) %>%
-            dplyr::summarize(Cruise = Cruise[1],
-                             Date = Date[1],
-                             dplyr::across(DateTime:Species,function(x){x[1]}),
-                             SubGrp = SubGrp[1],
-                             dplyr::across(Angle:seg_id,mean),
-                             PerpDist = mean(PerpDist),
-                             GSBest = round(mean(GSBest_raw, na.rm=TRUE),2),
-                             GSH = round(mean(GSH_raw, na.rm=TRUE),2),
-                             GSL = round(mean(GSL_raw, na.rm=TRUE),2),
-                             GSBest_geom = round(exp(mean(log(GSBest_raw), na.rm=TRUE)),2),
-                             GSH_geom = round(exp(mean(log(GSH_raw), na.rm=TRUE)),2),
-                             GSL_geom = round(exp(mean(log(GSL_raw), na.rm=TRUE)),2),
-                             GSBest_valid = ifelse(!is.na(GSBest), TRUE, FALSE),
-                             GSBest_geom_valid = ifelse(!is.na(GSBest_geom), TRUE, FALSE),
-                             ObsStd = ObsStd[1],
-                             seg_id = seg_id[1],
-                             sgid = sgid[1],
-                             sitid = sitid[1],
-                             dplyr::across(grep('stratum',names(subij)),function(x){x[1]})) %>%
+        # See if any revisions have been stored for this cohort
+        (pec <- phase_edits %>% filter(cohort == cohort_name))
+        if(nrow(pec)>0){
+          pec2join <- pec %>% select(Cruise, Species, Line, SubGrp, Event, new_phase)
+          suppressMessages({
+            revised_events <- left_join(events, pec2join)
+          })
+          revised_events <-
+            revised_events %>%
+            rowwise() %>%
+            mutate(phase = ifelse(is.na(new_phase), phase, new_phase)) %>%
+            ungroup() %>%
+            select(-new_phase) %>%
             as.data.frame
 
-          sub_result # review
-
-          # Make sure group size estimates are valid
-          if(!is.finite(sub_result$GSBest)){sub_result$GSBest <- sub_result$GSL}
-          if(!is.finite(sub_result$GSBest_geom)){sub_result$GSBest_geom <- sub_result$GSL_geom}
-
-          # Add to growing results object
-          results <- rbind(results,
-                           sub_result)
+          revised_events %>% head
+          events <- revised_events
         }
       }
 
-      # Review for debugging
-      nrow(results)
-      results %>% head
-      results$sgid %>% table %>% table
-      results$Phase = results$phase
-      results$phase <- results$sgid <- results$sitid <- NULL
-      results$Phase %>% table
-      results$GSBest %>% table(useNA='always')
-      results$GSBest_geom %>% table(useNA='always')
-      results$Phase %>% table
+      # Review changes
+      data.frame(old_phase = old_events$phase, new_phase = events$phase)
 
-      # get column indces of stratum columns
-      (stratum_cols <- names(results)[grep('stratum',names(results))])
+      #=========================================================================
 
-      # Combine into single phase-sighting
-      # add all subgroups together in each phase
-      sitsum <-
-        results %>%
-        dplyr::group_by(Cruise,Date,SightNo,Phase) %>%
-        dplyr::summarize(across(DateTime:Lon,mean),
-                         dplyr::across(Bft:ObsInd,function(x){x[1]}),
-                         Obs_Sight = Obs_Sight[1],
-                         Species = Species[1],
-                         across(Angle:PerpDist,mean),
-                         GSBest = sum(GSBest, na.rm=TRUE),
-                         GSBest_geom = sum(GSBest_geom, na.rm=TRUE),
-                         GSBest_allvalid = all(GSBest_valid == TRUE),
-                         GSBest_geom_allvalid = all(GSBest_geom_valid == TRUE),
-                         ObsStd = ObsStd[1],
-                         seg_id = seg_id[1],
-                         EffType = EffType[1],
-                         OnEffort = OnEffort[1],
-                         dplyr::across(all_of(stratum_cols),function(x){x[1]})) %>%
-        as.data.frame()
+      # Summarize events into subgroups
+      # one row for each subgroup in each phase of a sighting, with averaged school size estimates
+      subgroups <- subgroup_subgroups(events)
+      subgroups %>% head
 
-      # review
+      # Summarize subgroups into sightings
+      # one row for each phase of each sighting, with summed group size estimates (by summing subgroups)
+      suppressMessages({
+        sitsum <- subgroup_sightings(results)
+      })
       sitsum %>% head
 
       # prepare results list
-      subgroups <- list(sightings = sitsum, # one row per phase-sighting
-                        subgroups = results, # one row per phase-subgroup
-                        events = subs) # one row per G event in DAS data
+      subgroups_list <- list(sightings = sitsum, # one row per phase-sighting
+                             subgroups = subgroups, # one row per phase-subgroup
+                             events = events) # one row per G event in DAS data
 
       # review
-      subgroups$sightings %>% head
-      subgroups$subgroups %>% head
-      subgroups$subgroups %>% dplyr::select(GSBest, GSBest_geom, GSBest_valid, GSBest_geom_valid)
-      subgroups$events %>% head
+      subgroups_list$sightings %>% head
+      subgroups_list$subgroups %>% head
+      subgroups_list$subgroups %>% dplyr::select(GSBest, GSBest_geom, GSBest_valid, GSBest_geom_valid)
+      subgroups_list$events %>% head
 
       # Add subgroups table to new slot in cohort's list
-      cruzi$cohorts[[cohorts_i]]$subgroups <- subgroups
+      cruzi$cohorts[[cohorts_i]]$subgroups <- subgroups_list
 
     } # if there are G events in this das file
   } # loop through each cohort

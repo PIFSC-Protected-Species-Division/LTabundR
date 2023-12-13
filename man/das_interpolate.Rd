@@ -4,10 +4,14 @@
 \alias{das_interpolate}
 \title{Interpolate DAS data}
 \usage{
-das_interpolate(das, new_interval = 120, verbose = FALSE)
+das_interpolate(das, new_interval = 120, max_ignore = 3600, verbose = FALSE)
 }
 \arguments{
 \item{new_interval}{The interpolation interval, in seconds.}
+
+\item{max_ignore}{The maximum interval (seconds) between two rows of survey data that will be interpolated;
+if the time gap exceeds this value, interpolation will not occur for these two rows.
+The default is 3600 seconds (1 hour).}
 
 \item{verbose}{Print updates to the Console?}
 }
@@ -26,5 +30,6 @@ at the onset of processing if your position updates are separated
 by large time intervals, which would make spatial effort and stratum assignments less exact.
 \code{LTabundR} will interpolate the data using simple-linear methods (i.e., no great-circle calculations), such that
 position updates occur every \code{new_interval} seconds or less. If adjacent \code{DAS} rows are from different dates or cruises,
+or if the interval between rows exceeds the input \code{max_ignore},
 the interpolation routine will skip to the next pair of related rows. Interpolation will only occur for On-Effort rows.
 }

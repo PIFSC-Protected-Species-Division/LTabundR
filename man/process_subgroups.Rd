@@ -4,10 +4,19 @@
 \alias{process_subgroups}
 \title{Analyze subgroup detections for false killer whales}
 \usage{
-process_subgroups(cruz, verbose = TRUE)
+process_subgroups(cruz, phase_edits = NULL, verbose = TRUE)
 }
 \arguments{
 \item{cruz}{A \code{cruz} object passed from \code{process_surveys()}.}
+
+\item{phase_edits}{An optional input: a \code{data.frame} indicating manual adjustments to the protocol phase that data are assigned to.
+This \code{data.frame} is produced by the \code{LTabundR} function \code{subgroup_phases()}; see its documentation for formatting.
+If this input is supplied, the \code{process_subgroups()} function will first automatically assign data to phases,
+then redact those assignments using this input. The recommended workflow here is:
+(1) process your survey data without supplying \code{phase_edits};
+(2) review the automatic phase assignments using the \code{subgroup_phases()} function;
+(3) if revisions are needed, stage those edits using the same function.
+(4) re-run \code{process_subgroups()}, this time supplying the \code{phase_edits} input.}
 
 \item{verbose}{Boolean, with default \code{TRUE}, indicating whether or not updates should be printed to the Console.}
 }
