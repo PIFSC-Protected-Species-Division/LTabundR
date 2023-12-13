@@ -126,7 +126,7 @@ process_subgroups <- function(cruz,
       # Summarize subgroups into sightings
       # one row for each phase of each sighting, with summed group size estimates (by summing subgroups)
       suppressMessages({
-        sitsum <- subgroup_sightings(results)
+        sitsum <- subgroup_sightings(subgroups)
       })
       sitsum %>% head
 
