@@ -23,7 +23,7 @@
 #' this field allows you to specify what that target length is, in km.
 #'
 #' @param segment_max_interval If segmentizing by `"equallength"`,
-#' this setting allows you to specify the time gaps in effort
+#' this setting allows you to specify the time gaps in effort (in hours)
 #' that are allowed to be contained within a single segment.
 #' For example, if your goal is a few large segments of equal length
 #' (e.g., 150-km segments, for bootstrap estimation of density variance),
@@ -319,17 +319,26 @@ segmentize <- function(cruz,
     # further cut up eff_blocs based on time gaps
     blocs2 <-
       blocs %>%
-      # make simply time column
+      # make simple time column
       mutate(this_time = as.numeric(DateTime)) %>%
 
       # in each bloc, look for instances of big time gaps
       group_by(eff_bloc) %>%
-      mutate(next_time = lead(this_time)) %>%
-      mutate(int_time = next_time - this_time) %>%
-      mutate(int_flag = ifelse(int_time >= segment_max_interval, .01, 0)) %>%
+
+      mutate(last_time = lag(this_time)) %>%
+      mutate(int_time = this_time - last_time) %>%
+      mutate(int_flag = ifelse(int_time >= segment_max_interval, 1, 0)) %>%
       mutate(int_flag = ifelse(is.na(int_flag), 0, int_flag)) %>%
-      # where big time gaps exist, make new eff bloc by adding 0.01 to bloc number
-      mutate(new_bloc = cumsum(int_flag) + eff_bloc[1]) %>%
+      # where big time gaps exist, make new eff bloc by adding a suffix to bloc number
+      mutate(new_bloc = paste0(eff_bloc[1], '-', cumsum(int_flag))) %>%
+
+      # mutate(next_time = lead(this_time)) %>%
+      # mutate(int_time = next_time - this_time) %>%
+      # mutate(int_flag = ifelse(int_time >= segment_max_interval, 1, 0)) %>%
+      # mutate(int_flag = ifelse(is.na(int_flag), 0, int_flag)) %>%
+      # # where big time gaps exist, make new eff bloc by adding 0.01 to bloc number
+      # mutate(new_bloc = paste0(eff_bloc[1], '-', cumsum(int_flag))) %>%
+      #
       ungroup() %>%
 
       # Replace eff_bloc
@@ -420,6 +429,11 @@ segmentize <- function(cruz,
       (disperse_blocs <- blocs3 %>% filter(handling == 'disperse')) %>% nrow
       (segment_blocs <- blocs3 %>% filter(handling == 'segment')) %>% nrow
       (append_blocs <- blocs3 %>% filter(handling == 'append')) %>% nrow
+
+      #(bs <- segment_blocs$new_bloc %>% unique)
+      #(ba <- append_blocs$new_bloc %>% unique)
+      #which(bs %in% ba)
+      #which(ba %in% bs)
 
       segs <- data.frame() # put segmentized data here
 
@@ -596,6 +610,11 @@ segmentize <- function(cruz,
       message('--- --- median length = ', segs$tot_seg_km %>% median(na.rm=TRUE) %>% round(2),' km')
     }
 
+    # internal debugging tests
+    if(FALSE){
+      segs$use %>% table
+    }
+
     if(to_plot){
       par(mfrow=c(2,1), mar=c(4.2,4,3,1))
       segs %>%
@@ -665,16 +684,20 @@ segmentize <- function(cruz,
 
     # end summarize segments ===================================================
 
-    seg_summary %>% nrow
-    seg_summary %>% as.data.frame %>% head
-
-    seg_summary$use %>% table
-    seg_summary$OnEffort %>% table
-    seg_summary$Mode %>% table
-    seg_summary$EffType %>% table
+    # internal debugging tests
+    if(FALSE){
+      seg_summary %>% nrow
+      seg_summary %>% as.data.frame %>% head
+      seg_summary$use %>% table
+      seg_summary$OnEffort %>% table
+      seg_summary$Mode %>% table
+      seg_summary$EffType %>% table
+      (same_day_test <- seg_summary %>% filter(yday1 != yday2))
+    }
 
     # Confirm that all segments occurred on the same day
-    same_day_test <- seg_summary %>% filter(yday1 != yday2)
+    #(same_day_test <- seg_summary %>% filter(use == TRUE, yday1 != yday2))
+    (same_day_test <- seg_summary %>% filter(yday1 != yday2))
     if(nrow(same_day_test)>0){
       message('\n ******* FYI: Some segments spanned dates. See printed rows below. This is not necessarily bad, just an FYI. *******')
       print(same_day_test)

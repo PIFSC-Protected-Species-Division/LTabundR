@@ -474,14 +474,17 @@ lta <- function(cruz,
     abund_bft_range = 0:6
 
     # Try it
+    lta_result <- lta(cruz, Rg0, fit_filters, df_settings, estimates, bootstraps=0)
     lta_result <- lta(cruz, Rg0, fit_filters, df_settings, estimates, bootstraps=10)
 
     lta_result$estimate
     lta_result$bootstrap$summary
     lta_result$bootstrap$details
 
-
     # To try function, use TLabundR-dev/test_code/CNP/lta_tests.R
+
+    cruz$cohorts$all$segments$use %>% table
+
   }
 
   ##############################################################################

@@ -5,6 +5,9 @@
 #'
 #' param das  A `data.frame` of a `DAS` survey data file, created by `load_das()`.
 #' @param new_interval The interpolation interval, in seconds.
+#' @param max_ignore The maximum interval (seconds) between two rows of survey data that will be interpolated;
+#' if the time gap exceeds this value, interpolation will not occur for these two rows.
+#' The default is 3600 seconds (1 hour).
 #' @param verbose Print updates to the Console?
 #'
 #' @details This function allows you to interpolate the DAS position data
@@ -12,6 +15,7 @@
 #' by large time intervals, which would make spatial effort and stratum assignments less exact.
 #' `LTabundR` will interpolate the data using simple-linear methods (i.e., no great-circle calculations), such that
 #' position updates occur every `new_interval` seconds or less. If adjacent `DAS` rows are from different dates or cruises,
+#' or if the interval between rows exceeds the input `max_ignore`,
 #' the interpolation routine will skip to the next pair of related rows. Interpolation will only occur for On-Effort rows.
 #'
 #' @return An interpolated `data.frame` of the `DAS` data. No formatting has been changed.
@@ -20,6 +24,7 @@
 #'
 das_interpolate <- function(das,
                             new_interval = 120,
+                            max_ignore = 3600,
                             verbose = FALSE){
 
   if(FALSE){ #==================================================================
@@ -28,6 +33,7 @@ das_interpolate <- function(das,
     das <- das_load(das_file)
     verbose = TRUE
     new_interval = 120
+    max_ignore = 3600
     das2 <- das_interpolate(das, verbose=TRUE)
   } #===========================================================================
   # end debugging
@@ -74,7 +80,8 @@ das_interpolate <- function(das,
 
     # decide whether to interpolate the line
     mutate(interp_needed = ifelse(interp_valid &
-                                    lag_dt > new_interval,
+                                    lag_dt > new_interval &
+                                    lag_dt < max_ignore,
                                   TRUE,
                                   FALSE))
 
