@@ -112,7 +112,9 @@ segmentize <- function(cruz,
     das <- das_load(das_file)
     cruz <- process_strata(das, settings)
     cruz <- das_format(cruz)
+    debug_mode = TRUE
     verbose=TRUE
+    to_plot = TRUE
     debug_mode = TRUE
     segment_method = NULL
     segment_target_km = NULL
@@ -124,27 +126,57 @@ segmentize <- function(cruz,
     distance_on_off <- NULL
 
     # segment_remainder_handling <- c('append', 'segment')
-    # segment_method <- 'day'
-    # segment_max_interval <- 24
-    # segment_target_km <- 30
+    # segment_method <- 'equallength'
+    # segment_max_interval <- .5
+    # segment_target_km <- 10
+
+    segment_method = 'equallength'
+    segment_target_km = 20
+    segment_max_interval = 6
+    segment_remainder_handling = 'segment'
+
 
     # try it
-    cruz_demo <- segmentize(cruz, segment_method = 'day', segment_max_interval = 2, verbose=TRUE)
-    cruz_demo <- segmentize(cruz, segment_method = 'day', segment_max_interval = 6, verbose=TRUE)
-    cruz_demo <- segmentize(cruz, segment_method = 'day', segment_max_interval = 24, verbose=TRUE)
-    cruz_demo <- segmentize(cruz, segment_method = 'day', segment_max_interval = 48, verbose=TRUE)
-    cruz_demo <- segmentize(cruz, segment_method = 'equallength', segment_target_km = 5, verbose=TRUE)
-    cruz_demo <- segmentize(cruz, segment_method = 'equallength', segment_target_km = 10, verbose=TRUE)
-    cruz_demo <- segmentize(cruz, segment_method = 'equallength', segment_target_km = 50, verbose=TRUE)
-    cruz_demo <- segmentize(cruz, segment_method = 'equallength', segment_target_km = 150, verbose=TRUE)
-    cruz_demo <- segmentize(cruz, segment_method = 'equallength', segment_target_km = 20, verbose=TRUE)
-    cruz_demo <- segmentize(cruz, segment_method = 'equallength', segment_target_km = 20, segment_max_interval = 3600, verbose=TRUE)
-    cruz_demo <- segmentize(cruz, segment_method = 'equallength', segment_target_km = 20, segment_max_interval = 600, verbose=TRUE)
-    cruz_demo <- segmentize(cruz, segment_method = 'equallength', segment_target_km = 20, segment_remainder_handling = 'disperse', verbose=TRUE)
-    cruz_demo <- segmentize(cruz, segment_method = 'equallength', segment_target_km = 20, segment_remainder_handling = 'append', verbose=TRUE)
-    cruz_demo <- segmentize(cruz, segment_method = 'equallength', segment_target_km = 20, segment_remainder_handling = 'segment', verbose=TRUE)
-    cruz_demo <- segmentize(cruz, segment_method = 'equallength', segment_target_km = 20, segment_remainder_handling = c('append','segment'), verbose=TRUE)
-    cruz_demo <- segmentize(cruz, segment_method = 'equallength', segment_target_km = 20, segment_remainder_handling = c('disperse','segment'), verbose=TRUE)
+    cruz_demo <- segmentize(cruz, segment_method = 'day', segment_max_interval = 2, verbose=TRUE, debug_mode=TRUE)
+    cruz_demo <- segmentize(cruz, segment_method = 'day', segment_max_interval = 6, verbose=TRUE, debug_mode=TRUE)
+    cruz_demo <- segmentize(cruz, segment_method = 'day', segment_max_interval = 24, verbose=TRUE, debug_mode=TRUE)
+    cruz_demo <- segmentize(cruz, segment_method = 'day', segment_max_interval = 48, verbose=TRUE, debug_mode=TRUE)
+    cruz_demo <- segmentize(cruz, segment_method = 'equallength', segment_target_km = 5, segment_max_interval = 0.5,
+                            verbose=TRUE, debug_mode=TRUE)
+    cruz_demo <- segmentize(cruz, segment_method = 'equallength', segment_target_km = 10, segment_max_interval = 0.5,
+                            verbose=TRUE, debug_mode=TRUE)
+    cruz_demo <- segmentize(cruz, segment_method = 'equallength', segment_target_km = 50, segment_max_interval = 0.5,
+                            verbose=TRUE, debug_mode=TRUE)
+    cruz_demo <- segmentize(cruz, segment_method = 'equallength', segment_target_km = 150, segment_max_interval = 0.5,
+                            verbose=TRUE, debug_mode=TRUE)
+    cruz_demo <- segmentize(cruz, segment_method = 'equallength', segment_target_km = 20, segment_max_interval = 0.5,
+                            verbose=TRUE, debug_mode=TRUE)
+    cruz_demo <- segmentize(cruz, segment_method = 'equallength', segment_target_km = 20,
+                            segment_max_interval = 3600, verbose=TRUE, debug_mode=TRUE)
+    cruz_demo <- segmentize(cruz, segment_method = 'equallength', segment_target_km = 20,
+                            segment_max_interval = 600, verbose=TRUE, debug_mode=TRUE)
+    cruz_demo <- segmentize(cruz, segment_method = 'equallength', segment_target_km = 20,
+                            segment_max_interval = 60, verbose=TRUE, debug_mode=TRUE)
+    cruz_demo <- segmentize(cruz, segment_method = 'equallength', segment_target_km = 20,
+                            segment_max_interval = 6, verbose=TRUE, debug_mode=TRUE)
+    cruz_demo <- segmentize(cruz, segment_method = 'equallength', segment_target_km = 20,
+                            segment_max_interval = .6, verbose=TRUE, debug_mode=TRUE)
+
+    #cruz_demo$cohorts$default$das %>%
+    #  group_by(seg_id) %>%
+    #  summarize(cruises = length(unique(Cruise))) %>%
+    #  filter(cruises > 1)
+
+    cruz_demo <- segmentize(cruz, segment_method = 'equallength', segment_target_km = 20,
+                            segment_remainder_handling = 'disperse', verbose=TRUE, debug_mode=TRUE)
+    cruz_demo <- segmentize(cruz, segment_method = 'equallength', segment_target_km = 20,
+                            segment_remainder_handling = 'append', verbose=TRUE, debug_mode=TRUE)
+    cruz_demo <- segmentize(cruz, segment_method = 'equallength', segment_target_km = 20,
+                            segment_remainder_handling = 'segment', verbose=TRUE, debug_mode=TRUE)
+    cruz_demo <- segmentize(cruz, segment_method = 'equallength', segment_target_km = 20,
+                            segment_remainder_handling = c('append','segment'), verbose=TRUE, debug_mode=TRUE)
+    cruz_demo <- segmentize(cruz, segment_method = 'equallength', segment_target_km = 20,
+                            segment_remainder_handling = c('disperse','segment'), verbose=TRUE, debug_mode=TRUE)
 
   } # end debugging
   #=============================================================================
@@ -253,6 +285,27 @@ segmentize <- function(cruz,
     # accommodate NA's in `modes`
     distance_modes <- c(distance_modes, NA)
 
+    # Initial setup ============================================================
+    # Add unique identifier to each row after arranging
+    dass <-
+      dass %>%
+      arrange(Cruise, DateTime) %>%
+      mutate(temp_i = 1:n()) %>%
+      # log time gap between each row and the next row in same cruise
+      group_by(Cruise) %>%
+      arrange(DateTime) %>%
+      mutate(next_dt = lead(DateTime)) %>%
+      mutate(int_time_og = as.numeric(next_dt) - as.numeric(DateTime)) %>%
+      ungroup() %>%
+      # Make sure that no int_time_og exceeds the max_row_interval
+      mutate(int_time_og = ifelse(int_time_og > cruz$settings$survey$max_row_interval,
+                                  cruz$settings$survey$max_row_interval,
+                                  int_time_og))
+
+    # Filter out Off Effort
+    # In the end, Off Effort rows will have seg_id = NA
+    dasson <- dass %>% filter(OnEffort == TRUE)
+
     # Setup effort blocs =====================================================
     # (sections of survey with the same effort details / date / cruise / ship / stratum etc )
 
@@ -263,9 +316,11 @@ segmentize <- function(cruz,
     }
 
     blocs <-
-      dass %>%
+      dasson %>%
       # Create new columns indicating how to parse type/mode/onoff
       # these booleans will inform us whether to include or exclude the segment from analysis
+      arrange(year, Cruise, DateTime) %>%
+      # make simple date and simple time column
       mutate(effdate = lubridate::date(DateTime)) %>%
       mutate(mode_group = Mode %in% distance_modes,
              onoff_group = OnEffort %in% distance_on_off,
@@ -273,25 +328,21 @@ segmentize <- function(cruz,
              bft_group = round(Bft) %in% beaufort_range) %>%
       # based on those directions, create a column deciding
       # whether this row will be used in density estimation
-      mutate(use = ifelse(mode_group &
-                            onoff_group &
-                            type_group &
-                            bft_group,
+      rowwise() %>%
+      mutate(use = ifelse(all(c(mode_group, onoff_group, type_group, bft_group)),
                           TRUE, FALSE)) %>%
+      ungroup() %>%
       # Add type-type column detailing effort type in the rows for which use == TRUE
-      mutate(type_type = ifelse(use, EffType, 'Off' )) %>%
+      #mutate(type_type = ifelse(use, EffType, 'Off' )) %>%
       # make a column summarizing the effort scenario
-      mutate(effort_scenario = paste(Cruise,
-                                     ship,
-                                     stratum,
-                                     #effdate,
+      mutate(effort_scenario = paste(gsub(' ','',Cruise),
+                                     gsub(' ','', ship),
+                                     gsub(' ','', stratum),
                                      use,
-                                     type_type,
+                                     #type_type,
                                      sep=' - ')) %>%
       # Determine when the scenario changes & make bloc ID
-      mutate(eff_bloc = as.numeric(factor(effort_scenario))) %>%
-      # Get distance covered within effort bloc
-      ungroup()
+      mutate(eff_bloc = as.numeric(factor(effort_scenario)))
 
     # End of effort bloc setup ===============================================
 
@@ -300,6 +351,15 @@ segmentize <- function(cruz,
     }
 
     if(debug_mode){ # Double check that use was assigned correctly
+      blocs$use %>% table
+
+      # blocs %>%
+      #   filter(use == FALSE)  %>%
+      #   mutate(bftr = round(Bft)) %>%
+      #   #filter(bftr < 7) %>%
+      #   group_by(use, EffType, Mode, bftr) %>%
+      #   tally()
+
       problems <-
         blocs %>%
         filter(use == FALSE,
@@ -321,24 +381,15 @@ segmentize <- function(cruz,
       blocs %>%
       # make simple time column
       mutate(this_time = as.numeric(DateTime)) %>%
-
       # in each bloc, look for instances of big time gaps
       group_by(eff_bloc) %>%
-
+      arrange(DateTime) %>%
       mutate(last_time = lag(this_time)) %>%
       mutate(int_time = this_time - last_time) %>%
       mutate(int_flag = ifelse(int_time >= segment_max_interval, 1, 0)) %>%
       mutate(int_flag = ifelse(is.na(int_flag), 0, int_flag)) %>%
       # where big time gaps exist, make new eff bloc by adding a suffix to bloc number
       mutate(new_bloc = paste0(eff_bloc[1], '-', cumsum(int_flag))) %>%
-
-      # mutate(next_time = lead(this_time)) %>%
-      # mutate(int_time = next_time - this_time) %>%
-      # mutate(int_flag = ifelse(int_time >= segment_max_interval, 1, 0)) %>%
-      # mutate(int_flag = ifelse(is.na(int_flag), 0, int_flag)) %>%
-      # # where big time gaps exist, make new eff bloc by adding 0.01 to bloc number
-      # mutate(new_bloc = paste0(eff_bloc[1], '-', cumsum(int_flag))) %>%
-      #
       ungroup() %>%
 
       # Replace eff_bloc
@@ -391,8 +442,6 @@ segmentize <- function(cruz,
         group_by(eff_bloc, effdate) %>%
         mutate(seg_id = cur_group_id()) %>%
         ungroup() %>%
-        #arrange(Cruise, DateTime) %>%
-        #mutate(seg_id = eff_bloc) %>%
         group_by(seg_id) %>%
         mutate(tot_seg_km = sum(km_int, na.rm=TRUE)) %>%
         ungroup() %>%
@@ -407,7 +456,7 @@ segmentize <- function(cruz,
     if(segment_method == 'equallength'){ #====================================
       if(verbose){
         message('\n--- Segmentizing into stretches of equal length...')
-        message('\n--- --- Determining the remainder for each bloc...')
+        message('--- --- Determining the remainder for each bloc...')
       }
 
       blocs3 <-
@@ -440,13 +489,14 @@ segmentize <- function(cruz,
       # If handling is disperse ... ==========================================
       if(nrow(disperse_blocs)>0){
         if(verbose){
-          message('\n--- --- Segmentizing ', nrow(disperse_blocs),' rows of data using the "disperse" method ...')
+          message('--- --- Segmentizing ', nrow(disperse_blocs),' rows of data using the "disperse" method ...')
         }
 
         segi <-
           disperse_blocs %>%
           # For each bloc...
           group_by(new_bloc) %>%
+          arrange(DateTime) %>%
           # Adjust the target_km to perfectly fit bloc km
           mutate(remainder_seg = NA) %>% # placeholder so that seg methods can be combined
           mutate(target_km = ifelse(handling == 'disperse',
@@ -459,13 +509,13 @@ segmentize <- function(cruz,
           ungroup()
 
         segs <- rbind(segs, segi)
-        if(verbose){ message('--- --- Finished!') }
+        if(verbose){ message('--- --- --- Finished!') }
       }
 
       # If handling is segment ... ===========================================
       if(nrow(segment_blocs)>0){
         if(verbose){
-          message('\n--- --- Segmentizing ', nrow(segment_blocs),' rows of data using the "segment" method ...')
+          message('--- --- Segmentizing ', nrow(segment_blocs),' rows of data using the "segment" method ...')
         }
 
         # use one of the longest use blocs as an example
@@ -509,6 +559,7 @@ segmentize <- function(cruz,
           #filter(eff_bloc == 97) %>% # use this as a test bloc during debugging
           # For each bloc...
           group_by(new_bloc) %>%
+          arrange(DateTime) %>%
           # randomly select a segment in which to place the remainder
           mutate(remainder_seg = sample(1:(floor(n_seg_raw[1])+1), 1)) %>%
           # Assign each row to a segment ID
@@ -522,13 +573,13 @@ segmentize <- function(cruz,
           ungroup()
 
         segs <- rbind(segs, segi)
-        if(verbose){ message('--- --- Finished!') }
+        if(verbose){ message('--- --- --- Finished!') }
       }
 
       # If handling is append ... ============================================
       if(nrow(append_blocs)>0){
         if(verbose){
-          message('\n--- --- Segmentizing ', nrow(append_blocs),' rows of data using the "append" method ...')
+          message('--- --- Segmentizing ', nrow(append_blocs),' rows of data using the "append" method ...')
         }
         # use one of the longest use blocs as an example
         #segment_blocs %>% filter(use == TRUE) %>% arrange(desc(tot_bloc_km)) %>% as.data.frame %>% head
@@ -573,6 +624,7 @@ segmentize <- function(cruz,
           #filter(eff_bloc == 97) %>% # use this as a test bloc during debugging
           # For each bloc...
           group_by(new_bloc) %>%
+          arrange(DateTime) %>%
           # randomly select a segment in which to place the remainder
           mutate(remainder_seg = sample(1:(floor(n_seg_raw[1])), 1)) %>%
           # Assign each row to a segment ID
@@ -586,7 +638,7 @@ segmentize <- function(cruz,
           ungroup()
 
         segs <- rbind(segs, segi)
-        if(verbose){ message('--- --- Finished!') }
+        if(verbose){ message('--- --- --- Finished!') }
       }
 
       # Finalize formatting!
@@ -602,34 +654,176 @@ segmentize <- function(cruz,
 
     } # end equal length =====================================================
 
+    # Ensure everything is Cruise-chronological,
+    # then re-name segments
+    segs <-
+      segs %>%
+      arrange(temp_i) %>%
+      # rename segments to reflect chronological order
+      mutate(seg_id = seg_id %>% as.factor %>% as.numeric)
+
+    # Add back in Off Effort data
+    segs_to_join <- segs %>% select(temp_i, seg_id, use, tot_seg_km, int_time, eff_bloc)
+    segs_rejoined <- left_join(dass, segs_to_join, by='temp_i')
+    segs_rejoined %>% head
+
+    # finalize dataframe
+    segs <-
+      segs_rejoined %>%
+      # for segments with tot_seg_km = 0, change use to FALSE and seg_id to NA
+      mutate(use = ifelse(tot_seg_km == 0, FALSE, TRUE)) %>%
+      mutate(seg_id = ifelse(tot_seg_km == 0, NA, seg_id)) %>%
+      mutate(use = replace_na(use, FALSE)) %>%
+      arrange(temp_i) %>%
+      select(- temp_i)
+    segs %>% head
+
     # Status report
     if(verbose){
+      segids <- segs$seg_id
+      segids <- segids[!is.na(segids)]
       message('\n--- Segmentizing complete!')
-      message('--- --- unique segments created = ', segs$seg_id %>% unique %>% length)
+      message('--- --- unique segments created = ', segids %>% unique %>% length)
       message('--- --- mean length = ', segs$tot_seg_km %>% mean(na.rm=TRUE) %>% round(2),' km')
       message('--- --- median length = ', segs$tot_seg_km %>% median(na.rm=TRUE) %>% round(2),' km')
     }
 
-    # internal debugging tests
-    if(FALSE){
-      segs$use %>% table
+    # Diagnostic tests
+    if(verbose){
+      message('\nRunning diagnostic checks...')
+
+      # Look into OnEffort rows with use == FALSE ==============================
+      (testi <-
+         segs %>%
+         filter(OnEffort == TRUE, use == FALSE))
+
+      testi_table <-
+        testi %>%
+        mutate(bft_valid = ifelse(!is.na(Bft),
+                                  ifelse(round(Bft) %in% beaufort_range, TRUE, FALSE),
+                                  FALSE)) %>%
+        mutate(spd_valid = ifelse(!is.na(SpdKt), TRUE, FALSE)) %>%
+        mutate(seg_km_valid = ifelse(tot_seg_km > 0, TRUE, FALSE)) %>%
+        mutate(vis_valid = ifelse(!is.na(Vis), TRUE, FALSE)) %>%
+        group_by(EffType, Mode, bft_valid, vis_valid, spd_valid) %>%
+        group_by(EffType, Mode, bft_valid, seg_km_valid) %>%
+        tally()
+
+      if(nrow(testi)>0){
+        ids <- testi$seg_id %>% unique %>% sort
+        message('\n*** NOTE: ', nrow(testi),' rows had OnEffort = TRUE but use = FALSE.')
+        message("   This is not necessarily bad; `use` can be false due to invalid Bft or Vis values, or EffType's or Mode's that are not accepted for analysis.")
+        message('   Here is a table of effort scenarios contained within these ', nrow(testi),' rows:')
+        message('   (`bft_valid` indicates whether or not `Bft` is within `beaufort_range` settings and is not NA.)')
+        message('   (`seg_km_valid` indicates whether or not segment assigned to this row has more than 0km of distance in it.)')
+        message('   Recommendation: if any of these scenario should have been `use == TRUE`, filter the DAS data to these conditions and explore to see if edits are necessary.')
+        print(testi_table)
+
+        message('\n ---- As a reminder, per your settings, `use` will be TRUE for this cohort in the following conditions:')
+        message(' ---- ---- column `stratum` is one of these values: ',       paste(setti$strata, collapse=', '))
+        message(' ---- ---- column `EffType` is one of these values: ', paste(distance_types, collapse=', '))
+        message(' ---- ---- column `Mode` is one of these values: ', paste(distance_modes, collapse=', '))
+        message(' ---- ---- column `OnEffort` is one of these values: ', paste(distance_on_off, collapse=', '))
+        message(' ---- ---- column `Bft` within segment, when averaged, can be rounded to one of these values: ', paste(beaufort_range, collapse=', '))
+        message(' ---- Also, note that the segment has to have more than 0km of survey data within it, otherwise `use` is coerced to `FALSE` for all rows in the segment.')
+      }
+      nrow(testi)
+
+      # Ensure no seg_ids are repeated across cruises ==========================
+      (testi <-
+         segs %>%
+         group_by(seg_id) %>%
+         filter(!is.na(Cruise)) %>%
+         summarize(cruises = length(unique(Cruise))) %>%
+         filter(cruises > 1))
+      (ids <- testi$seg_id %>% unique %>% sort)
+      if(length(ids)>0){
+        message('\n*** WARNING: some segment IDs have occurred in multiple cruises.')
+        print(ids)
+        message('    Look into `seg_id` ',paste(ids, collapse=' '))
+      }else{
+        message('\n--- Confirmed: no segment IDs are shared across Cruises!')
+      }
+
+      # Get distribution of tot_seg_km =========================================
+      (x <- segs %>% filter(use == TRUE) %>% group_by(seg_id) %>% summarize(kmi = tot_seg_km[1]) %>% pull(kmi) %>% sort)
+      (breaks <- c(0, .5, 1,
+                   round(seq(2, segment_target_km - 2, length = 4), 1),
+                   round(seq(segment_target_km - 2, segment_target_km + 2, by = .5), 1),
+                   round(seq(segment_target_km + 3, max(segs$tot_seg_km, na.rm=TRUE) + 1, length=5), 1)) %>% sort)
+
+      (counts <- hist(x, breaks=breaks, right = FALSE, plot=FALSE)$counts)
+      (percs <- round(100*(counts / length(x)), 2))
+      if(TRUE){
+        message('\nGetting distribution of segment lengths (km):')
+        message('KM bin:  ', paste(stringr::str_pad(breaks, width=5, pad=' ', side='left'), collapse=' '))
+        message('Percent: ', paste(stringr::str_pad(percs, width=5, pad=' ', side='left'), collapse=' '))
+      }
+
+      # Warn if any seg_ids are 0km ==========================================
+      (testi <-
+         segs %>%
+         filter(use == TRUE, tot_seg_km == 0))
+      if(nrow(testi)>0){
+        ids <- testi$seg_id %>% unique %>% sort
+        message('\n*** WARNING! There are ', length(ids),' OnEffort segments, with use = TRUE, with a reported distance of 0km.')
+        if(length(ids) > 20){
+          message('    Look into `seg_id` ', paste(head(ids,20), collapse=' '), ' ... etc ...')
+        }else{
+          message('    Look into `seg_id` ', paste(ids, collapse=' '))
+        }
+      }else{
+        message('\n--- Confirmed: no segments with use=TRUE have distance of 0km!')
+      }
+
+      # Ensure seg_ids within each cruise are chronological
+      (testi <-
+          segs %>%
+          filter(use == TRUE) %>%
+          group_by(Cruise) %>%
+          #arrange(DateTime) %>%
+          mutate(next_seg = lead(seg_id)) %>%
+          mutate(ok_test = ifelse(next_seg >= seg_id, TRUE, FALSE)) %>%
+          select(line_num, DateTime, Cruise, OnEffort, Mode, EffType, use, seg_id, next_seg, tot_seg_km, ok_test) %>%
+          #arrange(seg_id) %>%
+          ungroup() %>%
+          filter(ok_test == FALSE))
+
+      if(nrow(testi)>0){
+        ids <- testi$seg_id %>% unique %>% sort
+        message('\n*** NOTE: ', length(ids),' segment IDs found to occur out of chronological order within their respective Cruise.')
+        message('    This is not necessarily bad.')
+        message('    Usually this is due to alternations between Passing / Closing mode, or between N / S effort, or between Bft 6 and 7,')
+        message('    causing segment IDs to jump back and forth between disparate values.')
+        if(length(ids) > 20){
+          message('    Look into `seg_id` ',paste(head(ids, 20), collapse=' '),' ... etc ...')
+        }else{
+          message('    Look into `seg_id` ',paste(ids, collapse=' '))
+        }
+      }
     }
 
     if(to_plot){
-      par(mfrow=c(2,1), mar=c(4.2,4,3,1))
-      segs %>%
+      par(mfrow=c(1,1), mar=c(4.2,4,3,1))
+      kmi <-
+        segs %>%
         group_by(seg_id) %>%
         filter(use == TRUE) %>%
         filter(row_number() == 1) %>%
-        pull(tot_seg_km) %>%
-        hist(breaks=20, main='use == TRUE', xlab='Segment length (km)')
-      segs %>%
-        group_by(seg_id) %>%
-        filter(use == FALSE) %>%
-        filter(row_number() == 1) %>%
-        pull(tot_seg_km) %>%
-        hist(breaks=20, main='use == FALSE', xlab='Segment length (km)')
-      par(mfrow=c(1,1), mar=c(4.2,4,3,1))
+        pull(tot_seg_km)
+      if(length(kmi)>0){
+        hist(kmi, breaks=100, main='use == TRUE', xlab='Segment length (km)')
+      }
+      # kmi <-
+      #   segs %>%
+      #   group_by(seg_id) %>%
+      #   filter(use == FALSE, !is.na(seg_id)) %>%
+      #   filter(row_number() == 1) %>%
+      #   pull(tot_seg_km)
+      # if(length(kmi)>0){
+      #   hist(kmi, breaks=100, main='use == FALSE', xlab='Segment length (km)')
+      # }
+      # par(mfrow=c(1,1), mar=c(4.2,4,3,1))
     }
 
     # End segmentize blocs ===================================================
@@ -640,7 +834,9 @@ segmentize <- function(cruz,
 
     seg_summary <-
       segs %>%
+      filter(is.na(seg_id) == FALSE) %>%
       group_by(seg_id) %>%
+      arrange(DateTime) %>%
       summarize(Cruise = Cruise[1],
                 ship = ship [1],
                 stratum = stratum[1],
@@ -650,22 +846,24 @@ segmentize <- function(cruz,
                 OnEffort = paste(OnEffort %>% unique, collapse='-'),
                 ESWsides = ESWsides[1],
                 dist = tot_seg_km[1],
-                minutes = round(sum(int_time)/60, 3),
+                minutes = round(sum(int_time_og)/60, 3),
                 n_rows = n(),
                 min_line = line_num[1],
                 max_line = line_num[n()],
                 year = year[1],
                 month = month[1],
                 day = day[1],
+                # Starting point
                 lat1 = Lat[1],
                 lon1 = Lon[1],
                 DateTime1 = DateTime[1],
                 timestamp1 = as.numeric(DateTime[1]),
                 yday1 = yday[1],
+                # Ending point
                 lat2 = Lat[n()],
                 lon2 = Lon[n()],
-                DateTime2 = DateTime[n()],
-                timestamp2 = as.numeric(DateTime[n()]),
+                DateTime2 = DateTime[n()] + int_time_og[n()],
+                timestamp2 = as.numeric(DateTime[n()] + int_time_og[n()]),
                 yday2 = yday[n()],
                 mlat = Lat[mean(1:n())],
                 mlon = Lon[mean(1:n())],
@@ -680,104 +878,131 @@ segmentize <- function(cruz,
                 avgCourse = stats::weighted.mean(Course, km_int, na.rm=TRUE),
                 avgSpdKt = stats::weighted.mean(SpdKt, km_int, na.rm=TRUE))
 
+    seg_summary %>% select(seg_id, dist, minutes, min_line, max_line, DateTime1, DateTime2) %>%  head(20)
+
     if(verbose){message('--- --- Finished!')}
 
     # end summarize segments ===================================================
 
-    # internal debugging tests
-    if(FALSE){
+    if(verbose){
+      message('\nRunning more diagnostic checks...')
+
       seg_summary %>% nrow
       seg_summary %>% as.data.frame %>% head
-      seg_summary$use %>% table
+      seg_summary$use %>% table(useNA='ifany')
       seg_summary$OnEffort %>% table
       seg_summary$Mode %>% table
       seg_summary$EffType %>% table
-      (same_day_test <- seg_summary %>% filter(yday1 != yday2))
-    }
 
-    # Confirm that all segments occurred on the same day
-    #(same_day_test <- seg_summary %>% filter(use == TRUE, yday1 != yday2))
-    (same_day_test <- seg_summary %>% filter(yday1 != yday2))
-    if(nrow(same_day_test)>0){
-      message('\n ******* FYI: Some segments spanned dates. See printed rows below. This is not necessarily bad, just an FYI. *******')
-      print(same_day_test)
+      # Report on segments with use == FALSE
+      (testi <-
+          seg_summary %>% filter(use == FALSE))
+      if(nrow(testi)>0){
+        ids <- testi$seg_id %>% unique %>% sort
+        message('\n*** NOTE! These segments returned `use` == FALSE and will be excluded from analyses.')
+        message('    Look into `seg_id` ',paste(ids, collapse=' '))
+      }
 
-      print(same_day_test %>% as.data.frame)
-    }
+      # Ensure each segment contains only one type of use ======================
+      seg_summary$use %>% table(useNA='ifany') %>% length
+      testi <-
+        seg_summary %>%
+        filter(! as.character(use) %in% c('FALSE', 'TRUE'))
+      if(nrow(testi)>0){
+        ids <- testi$seg_id %>% unique %>% sort
+        message('\n*** WARNING! Unexpected `use` values have been found.')
+        message('    Look into `seg_id` ',paste(ids, collapse=' '))
+      }else{
+        message('--- Confirmed: each segment has only one type of `use` value!')
+      }
+
+      # Ensure each segment contains only one type of OnEffort =================
+      seg_summary$OnEffort %>% table(useNA='ifany') %>% length
+      testi <-
+        seg_summary %>%
+        filter(! as.character(OnEffort) %in% c('FALSE', 'TRUE'))
+      if(nrow(testi)>0){
+        ids <- testi$seg_id %>% unique %>% sort
+        message('\n*** WARNING! Some segments were found to contain multiple `OnEffort` values.')
+        message('    Look into `seg_id` ',paste(ids, collapse=' '))
+      }else{
+        message('--- Confirmed: each segment has only one type of `OnEffort` value!')
+      }
+
+      # Check to see if segments span dates
+      (testi <- seg_summary %>% filter(yday1 != yday2))
+      if(nrow(testi)>0){
+        ids <- testi$seg_id %>% unique %>% sort
+        message('\n*** NOTE! Some segments span dates.')
+        message('     This is not necessarily bad, but is not expected if your `max_segment_interval` is less than ~8 hours.')
+        message('    Look into `seg_id` ',paste(ids, collapse=' '))
+      }else{
+        message('--- Confirmed: No segments span multiple dates!')
+      }
+    } # end debugging mode
 
     # Clean up data (remove all the columns you added during intermediate steps
-    segs_clean <- segs %>% select(Event:stratum, use, eff_bloc, seg_id)
+    segs_clean <-
+      segs %>%
+      select(Event:stratum, use, eff_bloc, seg_id) %>%
+      mutate(OnEffort = as.logical(OnEffort)) %>%
+      mutate(use = as.logical(use))
+
+    seg_summary <-
+      seg_summary %>%
+      mutate(OnEffort = as.logical(OnEffort)) %>%
+      mutate(use = as.logical(use))
 
     # Prepare this cohort's list
     cohort_list <- list(segments = seg_summary,
                         das = segs_clean)
 
-    # end summarize segments =======================================================
-
-    # segmentize_wrapper is a LTabundR function.-- see its documentation: ?segmentize_wrapper()
-    # segments <- segmentize_wrapper(dass,
-    #                                segment_method = segment_method,
-    #                                segment_target_km = segment_target_km,
-    #                                segment_max_interval = segment_max_interval,
-    #                                segment_remainder_handling = segment_remainder_handling,
-    #                                beaufort_range = beaufort_range,
-    #                                types = distance_types,
-    #                                modes = distance_modes,
-    #                                on_off = distance_on_off,
-    #                                debug_mode = FALSE,
-    #                                verbose = verbose)
-
-    # Summarize segments
-    # also using a LTabundR function: ?segmentize_summarize()
-    # if(verbose){message('--- --- calculating details for each segment ...')}
-    # cohort_list <- segmentize_summarize(segments,
-    #                                     dass,
-    #                                     debug_mode = FALSE,
-    #                                     to_plot = FALSE,
-    #                                     verbose = verbose)
-    # if(verbose){message('\n')}
-
+    # end summarize segments ===================================================
     #===========================================================================
+
     # Get diagnostics on which segments were excluded
     if(debug_mode){
 
-      (usefalse <-
-         cohort_list$segments %>%
-         arrange(DateTime1) %>%
-         filter(use == FALSE)
-      ) %>% head
+      # (usefalse <-
+      #    cohort_list$segments %>%
+      #    arrange(DateTime1) %>%
+      #    filter(!is.na(seg_id) & use == FALSE)
+      # ) %>% head
+      #
+      # if(nrow(usefalse)>0){
+      #
+      #   message('\nSTART OF DIAGNOSTICS: segments with use == FALSE (n = ', nrow(usefalse),'):')
+      #   message('\n ---- FYI: Per your settings, use will be TRUE for this cohort in the following conditions:')
+      #   message(' ---- ---- column `stratum` is one of these values: ',       paste(setti$strata, collapse=', '))
+      #   message(' ---- ---- column `EffType` is one of these values: ', paste(distance_types, collapse=', '))
+      #   message(' ---- ---- column `Mode` is one of these values: ', paste(distance_modes, collapse=', '))
+      #   message(' ---- ---- column `OnEffort` is one of these values: ', paste(distance_on_off, collapse=', '))
+      #   message(' ---- ---- column `Bft` within segment, when averaged, can be rounded to one of these values: ', paste(beaufort_range, collapse=', '))
+      #   message('\n')
+      #
+      #   falsi=1
+      #   for(falsi in 1:nrow(usefalse)){
+      #     (usi <- usefalse[falsi,])
+      #     message(' ---- Segment ID = ',usi$seg_id,' | DAS rows = ',usi$n_rows,
+      #             ' (line_num ', usi$min_line,'-', usi$max_line,', ',
+      #             round(((usi$timestamp2 - usi$timestamp1)/60)),' mins) | start = ',
+      #             usi$DateTime1,' | stratum = ',usi$stratum,
+      #             ' | EffType(s) = ', usi$EffType,' | Mode(s) = ', usi$Mode,' | OnEffort(s) = ', usi$OnEffort,
+      #             ' | avg Bft = ', round(usi$avgBft))
+      #   }
+      #   message('\n')
+      #   if(nrow(usefalse)>10){
+      #     message('END OF DIAGNOSTICS: The above segments have use == FALSE (n = ', nrow(usefalse),'):')
+      #     message('\n ---- FYI: Per your settings, use will be TRUE for this cohort in the following conditions:')
+      #     message(' ---- ---- column `stratum` is one of these values: ',       paste(setti$strata, collapse=', '))
+      #     message(' ---- ---- column `EffType` is one of these values: ', paste(distance_types, collapse=', '))
+      #     message(' ---- ---- column `Mode` is one of these values: ', paste(distance_modes, collapse=', '))
+      #     message(' ---- ---- column `OnEffort` is one of these values: ', paste(distance_on_off, collapse=', '))
+      #     message(' ---- ---- column `Bft` within segment, when averaged, can be rounded to one of these values: ', paste(beaufort_range, collapse=', '))
+      #     message('\n')
+      #   }
+      # }
 
-      message('\nSTART OF DIAGNOSTICS: segments with use == FALSE (n = ', nrow(usefalse),'):')
-      message('\n ---- FYI: Per your settings, use will be TRUE for this cohort in the following conditions:')
-      message(' ---- ---- column `stratum` is one of these values: ',       paste(setti$strata, collapse=', '))
-      message(' ---- ---- column `EffType` is one of these values: ', paste(distance_types, collapse=', '))
-      message(' ---- ---- column `Mode` is one of these values: ', paste(distance_modes, collapse=', '))
-      message(' ---- ---- column `OnEffort` is one of these values: ', paste(distance_on_off, collapse=', '))
-      message(' ---- ---- column `Bft` within segment, when averaged, can be rounded to one of these values: ', paste(beaufort_range, collapse=', '))
-      message('\n')
-
-      if(nrow(usefalse)>0){
-
-        falsi=1
-        for(falsi in 1:nrow(usefalse)){
-          (usi <- usefalse[falsi,])
-          message(' ---- Segment ID = ',usi$seg_id,' | DAS rows = ',usi$n_rows,
-                  ' (line_num ', usi$min_line,'-', usi$max_line,', ',
-                  round(((usi$timestamp2 - usi$timestamp1)/60)),' mins) | start = ',
-                  usi$DateTime1,' | stratum = ',usi$stratum,
-                  ' | EffType(s) = ', usi$EffType,' | Mode(s) = ', usi$Mode,' | OnEffort(s) = ', usi$OnEffort,
-                  ' | avg Bft = ', round(usi$avgBft))
-        }
-        message('\n')
-        message('END OF DIAGNOSTICS: The above segments have use == FALSE (n = ', nrow(usefalse),'):')
-        message('\n ---- FYI: Per your settings, use will be TRUE for this cohort in the following conditions:')
-        message(' ---- ---- column `stratum` is one of these values: ',       paste(setti$strata, collapse=', '))
-        message(' ---- ---- column `EffType` is one of these values: ', paste(distance_types, collapse=', '))
-        message(' ---- ---- column `Mode` is one of these values: ', paste(distance_modes, collapse=', '))
-        message(' ---- ---- column `OnEffort` is one of these values: ', paste(distance_on_off, collapse=', '))
-        message(' ---- ---- column `Bft` within segment, when averaged, can be rounded to one of these values: ', paste(beaufort_range, collapse=', '))
-        message('\n')
-      }
     }
     #===========================================================================
 
@@ -803,6 +1028,13 @@ segmentize <- function(cruz,
     names(cohorts_new)[which(names(cohorts_new) == 'new')] <- cohorti_name
 
   } # end of cohort loop
+
+  if(FALSE){
+    # debugging area
+    segs %>% filter(seg_id == 151)
+
+  }
+
 
   # review
   cohorts_new %>% names
