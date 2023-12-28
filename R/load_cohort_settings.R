@@ -110,12 +110,14 @@
 #' (We are not sure what use case this would serve,
 #' but we offer it as an option for niche analyses.)
 #'
-#' @param distance_types  A character vector of the effort types that meet the "analysis
+#' @param distance_types  A character vector of the full-range of effort types that meet the "analysis
 #' inclusion criteria", i.e., will be included in detection function estimation,
 #' and therefore considered in effort segmentizing.
 #' Accepted values are `"S"` (systematic/standard effort), `"F"` (fine-scale effort),
 #' and `"N"` (non-systematic/non-standard effort, in which systematic protocols
 #' are being used but effort is not occurring along design-based transect routes).
+#' Note that it is possible to further subset the effort types specifically for
+#' density estimation in `LTabundR`'s function for line transect analysis, `lta()`.
 #'
 #' @param distance_modes  The effort modes that meet "analysis inclusion criteria", i.e.,
 #' will be included in detection function estimation,

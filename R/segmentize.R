@@ -876,7 +876,8 @@ segmentize <- function(cruz,
                 avgGlare = stats::weighted.mean(Glare, km_int, na.rm=TRUE),
                 avgVis = stats::weighted.mean(Vis, km_int, na.rm=TRUE),
                 avgCourse = stats::weighted.mean(Course, km_int, na.rm=TRUE),
-                avgSpdKt = stats::weighted.mean(SpdKt, km_int, na.rm=TRUE))
+                avgSpdKt = stats::weighted.mean(SpdKt, km_int, na.rm=TRUE)) %>%
+      arrange(DateTime1)
 
     seg_summary %>% select(seg_id, dist, minutes, min_line, max_line, DateTime1, DateTime2) %>%  head(20)
 
