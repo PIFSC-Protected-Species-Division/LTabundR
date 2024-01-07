@@ -789,19 +789,36 @@ segmentize <- function(cruz,
           ungroup() %>%
           filter(ok_test == FALSE))
 
+      #if(nrow(testi)>0){
+      #  ids <- testi$seg_id %>% unique %>% sort
+      #  message('\n*** NOTE: ', length(ids),' segment IDs found to occur out of chronological order within their respective Cruise.')
+      #  message('    This is not necessarily bad.')
+      #  message('    Usually this is due to alternations between Passing / Closing mode, or between N / S effort, or between Bft 6 and 7,')
+      #  message('    causing segment IDs to jump back and forth between disparate values.')
+      #  if(length(ids) > 20){
+      #    message('    Look into `seg_id` ',paste(head(ids, 20), collapse=' '),' ... etc ...')
+      #  }else{
+      #    message('    Look into `seg_id` ',paste(ids, collapse=' '))
+      #  }
+      #}
+
+      # Ensure that all use=TRUE sightings have a segment id
+      (testi <-
+        segs %>%
+        filter(Event %in% c('S','s'), use == TRUE) %>%
+        mutate(ok_test = ifelse(!is.na(seg_id) == TRUE, TRUE, FALSE)) %>%
+        filter(ok_test == FALSE))
       if(nrow(testi)>0){
-        ids <- testi$seg_id %>% unique %>% sort
-        message('\n*** NOTE: ', length(ids),' segment IDs found to occur out of chronological order within their respective Cruise.')
-        message('    This is not necessarily bad.')
-        message('    Usually this is due to alternations between Passing / Closing mode, or between N / S effort, or between Bft 6 and 7,')
-        message('    causing segment IDs to jump back and forth between disparate values.')
+        ids <- testi$line_num %>% unique %>% sort
+        message('\n*** NOTE: some use==TRUE sightings were missing a segment ID.')
         if(length(ids) > 20){
-          message('    Look into `seg_id` ',paste(head(ids, 20), collapse=' '),' ... etc ...')
+          message('    Look into `line_num` ',paste(head(ids, 20), collapse=' '),' ... etc ...')
         }else{
-          message('    Look into `seg_id` ',paste(ids, collapse=' '))
+          message('    Look into `line_num` ',paste(ids, collapse=' '))
         }
       }
     }
+
 
     if(to_plot){
       par(mfrow=c(1,1), mar=c(4.2,4,3,1))
@@ -862,9 +879,9 @@ segmentize <- function(cruz,
                 # Ending point
                 lat2 = Lat[n()],
                 lon2 = Lon[n()],
-                DateTime2 = DateTime[n()] + int_time_og[n()],
-                timestamp2 = as.numeric(DateTime[n()] + int_time_og[n()]),
-                yday2 = yday[n()],
+                DateTime2 = DateTime[n()] + min(c(segment_max_interval, int_time_og[n()])),
+                timestamp2 = as.numeric(DateTime2),
+                yday2 = lubridate::yday(DateTime2),
                 mlat = Lat[mean(1:n())],
                 mlon = Lon[mean(1:n())],
                 mDateTime = DateTime[mean(1:n())],
@@ -877,7 +894,7 @@ segmentize <- function(cruz,
                 avgVis = stats::weighted.mean(Vis, km_int, na.rm=TRUE),
                 avgCourse = stats::weighted.mean(Course, km_int, na.rm=TRUE),
                 avgSpdKt = stats::weighted.mean(SpdKt, km_int, na.rm=TRUE)) %>%
-      arrange(DateTime1)
+      arrange(Cruise, DateTime1)
 
     seg_summary %>% select(seg_id, dist, minutes, min_line, max_line, DateTime1, DateTime2) %>%  head(20)
 
@@ -931,7 +948,7 @@ segmentize <- function(cruz,
       }
 
       # Check to see if segments span dates
-      (testi <- seg_summary %>% filter(yday1 != yday2))
+      (testi <- seg_summary[seg_summary$yday1 != seg_summary$yday2, ])
       if(nrow(testi)>0){
         ids <- testi$seg_id %>% unique %>% sort
         message('\n*** NOTE! Some segments span dates.')
@@ -960,51 +977,6 @@ segmentize <- function(cruz,
 
     # end summarize segments ===================================================
     #===========================================================================
-
-    # Get diagnostics on which segments were excluded
-    if(debug_mode){
-
-      # (usefalse <-
-      #    cohort_list$segments %>%
-      #    arrange(DateTime1) %>%
-      #    filter(!is.na(seg_id) & use == FALSE)
-      # ) %>% head
-      #
-      # if(nrow(usefalse)>0){
-      #
-      #   message('\nSTART OF DIAGNOSTICS: segments with use == FALSE (n = ', nrow(usefalse),'):')
-      #   message('\n ---- FYI: Per your settings, use will be TRUE for this cohort in the following conditions:')
-      #   message(' ---- ---- column `stratum` is one of these values: ',       paste(setti$strata, collapse=', '))
-      #   message(' ---- ---- column `EffType` is one of these values: ', paste(distance_types, collapse=', '))
-      #   message(' ---- ---- column `Mode` is one of these values: ', paste(distance_modes, collapse=', '))
-      #   message(' ---- ---- column `OnEffort` is one of these values: ', paste(distance_on_off, collapse=', '))
-      #   message(' ---- ---- column `Bft` within segment, when averaged, can be rounded to one of these values: ', paste(beaufort_range, collapse=', '))
-      #   message('\n')
-      #
-      #   falsi=1
-      #   for(falsi in 1:nrow(usefalse)){
-      #     (usi <- usefalse[falsi,])
-      #     message(' ---- Segment ID = ',usi$seg_id,' | DAS rows = ',usi$n_rows,
-      #             ' (line_num ', usi$min_line,'-', usi$max_line,', ',
-      #             round(((usi$timestamp2 - usi$timestamp1)/60)),' mins) | start = ',
-      #             usi$DateTime1,' | stratum = ',usi$stratum,
-      #             ' | EffType(s) = ', usi$EffType,' | Mode(s) = ', usi$Mode,' | OnEffort(s) = ', usi$OnEffort,
-      #             ' | avg Bft = ', round(usi$avgBft))
-      #   }
-      #   message('\n')
-      #   if(nrow(usefalse)>10){
-      #     message('END OF DIAGNOSTICS: The above segments have use == FALSE (n = ', nrow(usefalse),'):')
-      #     message('\n ---- FYI: Per your settings, use will be TRUE for this cohort in the following conditions:')
-      #     message(' ---- ---- column `stratum` is one of these values: ',       paste(setti$strata, collapse=', '))
-      #     message(' ---- ---- column `EffType` is one of these values: ', paste(distance_types, collapse=', '))
-      #     message(' ---- ---- column `Mode` is one of these values: ', paste(distance_modes, collapse=', '))
-      #     message(' ---- ---- column `OnEffort` is one of these values: ', paste(distance_on_off, collapse=', '))
-      #     message(' ---- ---- column `Bft` within segment, when averaged, can be rounded to one of these values: ', paste(beaufort_range, collapse=', '))
-      #     message('\n')
-      #   }
-      # }
-
-    }
     #===========================================================================
 
     # Add back out events
