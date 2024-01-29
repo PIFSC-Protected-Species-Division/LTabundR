@@ -8,6 +8,7 @@ process_surveys(
   das_file,
   settings,
   edits = NULL,
+  delete_edited_files = TRUE,
   process_sightings = TRUE,
   process_subgroups = TRUE,
   save_local = FALSE
@@ -26,6 +27,10 @@ before proceeding with data processing. These edits must take the form of the in
 the \code{LTabundR} function \code{das_editor()} (see its documentation for details).
 If \code{edits} are supplied, a temporary version of the \code{DAS} data will be created
 (this temporary version will then be deleted at the end of this function's procedure.)}
+
+\item{delete_edited_files}{A Boolean, with default \code{TRUE}, indicating that any edited versions of \code{DAS} data, which are saved in new files by the function,
+should be deleted at the end of the function's processing steps. This (1) reduces the file size of your project and (2) ensures that there is only ONE
+version of your data in existence (the original), and that any updates to it are saved in the list you provide to the \code{edits} input.}
 
 \item{process_sightings}{A Boolean, with default \code{TRUE}, indicating whether or not sightings should be processed in addition to effort.
 When troubleshooting effort segments, it could be useful to set this to \code{FALSE} to expedite processing time.}

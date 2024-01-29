@@ -20,6 +20,10 @@
 #' If `edits` are supplied, a temporary version of the `DAS` data will be created
 #' (this temporary version will then be deleted at the end of this function's procedure.)
 #'
+#' @param delete_edited_files A Boolean, with default `TRUE`, indicating that any edited versions of `DAS` data, which are saved in new files by the function,
+#' should be deleted at the end of the function's processing steps. This (1) reduces the file size of your project and (2) ensures that there is only ONE
+#' version of your data in existence (the original), and that any updates to it are saved in the list you provide to the `edits` input.
+#'
 #' @param process_sightings A Boolean, with default `TRUE`, indicating whether or not sightings should be processed in addition to effort.
 #' When troubleshooting effort segments, it could be useful to set this to `FALSE` to expedite processing time.
 #'
@@ -277,6 +281,7 @@
 process_surveys <- function(das_file,
                             settings,
                             edits = NULL,
+                            delete_edited_files = TRUE,
                             process_sightings = TRUE,
                             process_subgroups = TRUE,
                             save_local = FALSE){
@@ -289,6 +294,7 @@ process_surveys <- function(das_file,
     settings <- example_settings
     edits = NULL
     save_local=FALSE
+    delete_edited_files = TRUE
     process_sightings = TRUE
     process_subgroups = TRUE
 
@@ -307,50 +313,62 @@ process_surveys <- function(das_file,
   #=============================================================================
   #=============================================================================
   # Execute edits
+  # & update the vector of DAS files to edit
 
-  das_file_new <- das_file
-  files_to_delete <- c()
-  if(!is.null(edits)){
-    message('\nProcessing edits ============================================')
+  suffix = '_edited'
+  das_file_new <-
+    das_editor_tofile(das_file,
+                      edits,
+                      suffix = suffix,
+                      verbose = TRUE)
+  das_file_new
 
-    (files_to_edit <- lapply(edits,'[[',1)[[1]])
-    # subset to edits that pertain to the das files being processed
-    (edits_to_keep <- which(files_to_edit %in% das_file_new))
-    if(length(edits_to_keep) > 0){
+  # Note the edited files to delete after processing is complete
+  (files_to_delete <- das_file_new[grepl(suffix, das_file_new)])
 
-      # Make edits
-      das_edited <- das_editor(edits)
-      das_edited <- das_edited$das
-      length(das_edited)
-
-      # Loop through each edited file and save a tmp version to file
-      i=1
-      for(i in 1:length(das_edited)){
-        dasi <- das_edited[[i]]
-        dasi %>% head
-        (das_file_index <- which(das_file_new == dasi$das_file))
-        # Make sure this edited das file is actually going to be used in this process_surveys() call
-        if(length(das_file_index)>0){
-          (fnami <- das_file_new[das_file_index])
-          (fnami <- gsub('.das','',fnami))
-          (fnami <- gsub('.DAS','',fnami))
-          (fnami <- paste0(fnami,'_edited.das'))
-
-          # Save tmp version
-          (das_tmp <- dasi$das) %>% nrow
-          write.table(das_tmp, file = fnami, append = FALSE, sep = " ", dec = ".",
-                      row.names = FALSE, col.names = FALSE, quote=FALSE)
-
-          # Replace filename in das_file_new with this modified version
-          das_file_new[das_file_index] <- fnami
-
-          # Add this replacement file to the vector of files that need deleting
-          (files_to_delete <- c(files_to_delete, fnami))
-        }
-      } # loop through each edited das file as a result of these edits
-      message('\n')
-    } # end of if there are actually edits to apply
-  } # end if edits isnt NULL
+  # das_file_new <- das_file
+  # files_to_delete <- c()
+  # if(!is.null(edits)){
+  #   message('\nProcessing edits ============================================')
+  #
+  #   (files_to_edit <- lapply(edits,'[[',1)[[1]])
+  #   # subset to edits that pertain to the das files being processed
+  #   (edits_to_keep <- which(files_to_edit %in% das_file_new))
+  #   if(length(edits_to_keep) > 0){
+  #
+  #     # Make edits
+  #     das_edited <- das_editor(edits)
+  #     das_edited <- das_edited$das
+  #     length(das_edited)
+  #
+  #     # Loop through each edited file and save a tmp version to file
+  #     i=1
+  #     for(i in 1:length(das_edited)){
+  #       dasi <- das_edited[[i]]
+  #       dasi %>% head
+  #       (das_file_index <- which(das_file_new == dasi$das_file))
+  #       # Make sure this edited das file is actually going to be used in this process_surveys() call
+  #       if(length(das_file_index)>0){
+  #         (fnami <- das_file_new[das_file_index])
+  #         (fnami <- gsub('.das','',fnami))
+  #         (fnami <- gsub('.DAS','',fnami))
+  #         (fnami <- paste0(fnami,'_edited.das'))
+  #
+  #         # Save tmp version
+  #         (das_tmp <- dasi$das) %>% nrow
+  #         write.table(das_tmp, file = fnami, append = FALSE, sep = " ", dec = ".",
+  #                     row.names = FALSE, col.names = FALSE, quote=FALSE)
+  #
+  #         # Replace filename in das_file_new with this modified version
+  #         das_file_new[das_file_index] <- fnami
+  #
+  #         # Add this replacement file to the vector of files that need deleting
+  #         (files_to_delete <- c(files_to_delete, fnami))
+  #       }
+  #     } # loop through each edited das file as a result of these edits
+  #     message('\n')
+  #   } # end of if there are actually edits to apply
+  # } # end if edits isnt NULL
 
   #=============================================================================
   # Loop through each DAS file
@@ -425,8 +443,10 @@ process_surveys <- function(das_file,
   #=============================================================================
   # Remove any temporary files from the editing stage
 
-  if(length(files_to_delete)>0){
-    file.remove(files_to_delete)
+  if(delete_edited_files){
+    if(length(files_to_delete)>0){
+      file.remove(files_to_delete)
+    }
   }
 
   #=============================================================================

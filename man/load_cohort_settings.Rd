@@ -134,12 +134,14 @@ overlapping strata is used to assign a stratum name to each row.
 (We are not sure what use case this would serve,
 but we offer it as an option for niche analyses.)}
 
-\item{distance_types}{A character vector of the effort types that meet the "analysis
+\item{distance_types}{A character vector of the full-range of effort types that meet the "analysis
 inclusion criteria", i.e., will be included in detection function estimation,
 and therefore considered in effort segmentizing.
 Accepted values are \code{"S"} (systematic/standard effort), \code{"F"} (fine-scale effort),
 and \code{"N"} (non-systematic/non-standard effort, in which systematic protocols
-are being used but effort is not occurring along design-based transect routes).}
+are being used but effort is not occurring along design-based transect routes).
+Note that it is possible to further subset the effort types specifically for
+density estimation in \code{LTabundR}'s function for line transect analysis, \code{lta()}.}
 
 \item{distance_modes}{The effort modes that meet "analysis inclusion criteria", i.e.,
 will be included in detection function estimation,
