@@ -28,6 +28,9 @@
 #' }
 #'
 #' @export
+#' @import dplyr
+#' @import ggplot2
+#' @import ggbreak
 #'
 process_polygon <- function(polygon_dataframe,
                             remove_land = TRUE,
@@ -43,6 +46,7 @@ process_polygon <- function(polygon_dataframe,
     # coerce_lons If `TRUE` (not the default), all longitudes will be coerced to negative values, e.g., -185. This can avoid complications when strata or survey data span the international date line.
 
     remove_land = TRUE
+    toplot = FALSE
     toplot = TRUE
 
     data(strata_cnp)
@@ -85,7 +89,7 @@ process_polygon <- function(polygon_dataframe,
   coords
 
   # Stage empty version of resulting ggplot object
-  pmod <- NULL
+  p_mod <- NULL
 
   #=============================================================================
   # Handle IDL

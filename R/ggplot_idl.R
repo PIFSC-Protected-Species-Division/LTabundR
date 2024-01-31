@@ -10,6 +10,9 @@
 #' @param bypass An option to return an unmodified `ggplot`, to ease automated toggling when using in various functions within `LTabundR`.
 
 #' @return A `ggplot2` object that is actually two plots side by side, with a small space in between indicating the IDL.
+#' @import dplyr
+#' @import ggplot2
+#' @import ggbreak
 #' @export
 #'
 ggplot_idl <- function(p_base,

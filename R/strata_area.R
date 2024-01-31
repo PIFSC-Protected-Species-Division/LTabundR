@@ -47,6 +47,7 @@
 #' @import sf
 #' @import ggplot2
 #' @import dplyr
+#' @import ggbreak
 #'
 #' @export
 #'

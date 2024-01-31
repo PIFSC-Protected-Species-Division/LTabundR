@@ -1,6 +1,6 @@
 Package: LTabundR
 Title: Development Version 
-Version: 0.4.9
+Version: 0.4.9.1
 Authors@R: 
     person("Eric", "Keen", , "eric.keen@noaa.gov", role = c("aut", "cre"))
     person("Amanda", "Bradford", , "amanda.bradford@noaa.gov", role = c("aut", "cre"))
@@ -17,6 +17,7 @@ Imports:
     dplyr,
     DT,
     geosphere,
+    ggbreak,
     ggplot2,
     ggpubr,
     ggrepel,
