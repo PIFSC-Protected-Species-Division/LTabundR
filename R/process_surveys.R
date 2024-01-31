@@ -326,50 +326,6 @@ process_surveys <- function(das_file,
   # Note the edited files to delete after processing is complete
   (files_to_delete <- das_file_new[grepl(suffix, das_file_new)])
 
-  # das_file_new <- das_file
-  # files_to_delete <- c()
-  # if(!is.null(edits)){
-  #   message('\nProcessing edits ============================================')
-  #
-  #   (files_to_edit <- lapply(edits,'[[',1)[[1]])
-  #   # subset to edits that pertain to the das files being processed
-  #   (edits_to_keep <- which(files_to_edit %in% das_file_new))
-  #   if(length(edits_to_keep) > 0){
-  #
-  #     # Make edits
-  #     das_edited <- das_editor(edits)
-  #     das_edited <- das_edited$das
-  #     length(das_edited)
-  #
-  #     # Loop through each edited file and save a tmp version to file
-  #     i=1
-  #     for(i in 1:length(das_edited)){
-  #       dasi <- das_edited[[i]]
-  #       dasi %>% head
-  #       (das_file_index <- which(das_file_new == dasi$das_file))
-  #       # Make sure this edited das file is actually going to be used in this process_surveys() call
-  #       if(length(das_file_index)>0){
-  #         (fnami <- das_file_new[das_file_index])
-  #         (fnami <- gsub('.das','',fnami))
-  #         (fnami <- gsub('.DAS','',fnami))
-  #         (fnami <- paste0(fnami,'_edited.das'))
-  #
-  #         # Save tmp version
-  #         (das_tmp <- dasi$das) %>% nrow
-  #         write.table(das_tmp, file = fnami, append = FALSE, sep = " ", dec = ".",
-  #                     row.names = FALSE, col.names = FALSE, quote=FALSE)
-  #
-  #         # Replace filename in das_file_new with this modified version
-  #         das_file_new[das_file_index] <- fnami
-  #
-  #         # Add this replacement file to the vector of files that need deleting
-  #         (files_to_delete <- c(files_to_delete, fnami))
-  #       }
-  #     } # loop through each edited das file as a result of these edits
-  #     message('\n')
-  #   } # end of if there are actually edits to apply
-  # } # end if edits isnt NULL
-
   #=============================================================================
   # Loop through each DAS file
 

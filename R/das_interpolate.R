@@ -3,7 +3,7 @@
 #' This function is not typically called by the user directly; it is called during `process_surveys()`.
 #' The user can instruct `LTabundR` to interpolate `DAS` data in `load_survey_settings()`.
 #'
-#' param das  A `data.frame` of a `DAS` survey data file, created by `load_das()`.
+#' @param das  A `data.frame` of a `DAS` survey data file, created by `das_load()`.
 #' @param new_interval The interpolation interval, in seconds.
 #' @param max_ignore The maximum interval (seconds) between two rows of survey data that will be interpolated;
 #' if the time gap exceeds this value, interpolation will not occur for these two rows.

@@ -27,6 +27,10 @@ A list with four named slots:
 \item \code{sf}  The \code{sf} version of the polygon that will be passed to mapping functions.
 \item \code{sf_land} The \code{sf} version of the land polygons included within the polygon, if any.
 \item \code{km2}  The area of the polygon, in square kilometers.
+\item \code{idl} A Boolean indicating whether or not this polygon crosses the International Date Line.
+\item \code{lat_range} Latitude range of polygon, in decimal degrees (N positive, S negative).
+\item \code{lon_range} Longitude range of polygon, in decimal degrees (E positive, W negative).
+\item \code{plot} A \code{ggplot} object; \code{NULL} if the input \code{toplot} is \code{FALSE}.
 }
 }
 \description{

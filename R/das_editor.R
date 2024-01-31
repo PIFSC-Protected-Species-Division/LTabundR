@@ -152,7 +152,7 @@ das_editor <- function(edits){
   ui = 1
   for(ui in 1:length(udas)){
     (dasu <- udas[ui])
-    message('Applying edits to DAS file: ',dasu)
+    message('--- applying edits to DAS file: ',dasu)
 
     # Read in das file
     dasi <- das_readtext(dasu)
@@ -171,11 +171,11 @@ das_editor <- function(edits){
     (eds <- which(types %in% c('text', 'function')))
     if(length(eds)>0){
       (edi <- editdasu[eds])
-      message('--- verbatim/function text replacements ...')
+      message('--- --- verbatim/function text replacements ...')
 
       ei = 1 # Loop through each edit
       for(ei in 1:length(edi)){
-        message('--- --- working on edit ', ei,' ...')
+        message('--- --- --- working on edit ', ei,' ...')
         (editi <- edi[[ei]])
         editi
         (rows <- editi$rows)
@@ -232,14 +232,14 @@ das_editor <- function(edits){
     (eds <- which(types %in% c('move', 'copy','insert','delete')))
     if(length(eds)>0){
       (edi <- editdasu[eds])
-      message('--- move, copy/paste, insertion, and deletion events ...')
+      message('--- --- move, copy/paste, insertion, and deletion events ...')
 
       revised_das2 <- revised_das
       revised_das2$id <- 1:nrow(revised_das2) # Store original row locations
 
       ei = 1 # Loop through each edit
       for(ei in 1:length(edi)){
-        message('--- --- working on edit ', ei,' ...')
+        message('--- --- --- working on edit ', ei,' ...')
         (editi <- edi[[ei]])
         (typi <- editi$type)
 

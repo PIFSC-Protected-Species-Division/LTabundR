@@ -21,6 +21,10 @@
 #' \item `sf`  The `sf` version of the polygon that will be passed to mapping functions.
 #' \item `sf_land` The `sf` version of the land polygons included within the polygon, if any.
 #' \item `km2`  The area of the polygon, in square kilometers.
+#' \item `idl` A Boolean indicating whether or not this polygon crosses the International Date Line.
+#' \item `lat_range` Latitude range of polygon, in decimal degrees (N positive, S negative).
+#' \item `lon_range` Longitude range of polygon, in decimal degrees (E positive, W negative).
+#' \item `plot` A `ggplot` object; `NULL` if the input `toplot` is `FALSE`.
 #' }
 #'
 #' @export
@@ -43,11 +47,13 @@ process_polygon <- function(polygon_dataframe,
 
     data(strata_cnp)
     length(strata_cnp)
+    polygon_dataframe <- strata_cnp[[1]]
     polygon_dataframe <- strata_cnp[[2]]
 
     data(strata_ccs)
     length(strata_ccs)
     polygon_dataframe <- strata_ccs[[5]]
+    polygon_dataframe
 
     process_polygon(polygon_dataframe, remove_land=TRUE, toplot=TRUE)$km2
     process_polygon(polygon_dataframe, remove_land=FALSE, toplot=TRUE)$km2
@@ -61,6 +67,7 @@ process_polygon <- function(polygon_dataframe,
   }
 
   #=============================================================================
+  # Setup
 
   # Ensure that coordinates are numeric
   polygon_dataframe$Lon <- as.numeric(polygon_dataframe$Lon)
@@ -77,28 +84,60 @@ process_polygon <- function(polygon_dataframe,
   }
   coords
 
+  # Stage empty version of resulting ggplot object
+  pmod <- NULL
+
   #=============================================================================
+  # Handle IDL
+
+  # Get range
+  (lonmin <- coords$Lon %>% min)
+  (lonmax <- coords$Lon %>% max)
+  (latmin <- coords$Lat %>% min)
+  (latmax <- coords$Lat %>% max)
+  lat_range <- c(latmin, latmax)
 
   # Test to see if this polygon crosses the IDL
-  (idl_test <- any(c(any(coords$Lon < -180),
-                     all(c(any(coords$Lon < 0), any(coords$Lon >= 0))))))
+  (idl <- any(c(any(coords$Lon < -180),
+                all(c(any(coords$Lon < 0), any(coords$Lon >= 0))))))
 
-  if(!idl_test){
+  #idl <- FALSE
+
+  if(!idl){
+    # Does not cross IDL
+    coords_mx <- as.matrix(coords[,1:2])
+    # sf_pol <- sfheaders::sfc_multipolygon(obj = coords_mx,
+    #                                    x = 'Lon', y='Lat')
+    # sf_pol <- sf::st_geometry(poli)
+
     # Normal -- does not cross date line
     coords_mx <- as.matrix(coords[,1:2])
     poli <- sf::st_polygon(list(coords_mx))
     sf_pol <- sf::st_geometry(poli)
+    #ggplot() + geom_sf(data=sf_pol)
 
   }else{
+    # DOES cross IDL
+
     # Coerce Lons to all negative at first
     (bads <- which(coords$Lon > 0))
     coordi <- coords
     coordi$Lon[bads] <- coordi$Lon[bads] - 360
     coordi
+
+    # Update lon range
+    (lonmin <- coordi$Lon %>% min)
+    (lonmax <- coordi$Lon %>% max)
+    if(lonmin < -180){ (lonmin <- 180 + (lonmin + 180)) }
+    if(lonmax < -180){ (lonmax <- 180 + (lonmax + 180)) }
+    lonmin
+    lonmax
+
+    # Continue with polygon creation
     coords_mx <- as.matrix(coordi[,1:2])
     poli <- sf::st_polygon(list(coords_mx))
     sf_poli <- sf::st_geometry(poli)
-    #ggplot(sf_poli) + geom_sf()
+    # ggplot(sf_poli) + geom_sf()
 
     # Split into an East and West polygon
     polw <- st_crop(sf_poli, xmin = -359.99999, ymin = -90, xmax = -180.00000001, ymax = 90)
@@ -115,19 +154,39 @@ process_polygon <- function(polygon_dataframe,
     sf_pol <- sf::st_geometry(sf_pol)
   }
 
+  lonmin
+  lonmax
+  (lon_range <- c(lonmin - 2, lonmax + 2))
+
+  #=============================================================================
+  # Prep for plotting
+
   # Set CRS
   sf_pol <- st_make_valid(sf_pol)
   st_crs(sf_pol) <- 4326
-  if(toplot){
-    print(ggplot(sf_pol) +
-      geom_sf(alpha=.5) +
-        labs(title='Polygon before considering land'))
-  }
+
+  # Prepare plot
+  p_base <-
+    ggplot() +
+    geom_sf(data=sf_pol, alpha=.5)
+  #p_base
+
+  # Modify if IDL is crossed
+  p_mod <-
+    ggplot_idl(p_base,
+               lon_range = lon_range,
+               lat_range = c(lat_range[1] - 2, lat_range[2] + 2),
+               bypass = !idl) +
+    labs(title='Polygon before considering land')
+  #p_mod
 
   # Get area
   (x <- st_area(sf_pol))
   (poli_area <- units::set_units(x, km^2))
   poli_area_w_land <- poli_area
+
+  #=============================================================================
+  # Handle land
 
   # Find any land occurring within the polygon
   landint <- NULL
@@ -148,21 +207,41 @@ process_polygon <- function(polygon_dataframe,
     (area_m2 <- areas_m2 %>% sum)
     (area_km2 <- units::set_units(area_m2, km^2))
     (poli_area <- poli_area - area_km2)
-    if(toplot){
-      print(ggplot() +
-        geom_sf(data=sfpol, alpha=.5) +
-        geom_sf(data=landint, alpha=.5, fill='grey40') +
-        labs(title='Polygon with land'))
-    }
+
+    # Prepare plot
+    p_base <-
+      ggplot() +
+      geom_sf(data=sf_pol, alpha=.5) +
+      geom_sf(data=landint, alpha=.5, fill='grey40')
+    #p_base
+
+    # Modify if IDL is crossed
+    p_mod <-
+      ggplot_idl(p_base,
+                 lon_range = lon_range,
+                 lat_range = c(lat_range[1] - 2, lat_range[2] + 2),
+                 bypass = !idl) +
+      labs(title='Polygon with land')
+    #p_mod
   }
 
-  # Prepare return list
+  #=============================================================================
+  # Returns
+
+  if(toplot){
+    print(p_mod)
+  }
+
   return_list <- list(coords = coords,
                       polygon = poli,
                       sf = sf_pol,
                       sf_land = landint,
                       km2 = poli_area,
-                      km2_with_land = poli_area_w_land)
+                      km2_with_land = poli_area_w_land,
+                      idl = idl,
+                      lat_range = lat_range,
+                      lon_range = lon_range,
+                      plot = p_mod)
 
   return(return_list)
 }
