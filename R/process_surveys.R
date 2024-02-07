@@ -20,9 +20,6 @@
 #' If `edits` are supplied, a temporary version of the `DAS` data will be created
 #' (this temporary version will then be deleted at the end of this function's procedure.)
 #'
-#' @param delete_edited_files A Boolean, with default `TRUE`, indicating that any edited versions of `DAS` data, which are saved in new files by the function,
-#' should be deleted at the end of the function's processing steps. This (1) reduces the file size of your project and (2) ensures that there is only ONE
-#' version of your data in existence (the original), and that any updates to it are saved in the list you provide to the `edits` input.
 #'
 #' @param process_sightings A Boolean, with default `TRUE`, indicating whether or not sightings should be processed in addition to effort.
 #' When troubleshooting effort segments, it could be useful to set this to `FALSE` to expedite processing time.
@@ -281,7 +278,6 @@
 process_surveys <- function(das_file,
                             settings,
                             edits = NULL,
-                            delete_edited_files = TRUE,
                             process_sightings = TRUE,
                             process_subgroups = TRUE,
                             save_local = FALSE){
@@ -324,7 +320,7 @@ process_surveys <- function(das_file,
   das_file_new
 
   # Note the edited files to delete after processing is complete
-  (files_to_delete <- das_file_new[grepl(suffix, das_file_new)])
+  # (files_to_delete <- das_file_new[grepl(suffix, das_file_new)])
 
   #=============================================================================
   # Loop through each DAS file
@@ -398,12 +394,12 @@ process_surveys <- function(das_file,
 
   #=============================================================================
   # Remove any temporary files from the editing stage
-
-  if(delete_edited_files){
-    if(length(files_to_delete)>0){
-      file.remove(files_to_delete)
-    }
-  }
+#
+#   if(delete_edited_files){
+#     if(length(files_to_delete)>0){
+#       file.remove(files_to_delete)
+#     }
+#   }
 
   #=============================================================================
   if(FALSE){ # debugging scratchpad

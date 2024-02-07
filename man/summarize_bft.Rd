@@ -4,10 +4,13 @@
 \alias{summarize_bft}
 \title{Summarize \code{Wincruz} by Beaufort Sea State}
 \usage{
-summarize_bft(cruz, cohort = 1)
+summarize_bft(cruz, use_only = TRUE, cohort = 1)
 }
 \arguments{
 \item{cruz}{Your \code{cruz} object (produced from \code{LTabundR::process_surveys()}).}
+
+\item{use_only}{If \code{TRUE} (the default), sea states will only be summarized for effort where \code{use=TRUE}, which is
+the effort that will be used in detection function model fitting. If \code{FALSE}, all effort will be summarized.}
 
 \item{cohort}{The cohort whose data you would like to summarize, provided as a number indicating which slot in \code{cruz$cohorts} should be referenced.}
 }

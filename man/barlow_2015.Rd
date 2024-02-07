@@ -5,7 +5,7 @@
 \alias{barlow_2015}
 \title{Relative trackline detection probabilities from Barlow (2015).}
 \format{
-An object of class \code{data.frame} with 161 rows and 9 columns.
+An object of class \code{data.frame} with 168 rows and 9 columns.
 }
 \usage{
 barlow_2015

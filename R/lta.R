@@ -293,7 +293,8 @@
 #' Similarly, if `sightings` has a column named `ss_valid` (all standard `cruz` objects do)
 #' and any of the rows in that column are `FALSE`, those rows will have their `best`
 #' school size estimate (which will be `NA` or `1`, since they are invalid) replaced
-#' by the mean best estimate for their respective species.
+#' by the mean best estimate for their respective species in the year for which abundance is being estimated.
+#' Currently the data used for that mean estimate are not specific to a given region, just the year of the abundance estimate.
 #'
 #' This stage of the `lta()` command is executed within a back-end function, `LTabundR::abundance()`,
 #' which has its own documentation for your reference.
@@ -1296,7 +1297,7 @@ lta <- function(cruz,
                                    species = paste(sppi, collapse='-'),
                                    abundi,
                                    g0_cv_small = g0_cvi[1],
-                                   g0_cv_large = g0_cv[2]))
+                                   g0_cv_large = g0_cvi[2]))
               abund_results <- rbind(abund_results, abundi)
             } # end of if abundi is NULL
             message('')
@@ -1321,7 +1322,10 @@ lta <- function(cruz,
             results_iter <-
               abund_results %>%
               dplyr::mutate(i = iter) %>%
-              dplyr::select(i, title, species, Region, year, km, ESW_mean, g0_est, n, ER, D, size_mean, N)
+              dplyr::select(i, title, species, Region, year, km, ESW_mean, g0_est,
+                            n, ER, D, size_mean, N,
+                            g0_small, g0_large,
+                            g0_cv_small, g0_cv_large)
 
             results <- rbind(results, results_iter)
             message('--- Min abundance: ', min(round(results$N)))

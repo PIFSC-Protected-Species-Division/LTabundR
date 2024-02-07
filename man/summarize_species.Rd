@@ -10,7 +10,7 @@ summarize_species(
   cohort = 1,
   filter_to_regions = NULL,
   exclude_regions = NULL,
-  distance_restrict = FALSE,
+  distance_restrict = TRUE,
   distance_range = c(0, 10),
   distance_interval = 0.5
 )

@@ -116,15 +116,18 @@ A list.
 \item \code{N_L95}: The lower 95\% confidence interval of abundance using the BCA method.
 \item \code{N_U95}: The upper 95\% confidence interval of abundance using the BCA method.
 \item \code{ER}: The estimate of the encounter rate.
+\item  \code{ESW} = The estimate of the Effective Strip Width (km).
+\item  \code{ESW_CV} = Estimate of ESW CV, based on standard deviation of bootstrap estimates of ESW.
+\item \code{ss} = Mean subgroup size estimate.
 \item \code{n}: Number of sightings used in density estimation.
 \item \code{L}: Survey effort, in km, used in density estimation.
 \item \code{n_segments}: Number of effort segments used in density estimation.
-\item \code{g0}: The weighted mean of \emph{g(0)} for the point estimate, based on sightings conditions in \code{density_segments}.
+\item \code{g0}: The empirical weighted mean of \emph{g(0)} for the point estimate, based on sightings conditions in \code{density_segments}.
 \item \code{g0_cv}: The CV of this estimate of the point estimate of the weighted mean of \emph{g(0)}, as estimated by an MCMC routine.
 \item \code{g0_details}: A \code{list} with detailed results from \code{Rg(0)} estimation (see output details in \code{?g0_model}).
 \item \code{df}: A \code{list} with detailed results from detection function estimation (see output details in \code{?df_fit}).
 \item \code{bootstraps}: A named \code{list} with the bootstrapped values for \code{esw} (effective strip half-width),
-\code{ss} (school size), \code{g0} (relative g(0)), \code{er} (encounter rate), \code{D} (density), and \code{N} (abundance).
+\code{ss} (subgroup size), \code{g0} (relative g(0)), \code{er} (encounter rate), \code{D} (density), and \code{N} (abundance).
 \item \code{iterations}: number of bootstrap iterations used for CV estimation of effective strip half-width, school size, g(0), and encounter rate.
 \item \code{density_bootstraps}: number of bootstrap iterations used for CV estimation of density and abundance.
 }
@@ -147,7 +150,7 @@ This function performs the following operations:
 \item Fits a detection function to \code{df_sits} without covariates, using the \code{LTabundR} function \code{df_fit()},
 in order to estimate the effective strip half-width (ESW).
 \item Conducts bootstrap re-sampling of the detection function fitting routine in order to estimate the CV of ESW.
-\item Estimates the geometric mean of subgroup school size based on the \code{ss} input.
+\item Estimates the arithmetic mean of subgroup school size based on the \code{ss} input.
 \item Creates a bootstrap-resampled distribution of subgroup school sizes, with which CV is estimated.
 \item Models the relative g(0) in different survey conditions using the \code{LTabundR} function \code{g0_model()}.
 This function also estimates the CV of the Rg(0) estimate in each Beaufort sea state using jackknife resampling.

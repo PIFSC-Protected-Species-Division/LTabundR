@@ -27,7 +27,7 @@ abundance(
 already filtered to contain the effort you wish to use to estimate density/abundance.}
 
 \item{sightings}{Sightings dataframe, drawn from a \code{cruz} object (e.g., \code{cruz$cohorts[[1]]$sightings}),
-already filtered to contain the sightings you wish to use to fit the density/abundance.
+already filtered to contain the sightings you wish to use to estimate the density/abundance.
 This sightings dataframe must have a column named \code{esw}, which can be provided
 by the \code{LTabundR} function \code{fit_df()} (fit a detection function model).
 If \code{NA}'s occur in the \code{esw} column, they will be replaced with the mean \code{esw} value

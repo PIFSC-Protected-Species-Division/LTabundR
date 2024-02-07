@@ -381,7 +381,8 @@ for the remainder of the dataset in that region-year.
 Similarly, if \code{sightings} has a column named \code{ss_valid} (all standard \code{cruz} objects do)
 and any of the rows in that column are \code{FALSE}, those rows will have their \code{best}
 school size estimate (which will be \code{NA} or \code{1}, since they are invalid) replaced
-by the mean best estimate for their respective species.
+by the mean best estimate for their respective species in the year for which abundance is being estimated.
+Currently the data used for that mean estimate are not specific to a given region, just the year of the abundance estimate.
 
 This stage of the \code{lta()} command is executed within a back-end function, \code{LTabundR::abundance()},
 which has its own documentation for your reference.

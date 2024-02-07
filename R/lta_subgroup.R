@@ -93,7 +93,7 @@
 #' \item Fits a detection function to `df_sits` without covariates, using the `LTabundR` function `df_fit()`,
 #' in order to estimate the effective strip half-width (ESW).
 #' \item Conducts bootstrap re-sampling of the detection function fitting routine in order to estimate the CV of ESW.
-#' \item Estimates the geometric mean of subgroup school size based on the `ss` input.
+#' \item Estimates the arithmetic mean of subgroup school size based on the `ss` input.
 #' \item Creates a bootstrap-resampled distribution of subgroup school sizes, with which CV is estimated.
 #' \item Models the relative g(0) in different survey conditions using the `LTabundR` function `g0_model()`.
 #' This function also estimates the CV of the Rg(0) estimate in each Beaufort sea state using jackknife resampling.
@@ -124,15 +124,18 @@
 #' \item `N_L95`: The lower 95% confidence interval of abundance using the BCA method.
 #' \item `N_U95`: The upper 95% confidence interval of abundance using the BCA method.
 #' \item `ER`: The estimate of the encounter rate.
+#' \item  `ESW` = The estimate of the Effective Strip Width (km).
+#' \item  `ESW_CV` = Estimate of ESW CV, based on standard deviation of bootstrap estimates of ESW.
+#' \item `ss` = Mean subgroup size estimate.
 #' \item `n`: Number of sightings used in density estimation.
 #' \item `L`: Survey effort, in km, used in density estimation.
 #' \item `n_segments`: Number of effort segments used in density estimation.
-#' \item `g0`: The weighted mean of *g(0)* for the point estimate, based on sightings conditions in `density_segments`.
+#' \item `g0`: The empirical weighted mean of *g(0)* for the point estimate, based on sightings conditions in `density_segments`.
 #' \item `g0_cv`: The CV of this estimate of the point estimate of the weighted mean of *g(0)*, as estimated by an MCMC routine.
 #' \item `g0_details`: A `list` with detailed results from `Rg(0)` estimation (see output details in `?g0_model`).
 #' \item `df`: A `list` with detailed results from detection function estimation (see output details in `?df_fit`).
 #' \item `bootstraps`: A named `list` with the bootstrapped values for `esw` (effective strip half-width),
-#' `ss` (school size), `g0` (relative g(0)), `er` (encounter rate), `D` (density), and `N` (abundance).
+#' `ss` (subgroup size), `g0` (relative g(0)), `er` (encounter rate), `D` (density), and `N` (abundance).
 #' \item `iterations`: number of bootstrap iterations used for CV estimation of effective strip half-width, school size, g(0), and encounter rate.
 #' \item `density_bootstraps`: number of bootstrap iterations used for CV estimation of density and abundance.
 #' }
@@ -489,6 +492,8 @@ lta_subgroup <- function(df_sits, # DateTime, Lat, Lon, Cruise, PerpDistKm
                   N_L95 = coxed::bca(its$N)[1],
                   N_U95 = coxed::bca(its$N)[2],
                   ER = er_estimate,
+                  ESW = esw %>% as.numeric(),
+                  ESW_CV = as.numeric(sd(esw_boots) / as.numeric(esw)),
                   ss = ss_estimate,
                   n = nrow(density_sightings),
                   L = L,

@@ -177,6 +177,11 @@ cruz$cohorts$pseudorca$das$stratum %>% table
 cruz_structure(cruz)
 #cruz_explorer(cruz)
 
+summarize_bft(cruz)$overall
+summarize_bft(cruz, use_only = FALSE)$overall
+
+cruz$cohorts$all$das %>% filter(Bft > 6) %>% group_by(use, Bft) %>% tally()
+
 # Rename
 cnp_150km_1986_2020 <- cruz
 

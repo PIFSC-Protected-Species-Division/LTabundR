@@ -33,7 +33,7 @@ summarize_species <- function(spp,
                               cohort=1,
                               filter_to_regions = NULL,
                               exclude_regions = NULL,
-                              distance_restrict = FALSE,
+                              distance_restrict = TRUE,
                               distance_range = c(0,10),
                               distance_interval = 0.5){
 
@@ -65,6 +65,10 @@ summarize_species <- function(spp,
     summarize_species(spp, cruz)$detection_distances
 
     summarize_species('046', cruz)
+    sits <- summarize_species('032', cruz)$sightings
+    summarize_species('032', cruz, distance_restrict = TRUE)$detection_distances
+    sits %>% filter(included == TRUE) %>% pull(PerpDistKm) %>% sort
+
     summarize_species('046', cruz)$detection_distances
     summarize_species('046', cruz, distance_range=c(0,3),distance_interval=.2)$detection_distances
 
@@ -207,34 +211,21 @@ summarize_species <- function(spp,
 
   (perps <- sitii$PerpDistKm %>% sort)
 
-  results$detection_distances <-
-    data.frame(km_min_incl = td_steps,
-             km_max_excl = lead(td_steps),
-             sightings = c(hist(perps, breaks=td_steps, plot=FALSE)$counts,0)) %>%
-    dplyr::mutate(km_mid = km_min_incl + 0.5*(km_max_excl - km_min_incl)) %>%
-    dplyr::mutate(total_within = cumsum(sightings)) %>%
-    dplyr::mutate(total_beyond = sum(sightings) - total_within) %>%
-    dplyr::mutate(percent_beyond = (total_beyond / sum(sightings)*100)) %>%
-    dplyr::select(km_min_incl, km_max_excl, sightings, percent_beyond, total_beyond, total_within, km_mid) %>%
-    dplyr::filter(km_min_incl >= min(distance_range),
-                  km_max_excl <= max(distance_range))
-
-  #results$detection_distances
-  #sitii$PerpDistKm %>% sort
+  results$detection_distances <- summarize_distances(perps,
+                                                     distance_range = distance_range,
+                                                     distance_interval = distance_interval)
 
   # results$detection_distances <-
-  #   data.frame(km = td_steps,
-  #              sightings = c(hist(sitii$PerpDistKm,
-  #                                 breaks=td_steps,
-  #                                 #right = FALSE,
-  #                                 plot=FALSE)$counts,
-  #                            0)) %>%
+  #   data.frame(km_min_incl = td_steps,
+  #            km_max_excl = lead(td_steps),
+  #            sightings = c(hist(perps, breaks=td_steps, plot=FALSE)$counts,0)) %>%
+  #   dplyr::mutate(km_mid = km_min_incl + 0.5*(km_max_excl - km_min_incl)) %>%
   #   dplyr::mutate(total_within = cumsum(sightings)) %>%
   #   dplyr::mutate(total_beyond = sum(sightings) - total_within) %>%
   #   dplyr::mutate(percent_beyond = (total_beyond / sum(sightings)*100)) %>%
-  #   dplyr::select(km, sightings, percent_beyond, total_beyond, total_within) %>%
-  #   dplyr::filter(km >= min(distance_range),
-  #                 km <= max(distance_range))
+  #   dplyr::select(km_min_incl, km_max_excl, sightings, percent_beyond, total_beyond, total_within, km_mid) %>%
+  #   dplyr::filter(km_min_incl >= min(distance_range),
+  #                 km_max_excl <= max(distance_range))
 
   # Add raw sightings to results ===============================================
   results$sightings <- siti

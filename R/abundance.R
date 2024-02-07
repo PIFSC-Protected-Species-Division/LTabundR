@@ -8,7 +8,7 @@
 #' @param segments Effort segments dataframe, drawn from a `cruz` object (e.g., `cruz$cohorts[[1]]$segments`),
 #' already filtered to contain the effort you wish to use to estimate density/abundance.
 #' @param sightings Sightings dataframe, drawn from a `cruz` object (e.g., `cruz$cohorts[[1]]$sightings`),
-#' already filtered to contain the sightings you wish to use to fit the density/abundance.
+#' already filtered to contain the sightings you wish to use to estimate the density/abundance.
 #' This sightings dataframe must have a column named `esw`, which can be provided
 #' by the `LTabundR` function `fit_df()` (fit a detection function model).
 #' If `NA`'s occur in the `esw` column, they will be replaced with the mean `esw` value

@@ -353,6 +353,10 @@ segmentize <- function(cruz,
     if(debug_mode){ # Double check that use was assigned correctly
       blocs$use %>% table
 
+      blocs %>%
+        group_by(use, Bft) %>%
+        tally()
+
       # blocs %>%
       #   filter(use == FALSE)  %>%
       #   mutate(bftr = round(Bft)) %>%
@@ -671,7 +675,7 @@ segmentize <- function(cruz,
     segs <-
       segs_rejoined %>%
       # for segments with tot_seg_km = 0, change use to FALSE and seg_id to NA
-      mutate(use = ifelse(tot_seg_km == 0, FALSE, TRUE)) %>%
+      mutate(use = ifelse(tot_seg_km == 0, FALSE, use)) %>%
       mutate(seg_id = ifelse(tot_seg_km == 0, NA, seg_id)) %>%
       mutate(use = replace_na(use, FALSE)) %>%
       arrange(temp_i) %>%
@@ -691,6 +695,8 @@ segmentize <- function(cruz,
     # Diagnostic tests
     if(verbose){
       message('\nRunning diagnostic checks...')
+
+      segs %>% group_by(use, Bft) %>% tally()
 
       # Look into OnEffort rows with use == FALSE ==============================
       (testi <-
@@ -965,6 +971,8 @@ segmentize <- function(cruz,
       select(Event:stratum, use, eff_bloc, seg_id) %>%
       mutate(OnEffort = as.logical(OnEffort)) %>%
       mutate(use = as.logical(use))
+
+    #segs_clean %>% group_by(use, Bft) %>% tally()
 
     seg_summary <-
       seg_summary %>%
