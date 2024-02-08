@@ -286,6 +286,7 @@ process_surveys <- function(das_file,
   # For debugging -- not run!
   if(FALSE){
     das_file <- 'data-raw/data/HICEASwinter2020.das'
+    das_file = "/Users/ekezell/Desktop/projects/noaa ltabundr/CenPac1986-2020_Final_alb.das"
     data(example_settings)
     settings <- example_settings
     edits = NULL

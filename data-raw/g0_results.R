@@ -88,11 +88,12 @@ species <- list(
        truncation = 5.5),
   list(spp = c('047', '048', '080'),
        title = 'Kogia spp',
-       truncation = 4.0),
+       truncation = 4.0,
+       constrain_shape = FALSE),
   list(spp = '061',
        title = "Cuvier's beaked whale",
-       truncation = 4.0),
-       #pool_bft = '01'),
+       truncation = 4.0,
+       constrain_shape=TRUE),
   list(spp = '049',
        title = 'Unid. beaked whale',
        truncation = 5.5,
@@ -148,6 +149,7 @@ Rg0 <-
 Rg0 %>% head
 
 #Rg0 %>% View
+
 ################################################################################
 # Plot result
 
