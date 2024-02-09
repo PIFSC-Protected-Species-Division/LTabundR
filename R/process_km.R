@@ -9,7 +9,9 @@
 #' Default is 30 seconds; if the interval is less than this value, the distance will be assumed to be 0 km.
 #' @param max_interval The maximum time interval, in seconds, between rows before assuming that
 #' there has been a break in survey data logging. This time interval will be replaced with the value specified in `replacement_interval`.
-#' @param replacement_interval The time interval, in hours, to use as a replacement when the time interval between rows exceeds `max_interval`.
+#' @param replacement_interval The time interval, in second, to use as a replacement
+#' when the time interval between rows exceeds `max_interval`. The default is 900 seconds.
+#' or the `max_interval` specified, whichever is smaller.
 #' @param max_km_gap Another way of avoiding long gaps in data; this is the maximum distance gap, in km, allowed between rows of data.
 #' This constraint is applied *after* the `interval` constraints above.
 #' @param max_km_replace The distance, in km, to use when the distance between rows exceeds `max_km_gap`.
@@ -22,8 +24,8 @@
 #'
 process_km <- function(das,
                        min_interval = 30,
-                       max_interval = Inf,
-                       replacement_interval = .1667,
+                       max_interval = 900,
+                       replacement_interval = min(c(900, max_interval)),
                        max_km_gap = 30,
                        max_km_replace = 0,
                        debug_mode = TRUE){
@@ -32,9 +34,9 @@ process_km <- function(das,
     das_file <- 'data-raw/data/HICEASwinter2020.das'
     das <- load_das(das_file)
     min_interval = 30
-    max_interval = Inf
-    replacement_interval = .1667
-    max_km_gap = Inf
+    max_interval = 900
+    replacement_interval = 900
+    max_km_gap = 30
     max_km_replace = 0
     debug_mode = TRUE
   } # end debugging! ===========================================================
@@ -81,7 +83,7 @@ process_km <- function(das,
           }else{
             # if speed is valid, use that to calculate distance for the duration of the replacement interval
             if(is.finite(x[6])){
-              d <- x[6] * 1.852 * replacement_interval
+              d <- x[6] * 1.852 * (replacement_interval/3600)
             }
           }
         }

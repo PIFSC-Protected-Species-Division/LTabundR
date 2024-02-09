@@ -69,7 +69,7 @@ das_format <- function(cruz,
 
   # Gather relevant settings
   strata <- settings$strata
-  max_row_interval <- settings$survey$max_row_interval
+  (max_row_interval <- settings$survey$max_row_interval)
 
   # Remove invalid cruise numbers  #############################################
 
@@ -111,12 +111,14 @@ das_format <- function(cruz,
   if(verbose){message('--- calculating distances ...')}
   km <- process_km(dass,
                    min_interval = 30, # only calculate distances b/w entries 30 sec apart or more
-                   max_interval = Inf, # assume entries this long apart represent a gap in effort
-                   replacement_interval = .1667, # for large intervals, what interval to assume (10 minutes)
+                   #max_interval = Inf, # assume entries this long apart represent a gap in effort
+                   max_interval = max_row_interval, # assume entries this long apart represent a gap in effort
+                   replacement_interval = .25, # for large intervals, what interval to assume (10 minutes)
                    max_km_gap = 30, # any km gap beyond this value will be replaced
                    max_km_replace = 0, # replacement value
                    debug_mode = FALSE)
 
+  km %>% sum
   # debugging code
   #message(round(difftime(Sys.time(),tstart,units='secs'))," seconds : ",round(sum(km))," km")
   #hist(km, breaks=seq(0,max(km)+1,by=.5))
