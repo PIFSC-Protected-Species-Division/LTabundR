@@ -339,6 +339,7 @@ segmentize <- function(cruz,
                                      gsub(' ','', ship),
                                      gsub(' ','', stratum),
                                      use,
+                                     EffType,
                                      #type_type,
                                      sep=' - ')) %>%
       # Determine when the scenario changes & make bloc ID
@@ -354,8 +355,9 @@ segmentize <- function(cruz,
       blocs$use %>% table
 
       blocs %>%
-        group_by(use, Bft) %>%
-        tally()
+        group_by(use, EffType, Bft) %>%
+        tally() %>%
+        as.data.frame
 
       # blocs %>%
       #   filter(use == FALSE)  %>%
@@ -850,6 +852,7 @@ segmentize <- function(cruz,
     }
 
     # End segmentize blocs ===================================================
+
 
     # Summarize segments =======================================================
 
