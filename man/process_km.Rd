@@ -6,9 +6,9 @@
 \usage{
 process_km(
   das,
-  min_interval = 30,
-  max_interval = Inf,
-  replacement_interval = 0.1667,
+  min_interval = 5,
+  max_interval = 900,
+  replacement_interval = min(c(900, max_interval)),
   max_km_gap = 30,
   max_km_replace = 0,
   debug_mode = TRUE
@@ -23,7 +23,9 @@ Default is 30 seconds; if the interval is less than this value, the distance wil
 \item{max_interval}{The maximum time interval, in seconds, between rows before assuming that
 there has been a break in survey data logging. This time interval will be replaced with the value specified in \code{replacement_interval}.}
 
-\item{replacement_interval}{The time interval, in hours, to use as a replacement when the time interval between rows exceeds \code{max_interval}.}
+\item{replacement_interval}{The time interval, in second, to use as a replacement
+when the time interval between rows exceeds \code{max_interval}. The default is 900 seconds.
+or the \code{max_interval} specified, whichever is smaller.}
 
 \item{max_km_gap}{Another way of avoiding long gaps in data; this is the maximum distance gap, in km, allowed between rows of data.
 This constraint is applied \emph{after} the \code{interval} constraints above.}

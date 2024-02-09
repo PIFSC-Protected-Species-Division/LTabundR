@@ -110,10 +110,9 @@ das_format <- function(cruz,
 
   if(verbose){message('--- calculating distances ...')}
   km <- process_km(dass,
-                   min_interval = 30, # only calculate distances b/w entries 30 sec apart or more
-                   #max_interval = Inf, # assume entries this long apart represent a gap in effort
+                   # min_interval - use default
                    max_interval = max_row_interval, # assume entries this long apart represent a gap in effort
-                   replacement_interval = .25, # for large intervals, what interval to assume (10 minutes)
+                   replacement_interval = max_row_interval, # for large intervals, what interval to assume
                    max_km_gap = 30, # any km gap beyond this value will be replaced
                    max_km_replace = 0, # replacement value
                    debug_mode = FALSE)

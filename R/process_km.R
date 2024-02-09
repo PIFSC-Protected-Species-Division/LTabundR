@@ -23,7 +23,7 @@
 #' @export
 #'
 process_km <- function(das,
-                       min_interval = 30,
+                       min_interval = 5,
                        max_interval = 900,
                        replacement_interval = min(c(900, max_interval)),
                        max_km_gap = 30,
@@ -33,7 +33,7 @@ process_km <- function(das,
   if(FALSE){ # for debugging -- not run! =======================================
     das_file <- 'data-raw/data/HICEASwinter2020.das'
     das <- load_das(das_file)
-    min_interval = 30
+    min_interval = 10
     max_interval = 900
     replacement_interval = 900
     max_km_gap = 30
@@ -74,7 +74,7 @@ process_km <- function(das,
     if(all(na_check)){
 
       if(x[7] >= 1991){ # years 1991 or later
-        if(x[5] > min_interval){ # only calculate distance if time gap between the adjacent rows is more than 30 seconds
+        if(x[5] > min_interval){ # only calculate distance if time gap between the adjacent rows is more than min_interval seconds
           if(x[5] < max_interval){
             # only calculate distance if time gap is less than max_row_interval
             if(x[1] == x[3]){x[3] <- NA} # if latitudes are equivalent, coerce the function to return d = 0
