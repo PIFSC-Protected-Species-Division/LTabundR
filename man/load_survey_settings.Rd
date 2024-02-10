@@ -7,7 +7,11 @@
 load_survey_settings(
   out_handling = "remove",
   interpolate = NULL,
-  max_row_interval = 900,
+  min_row_interval = 5,
+  max_row_interval = 1800,
+  max_row_km = 10,
+  km_filler = 1,
+  speed_filler = 10 * 1.852,
   segment_method = "day",
   segment_target_km = 150,
   segment_max_interval = 48,
@@ -41,9 +45,22 @@ interpolate the data using simple-linear methods (i.e., no great-circle calculat
 position updates occur every 30 seconds or less. If adjacent \code{DAS} rows are from different dates or cruises,
 the interpolation routine will skip to the next pair of related rows. Interpolation will only occur for On-Effort rows.}
 
+\item{min_row_interval}{The minimum time interval, in seconds, between rows in order for
+the Great Circle distance between rows to be calculated. Intervals less than this number
+will be assigned a distance of 0 km.}
+
 \item{max_row_interval}{The maximum alloweable time interval, in seconds, between rows before
-the function assumes that there has been a break in survey data logging. The default is 900 seconds,
-or 15 minutes.}
+the function assumes that there has been a break in survey data logging. The default is 1800 seconds,
+or 30 minutes.}
+
+\item{max_row_km}{The maximum alloweable distance interval, in km, between rows before
+the function assumes that there has been a break in survey data logging. The default is 20 km.}
+
+\item{km_filler}{When valid speed and position information is not available (e.g., the given distance exceeds \code{max_km_gap}), this value (in km) will be used as an estimate of the
+distance in between consecutive rows of data.}
+
+\item{speed_filler}{When speed is not available in the data, this value (in kmh) will be used as a filler in order to estimate the
+distance between consecutive rows of data based on timestamp differences (when lat/long coordinates are not available).}
 
 \item{segment_method}{The two method options are \code{"day"} --
 all effort within the same Cruise-StudyArea-Stratum-Year-Effort scenario (i.e., an effort bloc)

@@ -35,6 +35,8 @@ das_format <- function(cruz,
     das <- das_load(das_file)
     cruz <- process_strata(das, settings)
     verbose=TRUE
+    min_row_interval <- 5
+    max_row_km <- 10
 
     # Investigate invalid Cruise values
     bads <- which(is.na(das$Cruise))
@@ -69,7 +71,11 @@ das_format <- function(cruz,
 
   # Gather relevant settings
   strata <- settings$strata
+  (min_row_interval <- settings$survey$min_row_interval)
   (max_row_interval <- settings$survey$max_row_interval)
+  (max_row_km <- settings$survey$max_row_km)
+  (km_filler <- settings$survey$km_filler)
+  (speed_filler <- settings$survey$speed_filler)
 
   # Remove invalid cruise numbers  #############################################
 
@@ -110,14 +116,18 @@ das_format <- function(cruz,
 
   if(verbose){message('--- calculating distances ...')}
   km <- process_km(dass,
-                   # min_interval - use default
+                   #min_interval = 0,
+                   min_interval = min_row_interval,
                    max_interval = max_row_interval, # assume entries this long apart represent a gap in effort
                    replacement_interval = max_row_interval, # for large intervals, what interval to assume
-                   max_km_gap = 30, # any km gap beyond this value will be replaced
-                   max_km_replace = 0, # replacement value
+                   #max_km_gap = Inf,
+                   max_km_gap = max_row_km, # any km gap beyond this value will be replaced
+                   km_filler = 1, # replacement value
+                   speed_filler = speed_filler,
                    debug_mode = FALSE)
 
   km %>% sum
+
   # debugging code
   #message(round(difftime(Sys.time(),tstart,units='secs'))," seconds : ",round(sum(km))," km")
   #hist(km, breaks=seq(0,max(km)+1,by=.5))
@@ -125,7 +135,8 @@ das_format <- function(cruz,
   #hist(km, breaks=seq(0,max(km)+1,by=.5), xlim=c(0,30), ylim=c(0,1000))
 
   # Add columns to data
-  dass$km_int <- km # km between rows
+  dass$km_valid <- km$km_valid # km between rows
+  dass$km_int <- km$km # km between rows
   dass$km_cum <- cumsum(dass$km_int) # cumulative distance
 
   # Add ship variable  #########################################################

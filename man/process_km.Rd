@@ -7,10 +7,11 @@
 process_km(
   das,
   min_interval = 5,
-  max_interval = 900,
-  replacement_interval = min(c(900, max_interval)),
-  max_km_gap = 30,
-  max_km_replace = 0,
+  max_interval = 1800,
+  replacement_interval = 1800,
+  max_km_gap = 10,
+  km_filler = 1,
+  speed_filler = 10 * 1.852,
   debug_mode = TRUE
 )
 }
@@ -30,9 +31,15 @@ or the \code{max_interval} specified, whichever is smaller.}
 \item{max_km_gap}{Another way of avoiding long gaps in data; this is the maximum distance gap, in km, allowed between rows of data.
 This constraint is applied \emph{after} the \code{interval} constraints above.}
 
-\item{max_km_replace}{The distance, in km, to use when the distance between rows exceeds \code{max_km_gap}.}
+\item{km_filler}{When valid speed and position information is not available (e.g., the given distance exceeds \code{max_km_gap}), this value (in km) will be used as an estimate of the
+distance in between consecutive rows of data.}
+
+\item{speed_filler}{When speed is not available in the data, this value (in kmh) will be used as a filler in order to estimate the
+distance between consecutive rows of data based on timestamp differences (when lat/long coordinates are not available).}
 
 \item{debug_mode}{Boolean, with default \code{FALSE}, indicating whether details should be printed to the Console that facilitate debugging.}
+
+\item{max_km_replace}{The distance, in km, to use when the distance between rows exceeds \code{max_km_gap}.}
 }
 \value{
 A numeric vector, the same length as the number of rows in \code{das}, of distances (in km).
