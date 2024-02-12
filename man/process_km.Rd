@@ -7,9 +7,9 @@
 process_km(
   das,
   min_interval = 5,
-  max_interval = 1800,
-  replacement_interval = 1800,
-  max_km_gap = 10,
+  max_interval = 3600,
+  replacement_interval = 3600,
+  max_km_gap = 100,
   km_filler = 1,
   speed_filler = 10 * 1.852,
   debug_mode = TRUE

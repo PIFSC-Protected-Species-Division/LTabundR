@@ -7,9 +7,9 @@
 load_survey_settings(
   out_handling = "remove",
   interpolate = NULL,
-  min_row_interval = 5,
-  max_row_interval = 1800,
-  max_row_km = 10,
+  min_row_interval = 2,
+  max_row_interval = 3600,
+  max_row_km = 100,
   km_filler = 1,
   speed_filler = 10 * 1.852,
   segment_method = "day",
@@ -50,17 +50,20 @@ the Great Circle distance between rows to be calculated. Intervals less than thi
 will be assigned a distance of 0 km.}
 
 \item{max_row_interval}{The maximum alloweable time interval, in seconds, between rows before
-the function assumes that there has been a break in survey data logging. The default is 1800 seconds,
-or 30 minutes.}
+the function assumes that there has been a break in survey data logging.}
 
 \item{max_row_km}{The maximum alloweable distance interval, in km, between rows before
-the function assumes that there has been a break in survey data logging. The default is 20 km.}
+the function assumes that there has been a break in survey data logging.}
 
-\item{km_filler}{When valid speed and position information is not available (e.g., the given distance exceeds \code{max_km_gap}), this value (in km) will be used as an estimate of the
+\item{km_filler}{When valid speed and position information is not available
+(e.g., the given distance exceeds \code{max_km_gap}),
+this value (in km) will be used as an estimate of the
 distance in between consecutive rows of data.}
 
-\item{speed_filler}{When speed is not available in the data, this value (in kmh) will be used as a filler in order to estimate the
-distance between consecutive rows of data based on timestamp differences (when lat/long coordinates are not available).}
+\item{speed_filler}{When speed is not available in the data, this value (in kmh)
+will be used as a filler in order to estimate the
+distance between consecutive rows of data based on timestamp differences
+(when lat/long coordinates are not available).}
 
 \item{segment_method}{The two method options are \code{"day"} --
 all effort within the same Cruise-StudyArea-Stratum-Year-Effort scenario (i.e., an effort bloc)
