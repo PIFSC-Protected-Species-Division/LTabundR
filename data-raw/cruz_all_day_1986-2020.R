@@ -26,7 +26,11 @@ data(group_size_coefficients)
 
 survey <- load_survey_settings(
   out_handling = 'stratum',
-  max_row_interval = Inf,
+  min_row_interval = 2,
+  max_row_interval = 3600,
+  max_row_km = 100,
+  km_filler = 1,
+  speed_filler = 10 * 1.852,
   segment_method = "day",
   segment_target_km = 10,
   segment_max_interval = 6,

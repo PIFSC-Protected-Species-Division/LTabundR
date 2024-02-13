@@ -60,7 +60,7 @@ the function assumes that there has been a break in survey data logging.}
 this value (in km) will be used as an estimate of the
 distance in between consecutive rows of data.}
 
-\item{speed_filler}{When speed is not available in the data, this value (in kmh)
+\item{speed_filler}{When speed is not available in the data, this value (in kph)
 will be used as a filler in order to estimate the
 distance between consecutive rows of data based on timestamp differences
 (when lat/long coordinates are not available).}
