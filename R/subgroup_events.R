@@ -17,7 +17,7 @@
 #' @import tidyr
 #'
 subgroup_events <- function(das,
-                          species_filter = '033'){
+                            species_filter = '033'){
   if(FALSE){ # debugging only  -- not run! =====================================
     data(example_settings)
     settings <- example_settings
@@ -42,7 +42,6 @@ subgroup_events <- function(das,
   # If there are subgroup rows ...
   if(length(gi)>0){
     i <- 1 # gi[1] # for debugging
-    mr <- data.frame()
 
     # Loop through each subgroup row
     for(i in 1:length(gi)){
@@ -97,6 +96,7 @@ subgroup_events <- function(das,
       # Get group size estimates
       obsi <- 1
       for(obsi in 1:8){
+        #daso <- dasg[gi[i]+(obsi + 1),] ; daso
         daso <- das[gi[i]+(obsi + 1),] ; daso
         suppressWarnings( eventi <- as.numeric(as.character(daso$Event)) )
         if(!is.na(eventi)){
@@ -129,14 +129,15 @@ subgroup_events <- function(das,
 
     # Add foolproof subgroup identifier
     if(nrow(mr)>0){
-    mr <- mr %>%
-      dplyr::mutate(sgid = paste(gsub('-','',substr(DateTime,1,10)),
-                                 SightNo,
-                                 SubGrp,
-                                 sep='-'))
+      mr <- mr %>%
+        dplyr::mutate(sgid = paste(Cruise,
+                                   gsub('-','',substr(DateTime,1,10)),
+                                   SightNo,
+                                   SubGrp,
+                                   sep='-'))
 
-    # Uniique ID for each date-sighting
-    mr$sitid <- paste0(mr$Date,'-',mr$SightNo) ; mr
+      # Uniique ID for each date-sighting
+      mr$sitid <- paste0(mr$Cruise,'-',mr$Date,'-',mr$SightNo) ; mr
     }
 
     tail(mr)

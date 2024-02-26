@@ -460,6 +460,7 @@ lta <- function(cruz,
                            regions = 'MHI'))
 
     estimator <- lta_estimates(scenarios)
+    #estimates <- c(estimator(spp = '036', title = "Short-finned pilot whale"))
     estimates <-
       c(estimator(spp = '013', title = "Striped dolphin"),
         estimator(spp = '026', title = "Fraser's dolphin", alt_g0_spp = '013'),
@@ -471,7 +472,6 @@ lta <- function(cruz,
     bootstraps = 10000
     toplot=TRUE
     verbose=TRUE
-    abund_eff_types = c('S')
     abund_bft_range = 0:6
 
     # Try it
@@ -1157,6 +1157,14 @@ lta <- function(cruz,
           # Filter sightings to strictly systematic effort
           abund_sightings <- new_sightings
           abund_sightings$id <- 1:nrow(abund_sightings) # add an id row
+
+          # Revert species names to original, since some may have been changed to Other
+          # for detection function fitting
+          abund_sightings[which(abund_sightings$species == 'Other'),] # check before
+          abund_sightings$species <- abund_sightings$species_og
+          abund_sightings[which(abund_sightings$species == 'Other'),] # check after
+
+          # Perform filters
           abund_sightings <-
             abund_sightings %>%
             dplyr::filter(OnEffort == TRUE,

@@ -46,7 +46,12 @@ process_subgroups <- function(cruz,
     cruz <- segmentize(cruz)
     cruz <- process_sightings(cruz)
     verbose=TRUE
-    cohorts_i = 4
+    cohorts_i = 1
+
+    #data("cnp_150km_1986_2020")
+    #cruz <- cnp_150km_1986_2020
+    #cruz_structure(cruz)
+    #cruz_explorer(cruz, cohort='pseudorca')
 
     phase_edits <- subgroup_phases(cruz, cohort='pseudorca')
     phase_edits
@@ -83,9 +88,27 @@ process_subgroups <- function(cruz,
       # within a single phase of a single sighting
       # (effectively, the 'raw' data for subgroups within the `das` data).
 
-      # Attempt automated phase assignment
-      events$phase <- 2
-      events$phase[events$OnEffort == TRUE] <- 1
+      # Any with OnEffort == TRUE is Phase 1.
+      # Any with OnEffort == FALSE AND NOT with an "S" in subgroup name is Phase 1.
+      # Anything else is Phase 2
+
+      # Find which subgroups have an "S" (this means they are probably Phase 2)
+      events$SubGrp %>% unique %>% sort
+      events <-
+        events %>%
+        rowwise() %>%
+        mutate(has_S = ifelse(nchar(SubGrp)>1 & grepl('S', SubGrp),
+                              TRUE,
+                              FALSE)) %>%
+        mutate(phase = ifelse(OnEffort == TRUE,
+                              1,
+                              ifelse(has_S == FALSE,
+                                     1,
+                                     2))) %>%
+        ungroup() %>%
+        select(-has_S)
+
+      # Review
       events$phase %>% table
       events$sgid %>% table %>% table
 
