@@ -32,7 +32,7 @@ for(i in 1:nrow(df)){
 }
 
 results
-
+results[71:77,]
 barlow_2015 <- results
 tail(barlow_2015)
 barlow_2015 %>% View
