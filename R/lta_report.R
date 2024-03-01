@@ -336,9 +336,9 @@ lta_report <- function(lta_result,
       if(nrow(estimati) > 0 && any(estimati$D > 0)){
         (tabi <- tibble(`Species or category` = titi,
                         `Mean ESW` = ifelse(!is.na(estimati$ESW_mean),
-                                            as.character(round(estimati$ESW_mean, 2)), '-'),
+                                            as.character(format(round(as.numeric(estimati$ESW_mean), digits=2), nsmall=2)), '-'),
                         `Mean s` = ifelse(!is.na(estimati$size_mean),
-                                          as.character(round(estimati$size_mean,1)), '-'),
+                                          as.character(format(round(as.numeric(estimati$size_mean), digits=1), nsmall=1)), '-'),
                         `g(0) small` = '-',
                         `(CV small)` = '-',
                         `g(0) large` = '-',
@@ -347,27 +347,27 @@ lta_report <- function(lta_result,
                         #`(CV)` = '-'))
 
         if('g0_small' %in% names(estimati)){
-          tabi$`g(0) small` <- estimati$g0_small %>% round(2)
+          tabi$`g(0) small` <- as.character(format(round(as.numeric(estimati$g0_small), digits=2), nsmall=2))
         }else{
-          tabi$`g(0) small` <- estimati$g0_est %>% round(2)
+          tabi$`g(0) small` <- as.character(format(round(as.numeric(estimati$g0_est), digits=2), nsmall=2))
         }
 
         if('g0_large' %in% names(estimati)){
-          tabi$`g(0) large` <- estimati$g0_large %>% round(2)
+          tabi$`g(0) large` <- as.character(format(round(as.numeric(estimati$g0_large), digits=2), nsmall=2))
         }else{
-          tabi$`g(0) large` <- estimati$g0_est %>% round(2)
+          tabi$`g(0) large` <- as.character(format(round(as.numeric(estimati$g0_est), digits=2), nsmall=2))
         }
 
         if('g0_cv_small' %in% names(estimati)){
-          tabi$`(CV small)` <- estimati$g0_cv_small %>% round(2)
+          tabi$`(CV small)` <- as.character(format(round(as.numeric(estimati$g0_cv_small), digits=2), nsmall=2))
         }else{
-          if(nrow(booti)>0){if(!is.na(booti$g0_cv)){ tabi$`(CV)` <- booti$g0_cv %>% round(2) }}
+          if(nrow(booti)>0){if(!is.na(booti$g0_cv)){ tabi$`(CV)` <- as.character(format(round(as.numeric(booti$g0_cv), digits=2), nsmall=2)) }}
         }
 
         if('g0_cv_large' %in% names(estimati)){
-          tabi$`(CV large)` <- estimati$g0_cv_large %>% round(2)
+          tabi$`(CV large)` <- as.character(format(round(as.numeric(estimati$g0_cv_large), digits=2), nsmall=2))
         }else{
-            if(nrow(booti)>0){if(!is.na(booti$g0_cv)){ tabi$`(CV)` <- booti$g0_cv %>% round(2) }}
+            if(nrow(booti)>0){if(!is.na(booti$g0_cv)){ tabi$`(CV)` <- as.character(format(round(as.numeric(booti$g0_cv), digits=2), nsmall=2)) }}
         }
       }
 
@@ -395,12 +395,14 @@ lta_report <- function(lta_result,
                       `Density` = '-', `Abundance` = '-', `CV` = '-', `95% CI` = '-'))
       if(nrow(estimati) > 0 && any(estimati$D > 0)){
         (tabi <- tibble(`Species or category` = titi,
-                        `Density` = (estimati$D * 1000) %>% round(2) %>% stringr::str_pad(width=4, side='both',pad='0'),
+                        `Density` = stringr::str_pad(as.character(format(round(as.numeric(estimati$D * 1000), digits=2), nsmall=2)), side='left', pad='0', width=4),
+                        #`Density` = (estimati$D * 1000) %>% round(2) %>% stringr::str_pad(width=4, side='both',pad='0'),
                         `Abundance` = estimati$N %>% round(0) %>% prettyNum(big.mark=','),
                         `CV` = '-',
                         `95% CI` = '-'))
         if(nrow(booti)>0){
-          tabi$`CV` <- booti$CV %>% round(2)
+          tabi$`CV` <- stringr::str_pad(as.character(format(round(as.numeric(booti$CV), digits=2), nsmall=2)), side='left', pad='0', width=4)
+          #booti$CV %>% round(2)
           tabi$`95% CI` <- paste0(prettyNum(round(booti$L95), big.mark=','),'-',prettyNum(round(booti$U95), big.mark=','))
         }
       }
