@@ -332,7 +332,7 @@ lta_report <- function(lta_result,
       (tabi <- tibble(`Species or category` = titi,
                       `Mean ESW` = '-', `Mean s` = '-',
                       `g(0) small` = '-', `g(0) large` = '-',
-                      `(CV small)` = '-', `(CV large)` = '-'))
+                      `(CV small)` = '-', `(CV large)` = '-', `(CV)`= '-'))
       if(nrow(estimati) > 0 && any(estimati$D > 0)){
         (tabi <- tibble(`Species or category` = titi,
                         `Mean ESW` = ifelse(!is.na(estimati$ESW_mean),
@@ -381,7 +381,7 @@ lta_report <- function(lta_result,
       }
       tabform
       names(tabform) <- c(paste0('var',coli,'.2'), yeari, regioni,
-                          paste0('var',coli,'.5'), paste0('var',coli,'.6'), paste0('var',coli,'.7'), paste0('var',coli,'.8'))
+                          paste0('var',coli,'.5'), paste0('var',coli,'.6'), paste0('var',coli,'.7'), paste0('var',coli,'.8'), paste0('var',coli,'.9'))
       tabform
       if(coli > 1){
         tabform <- tabform %>% dplyr::select(2:ncol(tabform))
