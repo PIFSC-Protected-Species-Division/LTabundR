@@ -331,8 +331,8 @@ lta_report <- function(lta_result,
 
       (tabi <- tibble(`Species or category` = titi,
                       `Mean ESW` = '-', `Mean s` = '-',
-                      `g(0) small` = '-', `g(0) large` = '-',
-                      `(CV small)` = '-', `(CV large)` = '-', `(CV)`= '-'))
+                      `g(0) small` = '-', `(CV small)` = '-',
+                      `g(0) large` = '-', `(CV large)` = '-', `(CV)` = '-'))
       if(nrow(estimati) > 0 && any(estimati$D > 0)){
         (tabi <- tibble(`Species or category` = titi,
                         `Mean ESW` = ifelse(!is.na(estimati$ESW_mean),
@@ -342,9 +342,8 @@ lta_report <- function(lta_result,
                         `g(0) small` = '-',
                         `(CV small)` = '-',
                         `g(0) large` = '-',
-                        `(CV large)` = '-'))
-                        #`g(0)` = estimati$g0_est %>% round(2),
-                        #`(CV)` = '-'))
+                        `(CV large)` = '-',
+                        `(CV)` = '-'))
 
         if('g0_small' %in% names(estimati)){
           tabi$`g(0) small` <- as.character(format(round(as.numeric(estimati$g0_small), digits=2), nsmall=2))
@@ -510,10 +509,11 @@ lta_report <- function(lta_result,
                              on_off = 'TRUE',
                              verbose = FALSE)
         (cohorts <- cruzi$cohorts) %>% length
+        cruzi$cohorts$all$das %>% head
         effy <- data.frame()
         ci <- 1
         for(ci in 1:length(cohorts)){
-          (bft <- summarize_bft(cruzi, cohort=ci)$by_stratum)
+          (bft <- summarize_bft(cruz=cruzi, cohort=ci)$by_stratum)
           effi <-
             bft %>%
             group_by(stratum) %>%
