@@ -28,7 +28,7 @@ Note that this package contains large built-in datasets and may take several min
 
 ### Vignette
 
-Visit [**this vignette**](https://emk-noaa.github.io/LTAvignette/) for a complete guide to using `LTabundR`.
+Visit [**this vignette**](https://pifsc-protected-species-division.github.io/LTabundR-vignette/index.html) for a complete guide to using `LTabundR`.
 
 ### Disclaimer
 
