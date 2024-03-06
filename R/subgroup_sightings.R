@@ -44,6 +44,8 @@ subgroup_sightings <- function(subgroups){
                      seg_id = seg_id[1],
                      EffType = EffType[1],
                      OnEffort = OnEffort[1],
+                     population = population[1],
+                     pop_prob = pop_prob[1],
                      dplyr::across(all_of(stratum_cols),function(x){x[1]})) %>%
     as.data.frame()
 

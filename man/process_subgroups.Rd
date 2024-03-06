@@ -4,19 +4,28 @@
 \alias{process_subgroups}
 \title{Analyze subgroup detections for false killer whales}
 \usage{
-process_subgroups(cruz, phase_edits = NULL, verbose = TRUE)
+process_subgroups(cruz, edits = NULL, verbose = TRUE)
 }
 \arguments{
 \item{cruz}{A \code{cruz} object passed from \code{process_surveys()}.}
 
-\item{phase_edits}{An optional input: a \code{data.frame} indicating manual adjustments to the protocol phase that data are assigned to.
-This \code{data.frame} is produced by the \code{LTabundR} function \code{subgroup_phases()}; see its documentation for formatting.
-If this input is supplied, the \code{process_subgroups()} function will first automatically assign data to phases,
-then redact those assignments using this input. The recommended workflow here is:
-(1) process your survey data without supplying \code{phase_edits};
-(2) review the automatic phase assignments using the \code{subgroup_phases()} function;
-(3) if revisions are needed, stage those edits using the same function.
-(4) re-run \code{process_subgroups()}, this time supplying the \code{phase_edits} input.}
+\item{edits}{An optional input: a \code{list} indicating manual adjustments to the subgroup \code{events} data.
+This \code{list} can contain elements produced by the \code{LTabundR} functions \code{subgroup_populations()} or \code{subgroup_edits()},
+or simply \code{list}(s) that the user prepares themselves.
+
+Each \code{list} element needs to be either a \code{data.frame} or a \code{list}
+with the following names: \code{edit}, \code{cohort}, \code{crusie}, and \code{sgid}. The remaining names depend on the type of \code{edit}
+(see the documentation for the \code{subgroup_edits()} function for details). Edits will be applied in the order in which they are supplied.
+
+If this input is supplied, the \code{process_subgroups()} function will first process the data using default operations,
+then redact the \code{events} data according to this input. The recommended workflow here is:
+(1) process your survey data without supplying \code{edits};
+(2) review the \code{events} data using the \code{subgroup_explorer()} function;
+(3) if revisions are needed, stage those edits using \code{subgroup_populations()} function, \code{subgroup_edits()} function, or manually coded lists.
+(4) collate those staged edits into a list.
+(5) re-run \code{process_subgroups()}, this time supplying the \code{edits} input.
+
+See the vignette for details.}
 
 \item{verbose}{Boolean, with default \code{TRUE}, indicating whether or not updates should be printed to the Console.}
 }

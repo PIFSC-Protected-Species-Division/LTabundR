@@ -8,14 +8,23 @@
 #' It is the final processing subroutine called within `process_surveys()`, after the subroutine `process_sightings()`.
 #'
 #' @param cruz A `cruz` object passed from `process_surveys()`.
-#' @param phase_edits An optional input: a `data.frame` indicating manual adjustments to the protocol phase that data are assigned to.
-#' This `data.frame` is produced by the `LTabundR` function `subgroup_phases()`; see its documentation for formatting.
-#' If this input is supplied, the `process_subgroups()` function will first automatically assign data to phases,
-#' then redact those assignments using this input. The recommended workflow here is:
-#' (1) process your survey data without supplying `phase_edits`;
-#' (2) review the automatic phase assignments using the `subgroup_phases()` function;
-#' (3) if revisions are needed, stage those edits using the same function.
-#' (4) re-run `process_subgroups()`, this time supplying the `phase_edits` input.
+#' @param edits An optional input: a `list` indicating manual adjustments to the subgroup `events` data.
+#' This `list` can contain elements produced by the `LTabundR` functions `subgroup_populations()` or `subgroup_edits()`,
+#' or simply `list`(s) that the user prepares themselves.
+#'
+#' Each `list` element needs to be either a `data.frame` or a `list`
+#' with the following names: `edit`, `cohort`, `crusie`, and `sgid`. The remaining names depend on the type of `edit`
+#' (see the documentation for the `subgroup_edits()` function for details). Edits will be applied in the order in which they are supplied.
+#'
+#' If this input is supplied, the `process_subgroups()` function will first process the data using default operations,
+#' then redact the `events` data according to this input. The recommended workflow here is:
+#' (1) process your survey data without supplying `edits`;
+#' (2) review the `events` data using the `subgroup_explorer()` function;
+#' (3) if revisions are needed, stage those edits using `subgroup_populations()` function, `subgroup_edits()` function, or manually coded lists.
+#' (4) collate those staged edits into a list.
+#' (5) re-run `process_subgroups()`, this time supplying the `edits` input.
+#'
+#' See the vignette for details.
 #'
 #' @param verbose Boolean, with default `TRUE`, indicating whether or not updates should be printed to the Console.
 #'
@@ -33,7 +42,7 @@
 #' @import dplyr
 #'
 process_subgroups <- function(cruz,
-                              phase_edits = NULL,
+                              edits = NULL,
                               verbose=TRUE){
 
   if(FALSE){ # debugging materials -- not run! =================================
@@ -53,8 +62,35 @@ process_subgroups <- function(cruz,
     #cruz_structure(cruz)
     #cruz_explorer(cruz, cohort='pseudorca')
 
-    phase_edits <- subgroup_phases(cruz, cohort='pseudorca')
-    phase_edits
+    #phase_edits <- subgroup_phases(cruz, cohort='pseudorca')
+    #phase_edits
+
+    # Prepare some fake edits for testing
+    #data("cnp_150km_1986_2020")
+    #cruz <- cnp_150km_1986_2020
+    cruz <- process_subgroups(cruz)
+    cohort = 'default'
+    #cohort = 'pseudorca'
+    default_pop = 'pelagic'
+    mhi <- cruz$settings$strata$MHI
+    nwhi <- cruz$settings$strata$NWHI
+    eez <- cruz$settings$strata$HI_EEZ
+    populations <- list(MHI = mhi, NWHI = nwhi)
+    (new_pops <- subgroup_populations(populations, cruz, cohort, default_pop))
+    edits <-
+      list(new_pops,
+           subgroup_edits(cohort=cohort, sgid = cruz$cohorts$default$subgroups$events$sgid[1],
+                          phase = 2),
+           subgroup_edits(cohort=cohort, sgid = cruz$cohorts$default$subgroups$events$sgid[2],
+                          population = 'hahaha', pop_prob = '1'),
+           subgroup_edits(cohort=cohort, sgid = cruz$cohorts$default$subgroups$events$sgid[3],
+                          phase=2,
+                          population = 'hahaha', pop_prob = 'hohoho'),
+           subgroup_edits(cohort=cohort, sgid = cruz$cohorts$default$subgroups$events$sgid[4],
+                          exclude = TRUE))
+    edits
+
+    subgroup_explorer(cruz, cohort=1)
 
   } #===========================================================================
 
@@ -64,6 +100,7 @@ process_subgroups <- function(cruz,
   # Harvest subgroup phases data
 
   # Loop through each cohort
+  cohorts_i <- 1
   for(cohorts_i in 1:length(cruzi$cohorts)){
     cohorti <- cruzi$cohorts[[cohorts_i]] # get cohort data
     (cohort_name <- names(cruzi$cohorts)[[cohorts_i]])
@@ -88,6 +125,7 @@ process_subgroups <- function(cruz,
       # within a single phase of a single sighting
       # (effectively, the 'raw' data for subgroups within the `das` data).
 
+      # Assign phases ==========================================================
       # Any with OnEffort == TRUE is Phase 1.
       # Any with OnEffort == FALSE AND NOT with an "S" in subgroup name is Phase 1.
       # Anything else is Phase 2
@@ -112,32 +150,119 @@ process_subgroups <- function(cruz,
       events$phase %>% table
       events$sgid %>% table %>% table
 
-      # Modify using the phase_edits input, if needed ==========================
-      old_events <- events # store old version of events
-      if(!is.null(phase_edits)){
+      # Add placeholder for population assignments =============================
+      events$population <- NA
+      events$pop_prob <- NA
 
-        # See if any revisions have been stored for this cohort
-        (pec <- phase_edits %>% filter(cohort == cohort_name))
-        if(nrow(pec)>0){
-          pec2join <- pec %>% select(Cruise, Species, Line, SubGrp, Event, new_phase)
-          suppressMessages({
-            revised_events <- left_join(events, pec2join)
-          })
-          revised_events <-
-            revised_events %>%
-            rowwise() %>%
-            mutate(phase = ifelse(is.na(new_phase), phase, new_phase)) %>%
-            ungroup() %>%
-            select(-new_phase) %>%
-            as.data.frame
+      # Apply subgroup_edits, if any ===========================================
+      if(!is.null(edits)){
 
-          revised_events %>% head
-          events <- revised_events
+        new_events <- events
+        edits %>% length
+        i=1
+        for(i in 1:length(edits)){
+          (editi <- edits[[i]])
+          if(is.data.frame(editi)){
+            editi <- split(editi, seq(nrow(editi)))
+          }
+          length(editi)
+          ii=1
+          for(ii in 1:length(editi)){
+            message('--- edit ',ii,' within slot ',i,' ...')
+            (editii <- editi[[ii]])
+            (ei <- editii$edit)
+
+            # Check to see if cohort applies
+            (edit_cohort <- editii$cohort)
+            if(is.numeric(edit_cohort)){edit_cohort <- names(cruz$cohorts)[edit_cohort]}
+            edit_cohort
+            if(edit_cohort == cohort_name){
+              (stop_msg <- paste0('FAIL! This edit did not find a match in the data :: edit ',ii,' within edit slot ',i,
+              ' :: sgid ', editii$sgid))
+              if(ei == 'population'){
+                editii
+                (matchi <- which(new_events$sgid == editii$sgid))
+                if(length(matchi)>0){
+                  new_events$population[matchi] <- editii$population
+                  new_events$pop_prob[matchi] <- editii$pop_prob
+                }else{ stop(stop_msg) }
+              }
+              if(ei == 'phase'){
+                editii
+                (matchi <- which(new_events$sgid == editii$sgid))
+                if(length(matchi)>0){
+                  new_events$phase[matchi] <- editii$phase
+                  new_events$phase[matchi] <- editii$phase
+                }else{ stop(stop_msg) }
+              }
+              if(ei == 'exclude'){
+                editii
+                (matchi <- which(new_events$sgid == editii$sgid))
+                if(length(matchi)>0){
+                  new_events <- new_events[-matchi, ]
+                }else{ stop(stop_msg) }
+              }
+            } # end of make sure cohort applies
+          }
         }
+
+        # Review post
+        events %>% nrow
+        new_events %>% nrow
+
+        events$phase %>% head
+        new_events$phase %>% head
+
+        events$population %>% head
+        new_events$population %>% head
+
+        events$pop_prob %>% head
+        new_events$pop_prob %>% head
+
+        # update events
+        events <- new_events
       }
 
-      # Review changes
-      data.frame(old_phase = old_events$phase, new_phase = events$phase)
+      # OLD WAY (SKIPPING NOW) #################################################
+
+      if(FALSE){
+        # phase_edits An optional input: a `data.frame` indicating manual adjustments to the protocol phase that data are assigned to.
+        # This `data.frame` is produced by the `LTabundR` function `subgroup_phases()`; see its documentation for formatting.
+        # If this input is supplied, the `process_subgroups()` function will first automatically assign data to phases,
+        # then redact those assignments using this input. The recommended workflow here is:
+        # (1) process your survey data without supplying `phase_edits`;
+        # (2) review the automatic phase assignments using the `subgroup_phases()` function;
+        # (3) if revisions are needed, stage those edits using the same function.
+        # (4) re-run `process_subgroups()`, this time supplying the `phase_edits` input.
+
+        # Modify using the phase_edits input, if needed ==========================
+        old_events <- events # store old version of events
+        if(!is.null(phase_edits)){
+
+          # See if any revisions have been stored for this cohort
+          (pec <- phase_edits %>% filter(cohort == cohort_name))
+          if(nrow(pec)>0){
+            pec2join <- pec %>% select(Cruise, Species, Line, SubGrp, Event, new_phase)
+            suppressMessages({
+              revised_events <- left_join(events, pec2join)
+            })
+            revised_events <-
+              revised_events %>%
+              rowwise() %>%
+              mutate(phase = ifelse(is.na(new_phase), phase, new_phase)) %>%
+              ungroup() %>%
+              select(-new_phase) %>%
+              as.data.frame
+
+            revised_events %>% head
+            events <- revised_events
+          }
+        }
+
+        # Review changes
+        data.frame(old_phase = old_events$phase, new_phase = events$phase)
+      }
+      # END OF OLD WAY BEING SKIPPED ###########################################
 
       #=========================================================================
 

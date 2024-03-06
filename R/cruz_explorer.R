@@ -27,6 +27,7 @@ cruz_explorer <- function(cruz,
   # Prepare base datasets
   segments <- ani$segments
   sits <- ani$sightings
+  subgroups <- ani$subgroups
   das <- ani$das
 
   ##############################################################################
@@ -60,7 +61,7 @@ cruz_explorer <- function(cruz,
                                           shiny::column(3,
                                                         shiny::uiOutput('efftype'),
                                                         shiny::uiOutput('oneffort')))
-                          ),
+      ),
 
       ##############################################################################
       ##############################################################################
@@ -78,7 +79,21 @@ cruz_explorer <- function(cruz,
                                                            shiny::fluidRow(shiny::column(12,DT::dataTableOutput('segments')))),
                                            shiny::tabPanel(shiny::h5('Sightings'),
                                                            shiny::br(),
-                                                           shiny::fluidRow(shiny::column(12,DT::dataTableOutput('sits'))))
+                                                           shiny::fluidRow(shiny::column(12,DT::dataTableOutput('sits')))),
+                                           shiny::tabPanel(shiny::h5('Subgroups'),
+                                                           shiny::br(),
+                                                           shiny::tabsetPanel(
+                                                             shiny::tabPanel(shiny::h6('Events'),
+                                                                             shiny::br(),
+                                                                             shiny::fluidRow(shiny::column(12,DT::dataTableOutput('sg_events')))),
+                                                             shiny::tabPanel(shiny::h6('Subgroups'),
+                                                                             shiny::br(),
+                                                                             shiny::fluidRow(shiny::column(12,DT::dataTableOutput('sg_subgroups')))),
+                                                             shiny::tabPanel(shiny::h6('Sightings'),
+                                                                             shiny::br(),
+                                                                             shiny::fluidRow(shiny::column(12,DT::dataTableOutput('sg_sightings'))))
+                                                           )
+                                           )
                                          )
                          ),
                          shiny::tabPanel(shiny::h4('Effort summaries'),
@@ -142,7 +157,7 @@ cruz_explorer <- function(cruz,
                                                            shiny::fluidRow(shiny::column(6,
                                                                                          shiny::h5('By geostratum'),
                                                                                          DT::dataTableOutput('spp_stratum')))
-                                                           ),
+                                           ),
                                            shiny::tabPanel(shiny::h5('Detection distances'),
                                                            shiny::br(),
                                                            shiny::fluidRow(shiny::column(4,
@@ -228,6 +243,7 @@ cruz_explorer <- function(cruz,
     rv$das <- das
     rv$segments <- segments
     rv$sits <- sits
+    rv$subgroups <- subgroups
     rv$cruzi <- NULL
     rv$effsumm <- NULL
     rv$sitsumm <- NULL
@@ -243,164 +259,231 @@ cruz_explorer <- function(cruz,
         print(input$distops)
         print(input$distint)
 
-        # Establish raw datasets
-        dasi <- das
-        segi <- segments
-        siti <- sits
-
-        # years ________________________________________________________________
-
+        # Use filter_cruz
+        fake_cruz <- list(cohorts=list(fake=ani))
+        years <- cruises <- regions <- not_regions <- included <- spp <- efftype <- onoff <- NULL
         if(! all(c(length(input$years) == 1, input$years == 'All'))){
           inputi <- input$years
           inputi <- inputi[inputi != 'All']
-          if(nrow(dasi) > 0){ dasi <- dasi %>% dplyr::filter(year %in% inputi) }
-          if(nrow(segi) > 0){ segi <- segi %>% dplyr::filter(year %in% inputi) }
-          if(nrow(siti) > 0){ siti <- siti %>% dplyr::filter(year %in% inputi) }
+          years <- inputi
         }
-        message('\nAfter filtering by year ...')
-        message('DAS = ',nrow(dasi),' rows')
-        message('segments = ',nrow(segi),' rows')
-        message('sightings = ',nrow(siti),' rows')
-
-        # cruises ______________________________________________________________
-
         if(! all(c(length(input$cruises) == 1, input$cruises == 'All'))){
           inputi <- input$cruises
           inputi <- inputi[inputi != 'All']
-          if(nrow(dasi) > 0){ dasi <- dasi %>% dplyr::filter(Cruise %in% inputi) }
-          if(nrow(segi) > 0){ segi <- segi %>% dplyr::filter(Cruise %in% inputi) }
-          if(nrow(siti) > 0){ siti <- siti %>% dplyr::filter(Cruise %in% inputi) }
+          cruises <- inputi
         }
-        message('\nAfter filtering by cruise ...')
-        message('DAS = ',nrow(dasi),' rows')
-        message('segments = ',nrow(segi),' rows')
-        message('sightings = ',nrow(siti),' rows')
-
-
-        # regions_include ______________________________________________________
-
-        print(input$regions_include)
-
-        if(! all(c(length(input$regions_include) == 1,
-                   input$regions_include == 'All'))){
-          print('inside if')
-
+        if(! all(c(length(input$regions_include) == 1, input$regions_include == 'All'))){
           inputi <- input$regions_include
           inputi <- inputi[inputi != 'All']
-          #inputi <- 'WHICEAS'
-          (region_cols <- paste0('stratum_',inputi))
-          print(region_cols)
-
-          if(nrow(dasi)>0){
-            (region_match <- which(gsub('-','.',names(dasi)) %in% region_cols))
-            (filter_decision <- apply(dasi %>% dplyr::select(region_match),1,any))
-            dasi <- dasi[filter_decision,]
-          }
-          if(nrow(segi)>0){
-            segi <- segi %>% dplyr::filter(gsub('-','.',stratum) %in% inputi)
-          }
-          if(nrow(siti)>0){
-            (region_match <- which(gsub('-','.',names(siti)) %in% region_cols))
-            (filter_decision <- apply(siti %>% dplyr::select(region_match),1,any))
-            siti <- siti[filter_decision,]
-          }
+          regions <- inputi
         }
-        message('\nAfter filtering by region_include ...')
-        message('DAS = ',nrow(dasi),' rows')
-        message('segments = ',nrow(segi),' rows')
-        message('sightings = ',nrow(siti),' rows')
-
-        # regions_exclude ______________________________________________________
-
         if(! all(c(length(input$regions_exclude) == 1, input$regions_exclude == 'None'))){
           inputi <- input$regions_exclude
           inputi <- inputi[inputi != 'None']
-          #inputi <- 'WHICEAS'
-          (region_cols <- paste0('stratum_',inputi))
-
-          if(nrow(dasi)>0){
-            (region_match <- which(gsub('-','.',names(dasi)) %in% region_cols))
-            (filter_decision <- apply(dasi %>% dplyr::select(region_match),1,any))
-            dasi <- dasi[! filter_decision,]
-          }
-          if(nrow(segi)>0){
-            segi <- segi %>% dplyr::filter(! gsub('-','.',stratum) %in% inputi)
-          }
-          if(nrow(siti)>0){
-            (region_match <- which(gsub('-','.',names(siti)) %in% region_cols))
-            (filter_decision <- apply(siti %>% dplyr::select(region_match),1,any))
-            siti <- siti[! filter_decision,]
-          }
+          not_regions <- inputi
         }
-        message('\nAfter filtering by region_exclude ...')
-        message('DAS = ',nrow(dasi),' rows')
-        message('segments = ',nrow(segi),' rows')
-        message('sightings = ',nrow(siti),' rows')
-
-        # species ______________________________________________________________
-
         if(! all(c(length(input$species) == 1, input$species == 'All'))){
           inputi <- input$species
           print(inputi)
           inputi <- inputi[inputi != 'All']
-          siti$sp <- siti$species
-          if(nrow(siti) > 0){ siti <- siti %>% dplyr::filter(sp %in% inputi) }
+          spp <- inputi
         }
-        message('\nAfter filtering by species ...')
-        message('DAS = ',nrow(dasi),' rows')
-        message('segments = ',nrow(segi),' rows')
-        message('sightings = ',nrow(siti),' rows')
-
-        # included _____________________________________________________________
-
         if(! all(c(length(input$included) == 1, input$included == 'All'))){
           inputi <- input$included
           if(inputi == 'Analysis only'){inputi <- TRUE}
           if(inputi == 'Other only'){inputi <- FALSE}
-          print(inputi)
-          if(nrow(dasi) > 0){ dasi <- dasi %>% dplyr::filter(use %in% inputi) }
-          if(nrow(segi) > 0){ segi <- segi %>% dplyr::filter(use %in% inputi) }
-          if(nrow(siti) > 0){ siti <- siti %>% dplyr::filter(included %in% inputi) }
+          included <- inputi
         }
-        message('\nAfter filtering by analysis inclusion ...')
-        message('DAS = ',nrow(dasi),' rows')
-        message('segments = ',nrow(segi),' rows')
-        message('sightings = ',nrow(siti),' rows')
-
-        # efftype ______________________________________________________________
-
         if(! all(c(length(input$efftype) == 1, input$efftype == 'All'))){
           inputi <- input$efftype
           inputi <- inputi[inputi != 'All']
-          if(nrow(dasi) > 0){ dasi <- dasi %>% dplyr::filter(EffType %in% inputi) }
-          if(nrow(segi) > 0){ segi <- segi %>% dplyr::filter(EffType %in% inputi) }
-          if(nrow(siti) > 0){ siti <- siti %>% dplyr::filter(EffType %in% inputi) }
+          efftype <- inputi
         }
-        message('\nAfter filtering by EffType ...')
-        message('DAS = ',nrow(dasi),' rows')
-        message('segments = ',nrow(segi),' rows')
-        message('sightings = ',nrow(siti),' rows')
-
-        # oneffort _____________________________________________________________
-
         if(! all(c(length(input$oneffort) == 1, input$oneffort == 'All'))){
           inputi <- input$oneffort
           if(inputi[1] == 'All'){input <- c(TRUE, FALSE)}
           if(inputi[1] == 'On Effort only'){inputi <- TRUE}
           if(inputi[1] == 'Off Effort only'){inputi <- FALSE}
-          if(nrow(dasi) > 0){ dasi <- dasi %>% dplyr::filter(OnEffort %in% inputi) }
-          if(nrow(segi) > 0){ segi <- segi %>% dplyr::filter(OnEffort %in% inputi) }
-          if(nrow(siti) > 0){ siti <- siti %>% dplyr::filter(OnEffort %in% inputi) }
+          onoff <- inputi
         }
-        message('\nAfter filtering by OnEffort ...')
-        message('DAS = ',nrow(dasi),' rows')
-        message('segments = ',nrow(segi),' rows')
-        message('sightings = ',nrow(siti),' rows')
+        newcruz <-
+          filter_cruz(fake_cruz,
+                      analysis_only = TRUE,
+                      years = years,
+                      cruises = cruises,
+                      regions = regions,
+                      not_regions = not_regions,
+                      eff_types = efftype,
+                      on_off = onoff)
+
+        dasi <- newcruz$cohorts$fake$das
+        segi <- newcruz$cohorts$fake$segments
+        siti <- newcruz$cohorts$fake$sightings
+        subi <- newcruz$cohorts$fake$subgroups
+
+        # OLD WAY -- SKIP ======================================================
+        if(FALSE){
+          # Establish raw datasets
+          dasi <- das
+          segi <- segments
+          siti <- sits
+
+          # years ________________________________________________________________
+
+          if(! all(c(length(input$years) == 1, input$years == 'All'))){
+            inputi <- input$years
+            inputi <- inputi[inputi != 'All']
+            if(nrow(dasi) > 0){ dasi <- dasi %>% dplyr::filter(year %in% inputi) }
+            if(nrow(segi) > 0){ segi <- segi %>% dplyr::filter(year %in% inputi) }
+            if(nrow(siti) > 0){ siti <- siti %>% dplyr::filter(year %in% inputi) }
+          }
+          message('\nAfter filtering by year ...')
+          message('DAS = ',nrow(dasi),' rows')
+          message('segments = ',nrow(segi),' rows')
+          message('sightings = ',nrow(siti),' rows')
+
+          # cruises ______________________________________________________________
+
+          if(! all(c(length(input$cruises) == 1, input$cruises == 'All'))){
+            inputi <- input$cruises
+            inputi <- inputi[inputi != 'All']
+            if(nrow(dasi) > 0){ dasi <- dasi %>% dplyr::filter(Cruise %in% inputi) }
+            if(nrow(segi) > 0){ segi <- segi %>% dplyr::filter(Cruise %in% inputi) }
+            if(nrow(siti) > 0){ siti <- siti %>% dplyr::filter(Cruise %in% inputi) }
+          }
+          message('\nAfter filtering by cruise ...')
+          message('DAS = ',nrow(dasi),' rows')
+          message('segments = ',nrow(segi),' rows')
+          message('sightings = ',nrow(siti),' rows')
+
+
+          # regions_include ______________________________________________________
+
+          print(input$regions_include)
+
+          if(! all(c(length(input$regions_include) == 1,
+                     input$regions_include == 'All'))){
+            print('inside if')
+
+            inputi <- input$regions_include
+            inputi <- inputi[inputi != 'All']
+            #inputi <- 'WHICEAS'
+            (region_cols <- paste0('stratum_',inputi))
+            print(region_cols)
+
+            if(nrow(dasi)>0){
+              (region_match <- which(gsub('-','.',names(dasi)) %in% region_cols))
+              (filter_decision <- apply(dasi %>% dplyr::select(region_match),1,any))
+              dasi <- dasi[filter_decision,]
+            }
+            if(nrow(segi)>0){
+              segi <- segi %>% dplyr::filter(gsub('-','.',stratum) %in% inputi)
+            }
+            if(nrow(siti)>0){
+              (region_match <- which(gsub('-','.',names(siti)) %in% region_cols))
+              (filter_decision <- apply(siti %>% dplyr::select(region_match),1,any))
+              siti <- siti[filter_decision,]
+            }
+          }
+          message('\nAfter filtering by region_include ...')
+          message('DAS = ',nrow(dasi),' rows')
+          message('segments = ',nrow(segi),' rows')
+          message('sightings = ',nrow(siti),' rows')
+
+          # regions_exclude ______________________________________________________
+
+          if(! all(c(length(input$regions_exclude) == 1, input$regions_exclude == 'None'))){
+            inputi <- input$regions_exclude
+            inputi <- inputi[inputi != 'None']
+            #inputi <- 'WHICEAS'
+            (region_cols <- paste0('stratum_',inputi))
+
+            if(nrow(dasi)>0){
+              (region_match <- which(gsub('-','.',names(dasi)) %in% region_cols))
+              (filter_decision <- apply(dasi %>% dplyr::select(region_match),1,any))
+              dasi <- dasi[! filter_decision,]
+            }
+            if(nrow(segi)>0){
+              segi <- segi %>% dplyr::filter(! gsub('-','.',stratum) %in% inputi)
+            }
+            if(nrow(siti)>0){
+              (region_match <- which(gsub('-','.',names(siti)) %in% region_cols))
+              (filter_decision <- apply(siti %>% dplyr::select(region_match),1,any))
+              siti <- siti[! filter_decision,]
+            }
+          }
+          message('\nAfter filtering by region_exclude ...')
+          message('DAS = ',nrow(dasi),' rows')
+          message('segments = ',nrow(segi),' rows')
+          message('sightings = ',nrow(siti),' rows')
+
+          # species ______________________________________________________________
+
+          if(! all(c(length(input$species) == 1, input$species == 'All'))){
+            inputi <- input$species
+            print(inputi)
+            inputi <- inputi[inputi != 'All']
+            siti$sp <- siti$species
+            if(nrow(siti) > 0){ siti <- siti %>% dplyr::filter(sp %in% inputi) }
+          }
+          message('\nAfter filtering by species ...')
+          message('DAS = ',nrow(dasi),' rows')
+          message('segments = ',nrow(segi),' rows')
+          message('sightings = ',nrow(siti),' rows')
+
+          # included _____________________________________________________________
+
+          if(! all(c(length(input$included) == 1, input$included == 'All'))){
+            inputi <- input$included
+            if(inputi == 'Analysis only'){inputi <- TRUE}
+            if(inputi == 'Other only'){inputi <- FALSE}
+            print(inputi)
+            if(nrow(dasi) > 0){ dasi <- dasi %>% dplyr::filter(use %in% inputi) }
+            if(nrow(segi) > 0){ segi <- segi %>% dplyr::filter(use %in% inputi) }
+            if(nrow(siti) > 0){ siti <- siti %>% dplyr::filter(included %in% inputi) }
+          }
+          message('\nAfter filtering by analysis inclusion ...')
+          message('DAS = ',nrow(dasi),' rows')
+          message('segments = ',nrow(segi),' rows')
+          message('sightings = ',nrow(siti),' rows')
+
+          # efftype ______________________________________________________________
+
+          if(! all(c(length(input$efftype) == 1, input$efftype == 'All'))){
+            inputi <- input$efftype
+            inputi <- inputi[inputi != 'All']
+            if(nrow(dasi) > 0){ dasi <- dasi %>% dplyr::filter(EffType %in% inputi) }
+            if(nrow(segi) > 0){ segi <- segi %>% dplyr::filter(EffType %in% inputi) }
+            if(nrow(siti) > 0){ siti <- siti %>% dplyr::filter(EffType %in% inputi) }
+          }
+          message('\nAfter filtering by EffType ...')
+          message('DAS = ',nrow(dasi),' rows')
+          message('segments = ',nrow(segi),' rows')
+          message('sightings = ',nrow(siti),' rows')
+
+          # oneffort _____________________________________________________________
+
+          if(! all(c(length(input$oneffort) == 1, input$oneffort == 'All'))){
+            inputi <- input$oneffort
+            if(inputi[1] == 'All'){input <- c(TRUE, FALSE)}
+            if(inputi[1] == 'On Effort only'){inputi <- TRUE}
+            if(inputi[1] == 'Off Effort only'){inputi <- FALSE}
+            if(nrow(dasi) > 0){ dasi <- dasi %>% dplyr::filter(OnEffort %in% inputi) }
+            if(nrow(segi) > 0){ segi <- segi %>% dplyr::filter(OnEffort %in% inputi) }
+            if(nrow(siti) > 0){ siti <- siti %>% dplyr::filter(OnEffort %in% inputi) }
+          }
+          message('\nAfter filtering by OnEffort ...')
+          message('DAS = ',nrow(dasi),' rows')
+          message('segments = ',nrow(segi),' rows')
+          message('sightings = ',nrow(siti),' rows')
+
+        } # END OF SKIPPING OLD WAY ============================================
 
         # Update working datasets
         rv$das <- dasi
         rv$segments <- segi
         rv$sits <- siti
+        rv$subgroups <- subi
 
         # Produce derivative datasets ==========================================
 
@@ -442,7 +525,7 @@ cruz_explorer <- function(cruz,
           (q85 <- quantile(dfi$PerpDistKm,.85,na.rm=TRUE))
           tds <- data.frame(Truncation_option = paste0(c(0,2.5,5,7.5,10, 12.5, 15),'%'),
                             km = c(q100,q975,q95,q925,q90, q875, q85) %>% round(2)) %>%
-                            dplyr::mutate(n = sapply(km,function(x){length(which(dfi$PerpDistKm <= x))}))
+            dplyr::mutate(n = sapply(km,function(x){length(which(dfi$PerpDistKm <= x))}))
           rv$td <- tds
         }
       } # end of if inputs are all not NULL (start up)
@@ -464,7 +547,7 @@ cruz_explorer <- function(cruz,
       choices <- c('All')
       if(!is.null(cruz$strata)){
         choices <- c(choices,
-                   gsub('-','.',cruz$strata$stratum[rev(order(cruz$strata$area))]))
+                     gsub('-','.',cruz$strata$stratum[rev(order(cruz$strata$area))]))
       }
       shiny::selectInput('regions_include', h5('Filter to region(s)?'),choices=choices,selected=choices[1], multiple=TRUE, width='100%')
     })
@@ -504,6 +587,9 @@ cruz_explorer <- function(cruz,
     output$das <- DT::renderDataTable(rv$das, rownames=FALSE)
     output$segments <- DT::renderDataTable(rv$segments, rownames=FALSE)
     output$sits <- DT::renderDataTable(rv$sits, rownames=FALSE)
+    output$sg_events <- DT::renderDataTable(rv$subgroups$events, rownames=FALSE)
+    output$sg_subgroups <- DT::renderDataTable(rv$subgroups$subgroups, rownames=FALSE)
+    output$sg_sightings <- DT::renderDataTable(rv$subgroups$sightings, rownames=FALSE)
 
     # Effort summaries
     output$effsumm_total <- DT::renderDataTable(rv$effsumm$total,
@@ -561,13 +647,13 @@ cruz_explorer <- function(cruz,
                                               rownames=FALSE)
 
     output$distances <- DT::renderDataTable(rv$sppsumm$detection_distances %>%
-        dplyr::arrange(desc(km)) %>%
-        dplyr::mutate(percent_beyond = paste0(round(percent_beyond,2),'%')),
-      rownames=FALSE)
+                                              dplyr::arrange(desc(km)) %>%
+                                              dplyr::mutate(percent_beyond = paste0(round(percent_beyond,2),'%')),
+                                            rownames=FALSE)
 
     output$td <- DT::renderDataTable(rv$td,
-                                    rownames=FALSE,
-                                    options=list(dom='tip'))
+                                     rownames=FALSE,
+                                     options=list(dom='tip'))
 
     # Plots ====================================================================
 
@@ -595,9 +681,9 @@ cruz_explorer <- function(cruz,
       dfi <- rv$segments
       #dfi <- segments
       ggplot2::ggplot(dfi %>%
-               dplyr::group_by(year) %>%
-               dplyr::summarize(km=sum(dist,na.rm=TRUE)),
-               ggplot2::aes(x=year,y=km)) +
+                        dplyr::group_by(year) %>%
+                        dplyr::summarize(km=sum(dist,na.rm=TRUE)),
+                      ggplot2::aes(x=year,y=km)) +
         ggplot2::geom_col(fill='firebrick',alpha=.5) +
         ggplot2::xlab('Year') +
         ggplot2::ylab('Distance surveyed (km)') +
@@ -640,20 +726,20 @@ cruz_explorer <- function(cruz,
                           ggplot2::aes(x=PerpDistKm)) +
           ggplot2::geom_histogram(binwidth=.5,alpha=.6, fill='steelblue') +
           ggplot2::scale_x_continuous(breaks=seq(0,ceiling(max(dfi$PerpDistKm, na.rm=TRUE)),by=1),
-                             minor_breaks=seq(0,ceiling(max(dfi$PerpDistKm, na.rm=TRUE)),by=.25)) +
+                                      minor_breaks=seq(0,ceiling(max(dfi$PerpDistKm, na.rm=TRUE)),by=.25)) +
           ggplot2::ylab('Sightings') +
           ggplot2::xlab('Trackline distance (km)') +
           ggplot2::theme_light() +
           ggplot2::geom_vline(xintercept=tds$km,
-                     col='firebrick') +
+                              col='firebrick') +
           ggplot2::annotate('text',
-                   x=tds$km,
-                   y=Inf,
-                   label=tds$Truncation_option,
-                   hjust=1, vjust=2,
-                   size=3.5, color='firebrick', alpha=.8)
+                            x=tds$km,
+                            y=Inf,
+                            label=tds$Truncation_option,
+                            hjust=1, vjust=2,
+                            size=3.5, color='firebrick', alpha=.8)
         ggplot2::scale_fill_manual(name='Truncation option',
-                          labels=c("0%","2.5%","5%","7.5%","10%"))
+                                   labels=c("0%","2.5%","5%","7.5%","10%"))
       }
 
       p
@@ -689,9 +775,9 @@ cruz_explorer <- function(cruz,
     output$plot_annual <- shiny::renderPlot({
       siti <- rv$sits
       ggplot2::ggplot(siti %>%
-               dplyr::group_by(year) %>%
-               dplyr::summarize(n=dplyr::n()),
-               ggplot2::aes(x=year,y=n)) +
+                        dplyr::group_by(year) %>%
+                        dplyr::summarize(n=dplyr::n()),
+                      ggplot2::aes(x=year,y=n)) +
         ggplot2::geom_col(fill='firebrick',alpha=.5) +
         ggplot2::xlab('Year') +
         ggplot2::ylab('Sightings (n)') +
@@ -701,9 +787,9 @@ cruz_explorer <- function(cruz,
     output$plot_annual_animals <- shiny::renderPlot({
       siti <- rv$sits
       ggplot2::ggplot(siti %>%
-               dplyr::group_by(year) %>%
-               dplyr::summarize(n=sum(best,na.rm=TRUE)),
-               ggplot2::aes(x=year,y=n)) +
+                        dplyr::group_by(year) %>%
+                        dplyr::summarize(n=sum(best,na.rm=TRUE)),
+                      ggplot2::aes(x=year,y=n)) +
         ggplot2::geom_col(fill='darkblue',alpha=.5) +
         ggplot2::xlab('Year') +
         ggplot2::ylab('Animals (sum of school sizes)') +
@@ -740,7 +826,7 @@ cruz_explorer <- function(cruz,
 
     # Save output  =============================================================
 
-}
+  }
 
   ##############################################################################
   ##############################################################################

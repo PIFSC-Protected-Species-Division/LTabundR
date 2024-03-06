@@ -64,6 +64,8 @@ subgroup_subgroups <- function(events){
                          seg_id = seg_id[1],
                          sgid = sgid[1],
                          sitid = sitid[1],
+                         population = population[1],
+                         pop_prob = pop_prob[1],
                          dplyr::across(grep('stratum',names(subij)),function(x){x[1]})) %>%
         as.data.frame
 
