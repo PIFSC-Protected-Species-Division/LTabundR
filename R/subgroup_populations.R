@@ -14,6 +14,7 @@
 #' @param cruz Your `cruz` object (produced from `LTabundR::process_surveys()`).
 #' @param cohort The cohort whose data you would like to use, provided as the number or name of the slot in `cruz$cohorts` to be referenced.
 #' @param default_pop desc
+#' @param verbose Boolean; print updates to console?
 #' @return A `data.frame` of population assignments for each subgroup event, formatted to be accepted as edits
 #' as an input in `process_subgroups()`.
 #' @export
@@ -23,7 +24,8 @@
 subgroup_populations <- function(populations,
                                  cruz,
                                  cohort='pseudorca',
-                                 default_pop = 'pelagic'){
+                                 default_pop = 'pelagic',
+                                 verbose=TRUE){
   # will preliminarily assign each subgroup to a population
   # based on a set of polygons you provide.
   # You can adjust these assignments, and their relative probabilities,
@@ -86,7 +88,7 @@ subgroup_populations <- function(populations,
 
   # Assign probabilities
   (pops <- names(populations))
-  (pop_cols <- which(names(evi) %in% paste0('pop_',pops)))
+  (pop_cols <- which(names(events) %in% paste0('pop_',pops)))
   #(prob_cols <- which(names(evi) %in% paste0('prob_',pops)))
   events$population <- default_pop
   events$pop_prob <- 1
