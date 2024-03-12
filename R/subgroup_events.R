@@ -88,7 +88,7 @@ subgroup_events <- function(das,
       mri_core <-
         mri_core %>%
         rowwise() %>%
-        mutate(ObsStd = ifelse(Obs_Sight %in% c(ObsL, ObsR), TRUE, FALSE)) %>%
+        mutate(ObsStd = ifelse(Obs_Sight %in% c(ObsL, Rec, ObsR), TRUE, FALSE)) %>%
         ungroup() %>%
         as.data.frame
       mri_core

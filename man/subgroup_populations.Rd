@@ -8,7 +8,8 @@ subgroup_populations(
   populations,
   cruz,
   cohort = "pseudorca",
-  default_pop = "pelagic"
+  default_pop = "pelagic",
+  verbose = TRUE
 )
 }
 \arguments{
@@ -28,6 +29,8 @@ to negative degrees West.}
 \item{cohort}{The cohort whose data you would like to use, provided as the number or name of the slot in \code{cruz$cohorts} to be referenced.}
 
 \item{default_pop}{desc}
+
+\item{verbose}{Boolean; print updates to console?}
 }
 \value{
 A \code{data.frame} of population assignments for each subgroup event, formatted to be accepted as edits

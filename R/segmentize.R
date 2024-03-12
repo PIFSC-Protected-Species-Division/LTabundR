@@ -108,10 +108,13 @@ segmentize <- function(cruz,
   if(FALSE){
     data(example_settings)
     settings <- example_settings
+    settings$cohorts[[1]]$beaufort_range
+    settings$cohorts[[1]]$beaufort_range <- 0:4
     das_file <- 'data-raw/data/HICEASwinter2020.das'
     das <- das_load(das_file)
     cruz <- process_strata(das, settings)
     cruz <- das_format(cruz)
+
     debug_mode = TRUE
     verbose=TRUE
     to_plot = TRUE
@@ -137,7 +140,10 @@ segmentize <- function(cruz,
 
 
     # try it
+    #cruz$settings$cohorts[[1]]$beaufort_range <- 0:4
     cruz_demo <- segmentize(cruz, segment_method = 'day', segment_max_interval = 2, verbose=TRUE, debug_mode=TRUE)
+    #cruz_demo$cohorts$default$das %>% group_by(use) %>% summarize(maxb = max(Bft,na.rm=TRUE))
+    #cruz_demo$cohorts$default$segments %>% group_by(use) %>% summarize(maxb=max(avgBft, na.rm=TRUE))
     cruz_demo <- segmentize(cruz, segment_method = 'day', segment_max_interval = 6, verbose=TRUE, debug_mode=TRUE)
     cruz_demo <- segmentize(cruz, segment_method = 'day', segment_max_interval = 24, verbose=TRUE, debug_mode=TRUE)
     cruz_demo <- segmentize(cruz, segment_method = 'day', segment_max_interval = 48, verbose=TRUE, debug_mode=TRUE)
@@ -226,6 +232,15 @@ segmentize <- function(cruz,
     if(verbose){message('\nSegmentizing data for cohort "',cohorti_name,'" . . . ')}
     dass <- cohorti[[1]] # get data only
     head(dass)
+
+    # Check to see if dass is a list or a dataframe
+    # If a list, this means the input was a fully processed cruz object.
+    # in which case, revert to the pre-segmentized state
+    if('list' %in% class(dass)){
+      dass <- dass$das %>% select(-use, -eff_bloc, -seg_id, -datum_id)
+      dass %>% names
+    }
+    dass %>% head
 
     # Gather settings for this cohort ==========================================
 
@@ -679,7 +694,7 @@ segmentize <- function(cruz,
       # for segments with tot_seg_km = 0, change use to FALSE and seg_id to NA
       mutate(use = ifelse(tot_seg_km == 0, FALSE, use)) %>%
       mutate(seg_id = ifelse(tot_seg_km == 0, NA, seg_id)) %>%
-      mutate(use = replace_na(use, FALSE)) %>%
+      mutate(use = tidyr::replace_na(use, FALSE)) %>%
       arrange(temp_i) %>%
       select(- temp_i)
     segs %>% head

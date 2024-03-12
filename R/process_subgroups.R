@@ -54,6 +54,7 @@ process_subgroups <- function(cruz,
     cruz <- das_format(cruz)
     cruz <- segmentize(cruz)
     cruz <- process_sightings(cruz)
+    edits = NULL
     verbose=TRUE
     cohorts_i = 1
 
@@ -159,51 +160,74 @@ process_subgroups <- function(cruz,
 
         new_events <- events
         edits %>% length
-        i=1
+        lapply(edits, unlist, use.names=FALSE)
+
+        # Flatten edits
+        i=2
+        new_edits <- c()
         for(i in 1:length(edits)){
           (editi <- edits[[i]])
           if(is.data.frame(editi)){
             editi <- split(editi, seq(nrow(editi)))
+          }else{
+            new_editi <- c()
+            for(ii in 1:length(editi)){
+              (editii <- editi[[ii]])
+              editiii <- split(editii, seq(nrow(editii)))
+              new_editi <- c(new_editi, editiii)
+            }
+            new_editi
+            editi <- new_editi
           }
-          length(editi)
-          ii=1
-          for(ii in 1:length(editi)){
-            message('--- edit ',ii,' within slot ',i,' ...')
-            (editii <- editi[[ii]])
-            (ei <- editii$edit)
+          editi
+          new_edits <- c(new_edits, editi)
+        }
+        new_edits
 
-            # Check to see if cohort applies
-            (edit_cohort <- editii$cohort)
-            if(is.numeric(edit_cohort)){edit_cohort <- names(cruz$cohorts)[edit_cohort]}
-            edit_cohort
-            if(edit_cohort == cohort_name){
-              (stop_msg <- paste0('FAIL! This edit did not find a match in the data :: edit ',ii,' within edit slot ',i,
-              ' :: sgid ', editii$sgid))
-              if(ei == 'population'){
-                editii
-                (matchi <- which(new_events$sgid == editii$sgid))
-                if(length(matchi)>0){
-                  new_events$population[matchi] <- editii$population
-                  new_events$pop_prob[matchi] <- editii$pop_prob
-                }else{ stop(stop_msg) }
-              }
-              if(ei == 'phase'){
-                editii
-                (matchi <- which(new_events$sgid == editii$sgid))
-                if(length(matchi)>0){
-                  new_events$phase[matchi] <- editii$phase
-                  new_events$phase[matchi] <- editii$phase
-                }else{ stop(stop_msg) }
-              }
-              if(ei == 'exclude'){
-                editii
-                (matchi <- which(new_events$sgid == editii$sgid))
-                if(length(matchi)>0){
-                  new_events <- new_events[-matchi, ]
-                }else{ stop(stop_msg) }
-              }
-            } # end of make sure cohort applies
-          }
+        # Now loop through edits
+        i=2
+        for(i in 1:length(new_edits)){
+          (editi <- new_edits[[i]])
+
+          (ei <- editi$edit)
+
+          # Check to see if cohort applies
+          (edit_cohort <- editi$cohort)
+          if(is.numeric(edit_cohort)){edit_cohort <- names(cruz$cohorts)[edit_cohort]}
+          edit_cohort
+          if(edit_cohort == cohort_name){
+            (stop_msg <- paste0('FAIL! This edit did not find a match in the data :: edit ',ii,' within edit slot ',i,
+                                ' :: sgid ', editi$sgid))
+            if(ei == 'population'){
+              editi
+              (matchi <- which(new_events$sgid %in% editi$sgid))
+              if(length(matchi)>0){
+                new_events$population[matchi] <- editi$population
+                new_events$pop_prob[matchi] <- editi$pop_prob
+              }else{ stop(stop_msg) }
+            }
+            if(ei == 'phase'){
+              editi
+              (matchi <- which(new_events$sgid == editi$sgid))
+              if(length(matchi)>0){
+                new_events$phase[matchi] <- editi$phase
+              }else{ stop(stop_msg) }
+            }
+            if(ei == 'ObsStd'){
+              editi
+              (matchi <- which(new_events$sgid == editi$sgid))
+              if(length(matchi)>0){
+                new_events$ObsStd[matchi] <- editi$ObsStd
+              }else{ stop(stop_msg) }
+            }
+            if(ei == 'exclude'){
+              editi
+              (matchi <- which(new_events$sgid == editi$sgid))
+              if(length(matchi)>0){
+                new_events <- new_events[-matchi, ]
+              }else{ stop(stop_msg) }
+            }
+          } # end of make sure cohort applies
         }
 
         # Review post

@@ -58,5 +58,6 @@ lta_ci <- function(estimate,
 
   list(quantile = c(lci_perc, uci_perc),
        bca = c(lci_bca, uci_bca),
-       bca_lognormal = c(lci_bcaln, uci_bcaln))
+       bca_lognormal = c(lci_bcaln, uci_bcaln),
+       cv = e39)
 }

@@ -486,6 +486,16 @@ lta <- function(cruz,
 
     cruz$cohorts$all$segments$use %>% table
 
+    g0 <- .68
+    g0_cv <- .36
+
+
+    g0_small <- g0_optimize(g0 = 0.68, g0_cv = .36)
+    g0_param <- matrix(data=NA, nrow=2, ncol=2)
+    g0_param[1,] <- g0_small$bestFit
+    plogis(rnorm(1000,g0_param[1,1],g0_param[1,2])) %>% hist
+    plogis(rnorm(1000,g0_param[1,1],g0_param[1,2])) %>% mean
+
   }
 
   ##############################################################################

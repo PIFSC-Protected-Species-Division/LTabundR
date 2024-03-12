@@ -5,6 +5,8 @@
 #' @param sgid A character vector of subgroup IDs whose data will be edited.
 #' @param exclude A Boolean vector, with length of either 1 or the same as `sgid`,
 #' indicating which `sgid`'s to erase: `TRUE` means exclude, `FALSE` means keep.
+#' @param ObsStd A Boolean vector, with length of either 1 or the same as `sgid`,
+#' indicating whether or not the observer of this subgroup was a standard/primary observer.
 #' @param phase A numeric vector, with length of either 1 or the same as `sgid`,
 #' indicating the new phase to assign the `sgid`'s.
 #' If you wish to remove a phase assignment for a `sgid`, use `NA`.
@@ -26,6 +28,7 @@
 subgroup_edits <- function(cohort,
                            sgid,
                            exclude = NULL,
+                           ObsStd = NULL,
                            phase = NULL,
                            population = NULL,
                            pop_prob = NULL){
@@ -42,6 +45,7 @@ subgroup_edits <- function(cohort,
     sgid = '20111026-004-A'
     exclude = TRUE
     phase = NULL
+    ObsStd = NULL
     population = NULL
     pop_prob = NULL
   }  #==========================================================================
@@ -57,6 +61,16 @@ subgroup_edits <- function(cohort,
                exclude = exclude) %>%
         select(edit, cohort, sgid, exclude))
       edits[[length(edits) + 1]] <- mri
+  }
+
+  # ObsStd =================================================================
+  if(!is.null(ObsStd)){
+    (mri <-
+       mr %>%
+       mutate(edit = 'ObsStd',
+              ObsStd = ObsStd) %>%
+       select(edit, cohort, sgid, ObsStd))
+    edits[[length(edits) + 1]] <- mri
   }
 
   # phase ======================================================================

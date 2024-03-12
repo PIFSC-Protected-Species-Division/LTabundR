@@ -50,7 +50,8 @@ subgroup_subgroups <- function(events){
                          Date = Date[1],
                          dplyr::across(DateTime:Species,function(x){x[1]}),
                          SubGrp = SubGrp[1],
-                         dplyr::across(Angle:seg_id,mean),
+                         Angle = mean(Angle, na.rm=TRUE),
+                         RadDist = mean(RadDist, na.rm=TRUE),
                          PerpDist = mean(PerpDist),
                          GSBest = round(mean(GSBest_raw, na.rm=TRUE),2),
                          GSH = round(mean(GSH_raw, na.rm=TRUE),2),
@@ -84,9 +85,10 @@ subgroup_subgroups <- function(events){
   # Review for debugging
   nrow(results)
   results %>% head
+  results$sgid
   results$sgid %>% table %>% table
   results$Phase = results$phase
-  results$phase <- results$sgid <- results$sitid <- NULL
+  #results$phase <- results$sgid <- results$sitid <- NULL
   results$Phase %>% table
   results$GSBest %>% table(useNA='always')
   results$GSBest_geom %>% table(useNA='always')
