@@ -8,6 +8,7 @@ subgroup_edits(
   cohort,
   sgid,
   exclude = NULL,
+  ObsStd = NULL,
   phase = NULL,
   population = NULL,
   pop_prob = NULL
@@ -21,6 +22,9 @@ provided as the number or name of the slot in \code{cruz$cohorts} to be referenc
 
 \item{exclude}{A Boolean vector, with length of either 1 or the same as \code{sgid},
 indicating which \code{sgid}'s to erase: \code{TRUE} means exclude, \code{FALSE} means keep.}
+
+\item{ObsStd}{A Boolean vector, with length of either 1 or the same as \code{sgid},
+indicating whether or not the observer of this subgroup was a standard/primary observer.}
 
 \item{phase}{A numeric vector, with length of either 1 or the same as \code{sgid},
 indicating the new phase to assign the \code{sgid}'s.

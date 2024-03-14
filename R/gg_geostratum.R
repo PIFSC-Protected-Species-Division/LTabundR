@@ -2,7 +2,7 @@
 #'
 #' @param p Base `ggplot2` to which you are adding this `geom`.
 #' @param cruz Your `cruz` object (produced from `LTabundR::process_surveys()`).
-#' @param strata
+#' @param strata desc
 #' @param color Color string.
 #' @param lwd Boundary line width.
 #' @param lty Boundary line type.
