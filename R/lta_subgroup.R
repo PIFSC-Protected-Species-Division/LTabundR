@@ -404,26 +404,137 @@ lta_subgroup <- function(df_sits, # DateTime, Lat, Lon, Cruise, PerpDistKm
   # Encounter rate
 
   if(verbose){message('\n--- estimating the encounter rate ...')}
-  (n <- density_sightings %>% nrow)
-  (L <- density_segments$dist %>% sum)
-  (er_estimate <- n/L)
 
-  er_boots <- c()
+  # Get all unique populations in sightings, including probabilities
+  (populations <-
+      sapply(unique(density_sightings$population),
+             function(x){stringr::str_split(x,';')[[1]]}) %>%
+      unlist %>%
+      unique)
+
+  #=============================================================================
+  # convenience function
+  #=============================================================================
+
+  er_subgroup <- function(density_sightings,
+                          density_segments,
+                          populations,
+                          stochastic = FALSE){
+
+    if(nrow(density_sightings)>0){
+      # Make a key with one sighting per row, summing subgroups in each sighting
+      (sit_key <-
+         density_sightings %>%
+         group_by(sitid) %>%
+         summarize(n=n(),
+                   population = population[1],
+                   pop_prob = pop_prob[1]))
+
+
+      # Stochastically assign mixed-population sightings to a single pop? ========
+      # Handle stochastic assignment
+      if(stochastic == TRUE & length(populations) > 1){
+        j=6
+        for(j in 1:nrow(sit_key)){
+          (sitj <- sit_key[j, ])
+          (popj <- sitj$population)
+          (pop_splits <- (stringr::str_split(popj, ';')[[1]]))
+          (probj <- sitj$pop_prob)
+          (prob_splits <- (stringr::str_split(probj, ';')[[1]]) %>% as.numeric)
+          # See if this sighting's population is split
+          if(length(pop_splits)>1 & length(prob_splits)>1){
+            pop_splits
+            prob_splits
+
+            # Make sure probabilities are ordered
+            pop_splits <- pop_splits[order(prob_splits)]
+            prob_splits <- prob_splits[order(prob_splits)]
+
+            # Set up a probability table
+            (splits <- data.frame(population = pop_splits,
+                                  prob = prob_splits) %>%
+                mutate(prob_cum = cumsum(prob)))
+
+            # Take a stochastic draw to determine population
+            (drawi <- runif(1, 0, 1))
+            (popi <- splits$population[splits$prob_cum >= drawi][1])
+
+            # Update population in sit_key
+            sit_key$population[j] <- popi
+            sit_key$pop_prob[j] <- '1'
+          }
+        } # end of loop through each sighting
+      } # end of stochastic reassignment =========================================
+    } # end of if nrow density_sightings > 0
+
+    # Stage encounter rate result
+    er <- data.frame()
+
+    # Loop through each population
+    i=1
+    for(i in 1:length(populations)){
+      (popi <- populations[i])
+
+      n <- 0
+      if(nrow(density_sightings)>0){
+        ni <- c()
+        j=6
+        for(j in 1:nrow(sit_key)){
+          (sitj <- sit_key[j, ])
+          (popj <- sitj$population)
+          (pop_splits <- (stringr::str_split(popj, ';')[[1]]))
+          (matchj <- which(pop_splits == popi))
+          (probj <- sitj$pop_prob)
+          (prob_splits <- (stringr::str_split(probj, ';')[[1]]) %>% as.numeric)
+          if(length(matchj)>0){
+            (probj <- prob_splits[matchj])
+            (nj <- sitj$n * probj)
+            ni <- c(ni, nj)
+          }
+        }
+        ni
+        n <- ni %>% sum
+      }     # end of if nrow density_sightings > 0
+      L <- density_segments$dist %>% sum
+      eri <- data.frame(population = popi, n, L)
+      er <- rbind(er, eri)
+    }
+    er
+    er$er <- er$n / er$L
+    return(er)
+  }
+  # end of convenience function ================================================
+
+  # Point estimate of encounter rate ===========================================
+  (er_estimate <- er_subgroup(density_sightings,
+                              density_segments,
+                              populations,
+                              stochastic = FALSE))
+
+  # Bootstrapped estimates =====================================================
+  # include stochastic reassignment
+
+  er_boots <- data.frame()
   i = 1
   for(i in 1:iterations){
     boot_data <- prep_bootstrap_datasets(segments = density_segments,
                                          sightings = density_sightings)
-    (Li <- boot_data$segments$dist %>% sum)
-    (ni <- boot_data$sightings %>% nrow)
-    (eri <- ni / Li)
+    eri <- er_subgroup(boot_data$sightings,
+                       boot_data$segments,
+                       populations,
+                       stochastic = TRUE)
+    #(Li <- boot_data$segments$dist %>% sum)
+    #(ni <- boot_data$sightings %>% nrow)
+    #(eri <- ni / Li)
     message('--- --- ',
             stringr::str_pad(i, width=4, pad=' ', side='left'),
             ' :: re-sampled encounter rate estimate = ',
-            stringr::str_pad(round(eri*100,3), width=5, pad='0', side='right'),
+            stringr::str_pad(round(mean(eri$er)*100,3), width=5, pad='0', side='right'),
             ' subgroups / 100 km2')
-    er_boots <- c(er_boots, eri)
+    er_boots <- rbind(er_boots, data.frame(i, eri))
     if(!is.null(output_dir)){saveRDS(er_boots, file=paste0(output_dir, 'er_boots.RData'))}
   }
+  er_boots
 
   ##############################################################################
   # Weighted g(0) and weighted CV
@@ -452,30 +563,51 @@ lta_subgroup <- function(df_sits, # DateTime, Lat, Lon, Cruise, PerpDistKm
   # Density estimation
 
   # Get estimate
-  if(verbose){message('\n--- estimating density ...')}
+  if(verbose){message('\n--- estimating density & abundance...')}
 
-  (D <- er_estimate * (ss_estimate / (2 * esw * g0_wt_mn)))
-  D * 100
+  populations
+  er_estimate$D <- NA
+  er_estimate$N <- NA
+  its <- data.frame()
+  i=1
+  for(i in 1:length(populations)){
+    (popi <- populations[i])
+    message('--- --- population = ', popi)
 
-  # Prep boot strap data
-  if(verbose){message('--- --- bootstrapping ...')}
-  its <- data.frame(er = er_boots, ss = ss_boots, esw = esw_boots, g0 = g0_boots)
-  head(its)
+    message('--- --- --- point estimate...')
+    (eri <- er_estimate %>% filter(population == popi))
+    (D <- eri$er * (as.numeric(ss_estimate) / (2 * esw * g0_wt_mn)))
+    D * 100
+    er_estimate$D[i] <- D
+    if(!is.null(abundance_area)){
+      N <- round(D * abundance_area) %>% as.numeric
+      er_estimate$N[i] <- N
+    }
 
-  # Bootstrap
-  its <- its[sample(1:nrow(its), size= density_bootstraps, replace=TRUE),]
+    message('--- --- --- bootstraps...\n')
+    (booti <- er_boots %>% filter(population == popi))
+    (itsi <- data.frame(booti,
+                        ss = ss_boots,
+                        esw = esw_boots,
+                        g0 = g0_boots))
+    itsi <- itsi[sample(1:nrow(itsi), size= density_bootstraps, replace=TRUE),]
+    itsi %>% head
+    itsi$D <- itsi$er * (itsi$ss / (2 * itsi$esw * itsi$g0))
+    itsi$N <- NA
+    if(!is.null(abundance_area)){
+      itsi$N <- round(itsi$D * abundance_area) %>% as.numeric
+    }
+    its <- rbind(its, itsi)
+  }
+  er_estimate
+  its %>% head
+  its %>% nrow
 
-  its$D <- its$er * (its$ss / (2 * its$esw * its$g0))
-  if(toplot){hist(its$D)}
 
-  ##############################################################################
-  # Abundance estimation
-
-  its$N <- NA
-  if(!is.null(abundance_area)){
-    if(verbose){message('\n--- estimating abundance ...')}
-    N <- round(D * abundance_area) %>% as.numeric
-    its$N <- round(its$D * abundance_area) %>% as.numeric
+  if(toplot){
+    ggplot(its, aes(x=D)) +
+      geom_histogram() +
+      facet_wrap(~population, scales='free_x')
   }
 
   ##############################################################################
@@ -483,33 +615,76 @@ lta_subgroup <- function(df_sits, # DateTime, Lat, Lon, Cruise, PerpDistKm
 
   if(verbose){message('\n--- compiling results ...')}
 
-  results <- list(D = D,
-                  D_CV = sd(its$D) / D,
-                  D_L95 = coxed::bca(its$D)[1],
-                  D_U95 = coxed::bca(its$D)[2],
-                  N = N,
-                  N_CV = sd(its$N) / N,
-                  N_L95 = coxed::bca(its$N)[1],
-                  N_U95 = coxed::bca(its$N)[2],
-                  ER = er_estimate,
-                  ESW = esw %>% as.numeric(),
-                  ESW_CV = as.numeric(sd(esw_boots) / as.numeric(esw)),
-                  ss = ss_estimate,
-                  n = nrow(density_sightings),
-                  L = L,
-                  n_segments = nrow(density_segments),
-                  g0 = g0_wt_mn,
-                  g0_cv = g0_wt_cv,
+  er_estimate
+  its %>% head
+
+  bootsumm <-
+    its %>%
+    group_by(population) %>%
+    summarize(D_sd = sd(D),
+              D_L95 = coxed::bca(D)[1],
+              D_U95 = coxed::bca(D)[2],
+              N_L95 = coxed::bca(N)[1],
+              N_U95 = coxed::bca(N)[2],
+              ESW_sd = sd(esw),
+              ss_sd = sd(ss))
+
+  pops <- left_join(er_estimate, bootsumm, by='population')
+  pops <-
+    pops %>%
+    mutate(ESW = esw %>% as.numeric,
+           group = ss_estimate,
+           n_segments = nrow(density_segments),
+           g0 = g0_wt_mn,
+           g0_cv = g0_wt_cv,
+           Area = ifelse(is.null(abundance_area), NA, abundance_area)) %>%
+    mutate(CV = D_sd / D,
+           ESW_CV = ESW_sd / ESW,
+           group_sd = ss_sd,
+           group_CV = ss_sd / group) %>%
+    select(population, L, n_segments,
+           g0, g0_cv,
+           ESW, ESW_CV,
+           group, group_sd, group_CV,
+           n, ER=er,
+           D, CV, D_L95, D_U95,
+           Area, N, N_L95, N_U95
+    )
+
+  pops
+
+  results <- list(estimate = pops,
+                  #D = er_estimate$D,
+                  #D_CV = sd(its$D) / D,
+                  #D_L95 = coxed::bca(its$D)[1],
+                  #D_U95 = coxed::bca(its$D)[2],
+                  #N = N,
+                  #N_CV = sd(its$N) / N,
+                  #N_L95 = coxed::bca(its$N)[1],
+                  #N_U95 = coxed::bca(its$N)[2],
+                  #ER = er_estimate,
+                  #ESW = esw %>% as.numeric(),
+                  #ESW_CV = as.numeric(sd(esw_boots) / as.numeric(esw)),
+                  #ss = ss_estimate,
+                  #n = nrow(density_sightings),
+                  #L = L,
+                  #n_segments = nrow(density_segments),
+                  #g0 = g0_wt_mn,
+                  #g0_cv = g0_wt_cv,
+                  bft = g0w$bft,
                   g0_details = g0_result,
                   df = df,
-                  bootstraps = list(esw = esw_boots,
-                                    ss = ss_boots,
-                                    g0 = g0_boots,
-                                    er = er_boots,
-                                    D = its$D,
-                                    N = its$N),
+                  bootstraps = its,
+                  #list(esw = esw_boots,
+                  #                  ss = ss_boots,
+                  #                  g0 = g0_boots,
+                  #                  er = er_boots,
+                  #                  D = its$D,
+                  #                  N = its$N),
                   iterations = iterations,
                   density_bootstraps = density_bootstraps)
+
+  results
   if(!is.null(output_dir)){saveRDS(results, file=paste0(output_dir,'lta_subgroup_results.RData'))}
 
   if(verbose){message('\nFinished!\n')}
