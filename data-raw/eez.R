@@ -39,5 +39,6 @@ hawaii_new <- st_multilinestring(newxy)
 hawaii_new <- st_cast(hawaii_new, to='MULTILINESTRING')
 hawaii_new <- sf::st_geometry(hawaii_new)
 eez_hawaii <- hawaii_new
+eez_hawaii <- hawaii
 usethis::use_data(eez_hawaii, overwrite = TRUE)
 

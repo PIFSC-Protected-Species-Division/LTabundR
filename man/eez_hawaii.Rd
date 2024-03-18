@@ -5,7 +5,7 @@
 \alias{eez_hawaii}
 \title{EEZ - Hawaii (formatted for sf / tmap mapping)}
 \format{
-An object of class \code{sfc_MULTILINESTRING} (inherits from \code{sfc}) of length 1.
+An object of class \code{sfc_MULTILINESTRING} (inherits from \code{sfc}) of length 25.
 }
 \usage{
 eez_hawaii

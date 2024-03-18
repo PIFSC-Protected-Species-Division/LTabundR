@@ -14,11 +14,6 @@
 #' @param strata_opacity Single numeric between 0 and 1; opacity of geostratum boundary lines, if `strata_show` is `TRUE`.
 #' @param effort_show Boolean; display survey tracks? Default is `FALSE`, because rendering the tracklines can take a while.
 #' If `verbose` is `TRUE`, a progress bar will be printed to the console as the survey tracklines are rendered.
-#' @param effort_resolution Single numeric integer equal to or larger than 1, indicating the data resolution of survey tracklines, if `effort_show` is `TRUE`.
-#' A value of `1` means full resolution (no data rows are removed), and can take minutes to render.
-#' Higher values mean lower resolution; in practice, the number provided represents the number of data lines skipped.
-#' For example, a value of `3` means that only every fourth data line is used to build tracks.
-#' For your initial call, we recommend the default (`15`).
 #' @param effort_color Single character string; color of survey tracklines, if `effort_show` is `TRUE`.
 #' @param effort_weight Single positive numeric; weight (thickness) of survey tracklines, if `effort_show` is `TRUE`.
 #' @param effort_opacity Single numeric between 0 and 1; opacity of survey tracklines, if `effort_show` is `TRUE`.
@@ -48,7 +43,7 @@ map_cruz <- function(cruz,
                      strata_opacity = 0.5,
 
                      effort_show=FALSE,
-                     effort_resolution=15,
+                     #effort_resolution=15,
                      effort_color = 'darkblue',
                      effort_weight = 0.6,
                      effort_opacity = 0.85,
@@ -85,6 +80,12 @@ map_cruz <- function(cruz,
     sightings_radius = 1
     sightings_opacity = 0.5
 
+    # @param effort_resolution Single numeric integer equal to or larger than 1, indicating the data resolution of survey tracklines, if `effort_show` is `TRUE`.
+    # A value of `1` means full resolution (no data rows are removed), and can take minutes to render.
+    # Higher values mean lower resolution; in practice, the number provided represents the number of data lines skipped.
+    # For example, a value of `3` means that only every fourth data line is used to build tracks.
+    # For your initial call, we recommend the default (`15`).
+
     # try it
     map_cruz(cruz)
     map_cruz(cruz, sightings_color='firebrick')
@@ -103,21 +104,24 @@ map_cruz <- function(cruz,
   das <- ani$das
 
   # Load eez data
-  data(eez_ccs)
-  data(eez_hawaii)
+  #data(eez_ccs)
+  #data(eez_hawaii)
+  data(eez)
 
   # Create base leaflet map
   m <-
     leaflet::leaflet() %>%
-    leaflet::addProviderTiles(leaflet::providers$Esri.OceanBasemap,
-                              options = leaflet::providerTileOptions(opacity = .5))
+    leaflet::addTiles(options = leaflet::providerTileOptions(opacity = .5))
+    #leaflet::addProviderTiles(leaflet::providers$Esri.OceanBasemap,
+    #                          options = leaflet::providerTileOptions(opacity = .5))
 
   # Add EEZ
   if(eez_show){
     m <-
       m %>%
-      leaflet::addPolylines(data=eez_hawaii, weight=eez_weight, color=eez_color, opacity=eez_opacity) %>%
-      leaflet::addPolylines(data=eez_ccs, weight=eez_weight, color=eez_color, opacity=eez_opacity)
+      leaflet::addPolylines(data=eez, weight=eez_weight, color=eez_color, opacity=eez_opacity)
+      #leaflet::addPolylines(data=eez_hawaii, weight=eez_weight, color=eez_color, opacity=eez_opacity) %>%
+      #leaflet::addPolylines(data=eez_ccs, weight=eez_weight, color=eez_color, opacity=eez_opacity)
   }
 
   # Add geostrata
@@ -171,7 +175,10 @@ map_cruz <- function(cruz,
 
     m
     dasi <- das #[1:100000,]
-    dasi <- dasi[c(TRUE,rep(FALSE,times=effort_resolution)),]
+    dasi <- das %>% filter(!is.na(seg_id))
+    #(whiches <- c(TRUE,rep(FALSE,times=effort_resolution)))
+    #(whiches <- rep(whiches, times=ceiling(nrow(dasi)/effort_resolution)))
+    #dasi <- dasi[whiches[1:nrow(dasi)], ]
     dasi$km_int <- process_km(das=dasi, max_km_gap=Inf, debug_mode=FALSE)
 
     dasii <- data.frame()
@@ -179,9 +186,9 @@ map_cruz <- function(cruz,
     segid_pre <- dasi$seg_id[1]
     if(verbose){pb <- txtProgressBar(1, nrow(dasi), style=3)} # setup progress bar
     for(i in 1:nrow(dasi)){
-      segidi <- dasi$seg_id[i]
+      (segidi <- dasi$seg_id[i])
       if(is.na(segidi)){segidi <- 9999}
-      kmi <- dasi$km_int[i]
+      (kmi <- dasi$km_int[i,1])
       if(segidi != segid_pre | kmi > 20){
         if(nrow(dasii)>1){
 

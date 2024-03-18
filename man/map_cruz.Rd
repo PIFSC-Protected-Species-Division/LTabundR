@@ -16,7 +16,6 @@ map_cruz(
   strata_weight = 1,
   strata_opacity = 0.5,
   effort_show = FALSE,
-  effort_resolution = 15,
   effort_color = "darkblue",
   effort_weight = 0.6,
   effort_opacity = 0.85,
@@ -50,12 +49,6 @@ map_cruz(
 
 \item{effort_show}{Boolean; display survey tracks? Default is \code{FALSE}, because rendering the tracklines can take a while.
 If \code{verbose} is \code{TRUE}, a progress bar will be printed to the console as the survey tracklines are rendered.}
-
-\item{effort_resolution}{Single numeric integer equal to or larger than 1, indicating the data resolution of survey tracklines, if \code{effort_show} is \code{TRUE}.
-A value of \code{1} means full resolution (no data rows are removed), and can take minutes to render.
-Higher values mean lower resolution; in practice, the number provided represents the number of data lines skipped.
-For example, a value of \code{3} means that only every fourth data line is used to build tracks.
-For your initial call, we recommend the default (\code{15}).}
 
 \item{effort_color}{Single character string; color of survey tracklines, if \code{effort_show} is \code{TRUE}.}
 
