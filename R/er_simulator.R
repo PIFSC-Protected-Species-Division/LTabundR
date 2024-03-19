@@ -9,6 +9,7 @@
 #' @param cohort The cohort whose data you would like to analyze, provided as a number indicating which slot in `cruz$cohorts` should be referenced.
 #' @param cruz Your `cruz` object (produced from `LTabundR::process_surveys()`).
 #' @param iterations Number of iterations
+#' @param verbose Boolean; print updates to the console?
 #'
 #' @details See the Appendix to Bradford et al. (2020) for analytical details, but briefly:
 #' in each bootstrap iteration, survey segments are resampled in a way that preserves
@@ -27,11 +28,14 @@
 #' The p-value represents the fraction of simulated encounter rates that exceed the observed encounter rate.
 #'
 #' @export
+#' @import dplyr
+#' @import ggplot2
 #'
 er_simulator <- function(spp,
                          cohort = 1,
                          cruz,
-                         iterations = 1000){
+                         iterations = 1000,
+                         verbose = FALSE){
 
   if(FALSE){ #==================================================================
 
@@ -40,13 +44,13 @@ er_simulator <- function(spp,
     data("cnp_150km_1986_2020")
     cruz <- cnp_150km_1986_2020
     cruz <- filter_cruz(cruz, years= c(2002, 2010, 2017))
-    iterations = 10
+    iterations = 1000
 
     # try it
     er_simulator(spp = '072',
-                 years = c(2002, 2010, 2017),
                  cruz = cruz,
-                 iterations = 10)
+                 iterations = 1000,
+                 verbose = TRUE)
 
   } #===========================================================================
 
@@ -79,7 +83,7 @@ er_simulator <- function(spp,
   bsits <- matrix()
   bi = 1
   for(bi in 1:iterations){
-    message('Iteration ', bi, ' ...')
+    if(verbose){message('Iteration ', bi, ' ...')}
 
     # Simulate the overall encounter rate w bootstrap resampling
     kms <- c()
@@ -87,7 +91,7 @@ er_simulator <- function(spp,
     yi <- 1
     for(yi in 1:length(years)){
       (yeari <- years[yi])
-      message('--- --- ',yeari)
+      #if(verbose){message('--- --- ',yeari)}
       # Resample the data
       segi <- segments %>% dplyr::filter(year == yeari)
       siti <- sightings %>% dplyr::filter(year == yeari)
@@ -114,30 +118,51 @@ er_simulator <- function(spp,
 
   # Plot results ===============================================================
 
-  par(mfrow=c(length(years),1))
+
+  #par(mfrow=c(length(years),1))
   (xmax <- 1.1*max(c(bsits, obsi)))
   i=1
   pvals <- c()
+  results <- data.frame()
   for(i in 1:length(years)){
+    (bs <- bsits[i,] %>% as.numeric)
+    (pvi <- (which(bs > obsi[i]) %>% length) / iterations)
+    pvals[i] <- pvi
+    (resulti <- data.frame(year = years[i], p = pvi, obs = obsi[i], sim = bs))
+    results <- rbind(results, resulti)
 
     # Plot
-    main_title <- paste0(paste('Species ',spp,collapse='-'),' :: ',years[i])
-    hist(bsits[i,],
-       xlim=c(0, xmax),
-       breaks= seq(0, xmax, length=20),
-       col = 'grey60',
-       border = 'grey85',
-       main = years[i], #main_title,
-       xlab = 'Simulated sightings')
-    abline(v=obsi[i], col='red', lwd=2)
+    # main_title <- paste0(paste('Species ',spp,collapse='-'),' :: ',years[i])
+    # hist(bsits[i,],
+    #    xlim=c(0, xmax),
+    #    breaks= seq(0, xmax, length=20),
+    #    col = 'grey60',
+    #    border = 'grey85',
+    #    main = years[i], #main_title,
+    #    xlab = 'Simulated sightings')
+    # abline(v=obsi[i], col='red', lwd=2)
 
-    pvals[i] <- (which(bsits[i,] > obsi[i]) %>% length) / iterations
   }
-  par(mfrow=c(1,1))
+  #par(mfrow=c(1,1))
+
+  results %>% head
+  results %>% tail
+
+  p <-
+    ggplot(results,
+         aes(x=sim)) +
+    geom_histogram(fill='darkblue', alpha=.5, bins=50) +
+    geom_vline(data=results, mapping=aes(xintercept = obs),
+               lty=2, alpha=.7, color='firebrick') +
+    facet_wrap(~year, nrow=1) +
+    theme_light()
+
+  print(p)
 
   # Compile results into a list
   resulti <- list(summary = data.frame(years, observed = obsi, p = pvals),
-                  details = bsits)
+                  details = results,
+                  p = p)
 
   return(resulti)
 }

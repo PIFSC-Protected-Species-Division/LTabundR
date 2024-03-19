@@ -4,7 +4,7 @@
 \alias{er_simulator}
 \title{Encounter Rate simulator test}
 \usage{
-er_simulator(spp, cohort = 1, cruz, iterations = 1000)
+er_simulator(spp, cohort = 1, cruz, iterations = 1000, verbose = FALSE)
 }
 \arguments{
 \item{spp}{Species code}
@@ -14,6 +14,8 @@ er_simulator(spp, cohort = 1, cruz, iterations = 1000)
 \item{cruz}{Your \code{cruz} object (produced from \code{LTabundR::process_surveys()}).}
 
 \item{iterations}{Number of iterations}
+
+\item{verbose}{Boolean; print updates to the console?}
 }
 \value{
 A dataframe with a row for each year. Columns provide the number of observations of
