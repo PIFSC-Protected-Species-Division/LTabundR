@@ -462,14 +462,17 @@ lta <- function(cruz,
     estimator <- lta_estimates(scenarios)
     #estimates <- c(estimator(spp = '036', title = "Short-finned pilot whale"))
     estimates <-
-      c(estimator(spp = '013', title = "Striped dolphin"),
-        estimator(spp = '026', title = "Fraser's dolphin", alt_g0_spp = '013'),
-        estimator(spp = '031', title = "Melon-headed whale", alt_g0_spp = '013'))
+      c(estimator(spp = '013', title = "Striped dolphin",
+                  g0=.3, g0_cv=.2),
+        estimator(spp = '026', title = "Fraser's dolphin", alt_g0_spp = '013',
+                  g0=.3, g0_cv=.2),
+        estimator(spp = '031', title = "Melon-headed whale", alt_g0_spp = '013',
+                  g0=.3, g0_cv=.2))
 
     use_g0 = TRUE
     ss_correction = 1
-    bootstraps = 10
-    bootstraps = 10000
+    bootstraps = 1000
+    bootstraps = 5
     toplot=TRUE
     verbose=TRUE
     abund_bft_range = 0:6
@@ -481,21 +484,6 @@ lta <- function(cruz,
     lta_result$estimate
     lta_result$bootstrap$summary
     lta_result$bootstrap$details
-
-    # To try function, use TLabundR-dev/test_code/CNP/lta_tests.R
-
-    cruz$cohorts$all$segments$use %>% table
-
-    g0 <- .68
-    g0_cv <- .36
-
-
-    g0_small <- g0_optimize(g0 = 0.68, g0_cv = .36)
-    g0_param <- matrix(data=NA, nrow=2, ncol=2)
-    g0_param[1,] <- g0_small$bestFit
-    plogis(rnorm(1000,g0_param[1,1],g0_param[1,2])) %>% hist
-    plogis(rnorm(1000,g0_param[1,1],g0_param[1,2])) %>% mean
-
   }
 
   ##############################################################################
@@ -574,10 +562,6 @@ lta <- function(cruz,
     # Handle survey area
     study_area <- NULL
     if(verbose){message('--- --- building survey area polygon given `regions` and `regions_remove` specs ...')}
-    #strata_all = cruz$settings$strata
-    #strata_keep = estimati$regions
-    #strata_remove = estimati$regions_remove
-    #remove_land = estimati$remove_land
     (this_area <- strata_area(strata_all = cruz$settings$strata,
                               strata_keep = estimati$regions,
                               strata_remove = estimati$regions_remove,
@@ -660,17 +644,6 @@ lta <- function(cruz,
             # Combine these into a single estimate of g0 and g0cv (using an LTabundR function)
             g0i <- g0_combine(g0s, g0cvs)$g0
             g0cvi <- g0_combine(g0s, g0cvs)$CV
-
-            # For debugging ================================
-            #         #minke # s/b  # fw  # bw
-            #g0s <- c(0.11,   .41,   .33,  .55)
-            #g0cvs <- c(0.98, .20,   .27,  .35)
-            #g0s <- g0s[1] # works for single-species and combine_g0 applications
-            #g0cvs <- g0cvs[1]
-            #(g0i <- mean(g0s)) # combined g0
-            #(g0int <- g0s^2 * g0cvs^2) # intermediate step
-            #(g0int2 <- sum(g0int / (length(g0s)^2))) # combined variance
-            #(g0cvi <- round((sqrt(g0int2) / g0i), 3)) # combined CV
             if(verbose){message('--- --- --- final weighted g0 = ', g0i,' (CV = ',g0cvi,')')}
 
           }else{ # end if nrow(rgoi) > 0
@@ -1011,33 +984,17 @@ lta <- function(cruz,
     iter <- 1 # for debugging
     for(iter in 1:niter){
 
-      # Attempt analysis up to 3 times before giving up
-      # This is in place to handle the random refactoring issue thrown by mrds
-      try_counter <- 0 # if the analysis fails, this will count number of attempts
-      try_status <- NULL # when the analysis works, this will be changed to 1
-      while(try_counter < 50 && is.null(try_status)){
-        if(try_counter > 0 && verbose){
-          message('\nSomething went wrong. Trying again ...\n')
-          # Save some diagnostics
-          if(!is.null(results_file)){
-            (new_fn <- paste0('Diagnostics --- iteration ',iter,' try ',try_counter,'.rds'))
-            truncation_distance = fit_filters$truncation_distance
-            covariates = covariates
-            detection_function_base = detection_function_base
-            base_model = base_model
-            delta_aic = delta_aic
-            toplot=toplot
-            save(segments, sightings, segment_picks, das, df,
-                 truncation_distance, covariates, detection_function_base,
-                 base_model, delta_aic, toplot,
-                 file=new_fn)
-          }
-          }
+      # If an attempt fails, the boostrap routine will press on.
+      # This means that the function may return fewer than niter boostraps.
+      try_counter <- 0
+      try_status <- NULL
+      while(try_counter < 1 && is.null(try_status)){
         try({
 
           if(niter > 1 & verbose){
             message('\n=====================================================')
             message('BOOTSTRAP ITERATION ',iter)
+            message('(number of successful bootstraps so far = ',length(unique(results$i)),')')
             message('=====================================================')
           }
 
@@ -1064,33 +1021,6 @@ lta <- function(cruz,
             sightings <- bs_data$sightings
             sightings$i_fit <- 1:nrow(sightings) # Replace unique identifier
             segment_picks <- bs_data$segment_picks
-
-            # Re-factor sightings
-            #sightings <- refactor_covariates(sightings, covar_levels)$data
-
-            if(FALSE){ # NOT RUN
-              # For development only
-              # tests to make sure bootstrap resampling is working well
-              sitis <- c()
-              for(i in 1:10000){
-                segments <- dist_segments
-                sightings <- fit_sightings
-                bs_data <- prep_bootstrap_datasets(segments,sightings)
-                siti <- bs_data$sightings
-                siti <- siti %>% dplyr::filter(OnEffort == TRUE,
-                                               EffType %in% abund_eff_types,
-                                               round(Bft) %in% abund_bft_range,
-                                               PerpDistKm <= truncation_distance,
-                                               species == '046',
-                                               year == 2021,
-                                               stratum == 'CNMI_EEZ')
-                siti %>% nrow
-                sitis <- c(sitis, nrow(siti))
-                message(i)
-              }
-              hist(sitis)
-              length(which(sitis == 0))
-            }
           }
 
           if(loopi == 'bootstrap' & verbose){message('Fitting detection function ...')}
@@ -1130,7 +1060,6 @@ lta <- function(cruz,
           fitted_sightings <- df$sightings
           fitted_sightings$esw
           (fit_sit_to_join <- fitted_sightings %>% dplyr::select(i_fit, esw))
-          #fit_sit_to_join <- fitted_sightings %>% dplyr::select(SightNoDaily, esw)
 
           # Now assign the ESW for each unique sighting number to each species within that sighting
           new_sightings <- dplyr::left_join(sightings, fit_sit_to_join,
@@ -1308,7 +1237,6 @@ lta <- function(cruz,
                                 verbose= ifelse(loopi == 'estimate', verbose, FALSE))
 
             abundi # debugging review
-            #abundi %>% print
             if(!is.null(abundi)){
               if(is.null(sppi)){sppi <- 'Other'}
               (abundi <- data.frame(title = est_filters$title,
@@ -1360,9 +1288,7 @@ lta <- function(cruz,
             RESULT$bootstrap <- list(summary = NULL,
                                      details = results,
                                      df = df_curves)
-            # RESULT %>% names
-            # RESULT$bootstrap
-            # head(results)
+
             suppressMessages({
               bs_summary <-
               results %>%
@@ -1385,14 +1311,8 @@ lta <- function(cruz,
                                U95 = lta_ci(Nmean, N)$bca_lognormal[2])
             })
 
-            #bs_summary
             message('--- Running CVs of bootstraps: ', paste(round(bs_summary$CV,2), collapse=', '), '')
             RESULT$bootstrap$summary <- bs_summary
-
-            # for debugging bootstraps:
-            # message('Max abundance = ',format(round(max(abund_results$N)), big.mark=','))
-            #continue <- readline(paste0("Continue? 1 = yes, 0 = no"))
-            #if(continue == 0){break}
 
             } # end if niter > 1
 
