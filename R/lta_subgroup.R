@@ -74,11 +74,7 @@
 #'
 #' @param iterations Number of iterations to use in the various CV bootstrapping procedures
 #' occurring throughout this function, specifically: Effective Strip Half-Width CV estimation,
-#' school size CV estimation, weighted `g(0)` CV estimation, and encounter rate estimation.
-#'
-#' @param density_bootstraps Number of bootstrap iterations to use for
-#' the CV estimate of density and abundance specifically. This input allows this final step
-#' to use a different (typically larger) iteration size than the `iterations` input above.
+#' school size CV estimation, weighted `g(0)` CV estimation, encounter rate estimation, and density/abundance estimation.
 #'
 #' @param output_dir The path in which results `RData` files should be stored. If left `NULL`, no results will be stored.
 #' To use your current working directory, simply provide `""`.
@@ -136,8 +132,7 @@
 #' \item `df`: A `list` with detailed results from detection function estimation (see output details in `?df_fit`).
 #' \item `bootstraps`: A named `list` with the bootstrapped values for `esw` (effective strip half-width),
 #' `ss` (subgroup size), `g0` (relative g(0)), `er` (encounter rate), `D` (density), and `N` (abundance).
-#' \item `iterations`: number of bootstrap iterations used for CV estimation of effective strip half-width, school size, g(0), and encounter rate.
-#' \item `density_bootstraps`: number of bootstrap iterations used for CV estimation of density and abundance.
+#' \item `iterations`: number of bootstrap iterations used for CV estimation.
 #' }
 #' See the [online vignette](https://emk-noaa.github.io/LTAvignette/subgroup-based-analysis.html) for more details
 #'
@@ -158,7 +153,6 @@ lta_subgroup <- function(df_sits, # DateTime, Lat, Lon, Cruise, PerpDistKm
                          g0_jackknife_fraction = 0.1,
                          abundance_area = NULL,
                          iterations = 5000,
-                         density_bootstraps = 10000,
                          output_dir = NULL,
                          toplot = FALSE,
                          verbose = TRUE){
@@ -295,7 +289,6 @@ lta_subgroup <- function(df_sits, # DateTime, Lat, Lon, Cruise, PerpDistKm
     output_dir <- "/Users/ekezell/Desktop"
     toplot = TRUE
     verbose = TRUE
-    density_bootstraps <- 10000
 
     # cruz <- cruzi
 
@@ -314,7 +307,6 @@ lta_subgroup <- function(df_sits, # DateTime, Lat, Lon, Cruise, PerpDistKm
                  g0_jackknife_fraction,
                  abundance_area,
                  iterations = 20,
-                 density_bootstraps,
                  output_dir,
                  toplot,
                  verbose)
@@ -590,7 +582,7 @@ lta_subgroup <- function(df_sits, # DateTime, Lat, Lon, Cruise, PerpDistKm
                         ss = ss_boots,
                         esw = esw_boots,
                         g0 = g0_boots))
-    itsi <- itsi[sample(1:nrow(itsi), size= density_bootstraps, replace=TRUE),]
+    itsi <- itsi[sample(1:nrow(itsi), size= iterations, replace=TRUE),]
     itsi %>% head
     itsi$D <- itsi$er * (itsi$ss / (2 * itsi$esw * itsi$g0))
     itsi$N <- NA
@@ -627,7 +619,8 @@ lta_subgroup <- function(df_sits, # DateTime, Lat, Lon, Cruise, PerpDistKm
               N_L95 = coxed::bca(N)[1],
               N_U95 = coxed::bca(N)[2],
               ESW_sd = sd(esw),
-              ss_sd = sd(ss))
+              ss_sd = sd(ss),
+              er_sd = sd(er))
 
   pops <- left_join(er_estimate, bootsumm, by='population')
   pops <-
@@ -640,49 +633,25 @@ lta_subgroup <- function(df_sits, # DateTime, Lat, Lon, Cruise, PerpDistKm
            Area = ifelse(is.null(abundance_area), NA, abundance_area)) %>%
     mutate(CV = D_sd / D,
            ESW_CV = ESW_sd / ESW,
+           ER_CV = er_sd / er,
            group_sd = ss_sd,
            group_CV = ss_sd / group) %>%
     select(population, L, n_segments,
            g0, g0_cv,
            ESW, ESW_CV,
            group, group_sd, group_CV,
-           n, ER=er,
+           n, ER=er, ER_CV,
            D, CV, D_L95, D_U95,
-           Area, N, N_L95, N_U95
-    )
+           Area, N, N_L95, N_U95)
 
   pops
 
   results <- list(estimate = pops,
-                  #D = er_estimate$D,
-                  #D_CV = sd(its$D) / D,
-                  #D_L95 = coxed::bca(its$D)[1],
-                  #D_U95 = coxed::bca(its$D)[2],
-                  #N = N,
-                  #N_CV = sd(its$N) / N,
-                  #N_L95 = coxed::bca(its$N)[1],
-                  #N_U95 = coxed::bca(its$N)[2],
-                  #ER = er_estimate,
-                  #ESW = esw %>% as.numeric(),
-                  #ESW_CV = as.numeric(sd(esw_boots) / as.numeric(esw)),
-                  #ss = ss_estimate,
-                  #n = nrow(density_sightings),
-                  #L = L,
-                  #n_segments = nrow(density_segments),
-                  #g0 = g0_wt_mn,
-                  #g0_cv = g0_wt_cv,
                   bft = g0w$bft,
                   g0_details = g0_result,
                   df = df,
                   bootstraps = its,
-                  #list(esw = esw_boots,
-                  #                  ss = ss_boots,
-                  #                  g0 = g0_boots,
-                  #                  er = er_boots,
-                  #                  D = its$D,
-                  #                  N = its$N),
-                  iterations = iterations,
-                  density_bootstraps = density_bootstraps)
+                  iterations = iterations)
 
   results
   if(!is.null(output_dir)){saveRDS(results, file=paste0(output_dir,'lta_subgroup_results.RData'))}

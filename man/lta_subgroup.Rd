@@ -19,7 +19,6 @@ lta_subgroup(
   g0_jackknife_fraction = 0.1,
   abundance_area = NULL,
   iterations = 5000,
-  density_bootstraps = 10000,
   output_dir = NULL,
   toplot = FALSE,
   verbose = TRUE
@@ -90,11 +89,7 @@ estimate will be scaled by this area.}
 
 \item{iterations}{Number of iterations to use in the various CV bootstrapping procedures
 occurring throughout this function, specifically: Effective Strip Half-Width CV estimation,
-school size CV estimation, weighted \code{g(0)} CV estimation, and encounter rate estimation.}
-
-\item{density_bootstraps}{Number of bootstrap iterations to use for
-the CV estimate of density and abundance specifically. This input allows this final step
-to use a different (typically larger) iteration size than the \code{iterations} input above.}
+school size CV estimation, weighted \code{g(0)} CV estimation, encounter rate estimation, and density/abundance estimation.}
 
 \item{output_dir}{The path in which results \code{RData} files should be stored. If left \code{NULL}, no results will be stored.
 To use your current working directory, simply provide \code{""}.}
@@ -128,8 +123,7 @@ A list.
 \item \code{df}: A \code{list} with detailed results from detection function estimation (see output details in \code{?df_fit}).
 \item \code{bootstraps}: A named \code{list} with the bootstrapped values for \code{esw} (effective strip half-width),
 \code{ss} (subgroup size), \code{g0} (relative g(0)), \code{er} (encounter rate), \code{D} (density), and \code{N} (abundance).
-\item \code{iterations}: number of bootstrap iterations used for CV estimation of effective strip half-width, school size, g(0), and encounter rate.
-\item \code{density_bootstraps}: number of bootstrap iterations used for CV estimation of density and abundance.
+\item \code{iterations}: number of bootstrap iterations used for CV estimation.
 }
 See the \href{https://emk-noaa.github.io/LTAvignette/subgroup-based-analysis.html}{online vignette} for more details
 }
