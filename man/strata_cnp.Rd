@@ -5,7 +5,7 @@
 \alias{strata_cnp}
 \title{Strata CNP}
 \format{
-An object of class \code{list} of length 11.
+An object of class \code{list} of length 12.
 }
 \usage{
 strata_cnp

@@ -99,7 +99,24 @@ strata_cnp$Bottlenose_BI <- isli %>%
 (strati <- read.csv('data-raw/data/new_strata/NWHINew.txt', header = FALSE))
 strati <- data.frame(Lon = strati[,2], Lat = strati[,1])
 head(strati)
-strata_cnp$NWHI <- strati  %>% dplyr::mutate(Lon = ifelse(Lon > 0, -180 - (180 - Lon), Lon))
+strata_cnp$nwhi_fkw <- strati  %>% dplyr::mutate(Lon = ifelse(Lon > 0, -180 - (180 - Lon), Lon))
+
+
+# New MHI FKW strata provided on March 25 2024
+mhi <- st_read(dsn = 'data-raw/data/fkw_strata/',
+               layer = 'Falsekiller_MHI_line')
+mhi <- mhi %>% st_transform(crs=4326)
+mhi <- mhi %>% st_coordinates %>% as.data.frame
+mhi <- mhi %>% select(Lon = X, Lat = Y)
+mhi %>% head
+strata_cnp$mhi_fkw <- mhi
+
+# nwhi <- st_read(dsn = 'data-raw/data/fkw_strata/',
+#                layer = 'Falsekiller_NWHI_line')
+# nwhi <- nwhi %>% st_transform(crs=4326)
+# nwhi <- nwhi %>% st_coordinates %>% as.data.frame
+# nwhi <- nwhi %>% select(Lon = X, Lat = Y)
+# nwhi %>% head
 
 
 #===============================================================================
