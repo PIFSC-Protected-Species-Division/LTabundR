@@ -307,8 +307,8 @@ lta_report <- function(lta_result,
                              `Nsys` = '-',
                              `Nest` = '-'))
       if(nrow(estimati) > 0){
-        tabi$Code <- estimati$species
-        tabi$Nest <- estimati$n
+        tabi$Code <- estimati$species[1]
+        tabi$Nest <- estimati$n[1]
       }
       tabi
       tabform <- tabi
