@@ -41,12 +41,12 @@ subgroup_events <- function(das,
 
   # If there are subgroup rows ...
   if(length(gi)>0){
-    i <- 1 # gi[1] # for debugging
+    i <- 37 # gi[1] # for debugging
 
     # Loop through each subgroup row
     for(i in 1:length(gi)){
-      dasg <- das[gi[i],] ; dasg   # G event details
-      dasa <- das[gi[i]+1,] ; dasa   # A event details
+      dasg <- das[gi[i],] ; dasg %>% as.data.frame  # G event details
+      dasa <- das[gi[i]+1,] ; dasa %>% as.data.frame   # A event details
 
       # Compile data.frame
       mri_core <- data.frame(Cruise = dasg$Cruise,
@@ -99,6 +99,9 @@ subgroup_events <- function(das,
         #daso <- dasg[gi[i]+(obsi + 1),] ; daso
         daso <- das[gi[i]+(obsi + 1),] ; daso
         suppressWarnings( eventi <- as.numeric(as.character(daso$Event)) )
+
+        #if(is.na(eventi) & obsi == 1){message('trip')}
+
         if(!is.na(eventi)){
           if(eventi == obsi){
             mri <- mri_core

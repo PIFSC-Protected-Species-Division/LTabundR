@@ -1285,6 +1285,9 @@ lta <- function(cruz,
             df_curves <- rbind(df_curves, curvi)
 
             # Update bootstrap object in output
+            #boot_g0 <- RESULT$g0_est[1]
+            #boot_g0_cv <- RESULT$g0_cv_small[1]
+
             RESULT$bootstrap <- list(summary = NULL,
                                      details = results,
                                      df = df_curves)
