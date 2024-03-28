@@ -87,8 +87,8 @@ lta_delta_method <- function(ltas,
     # Print results
     if(verbose){
       new_summ
-      for(i in 1:nrow(new_summ)){
-        newi <- new_summ[i,]
+      for(j in 1:nrow(new_summ)){
+        newi <- new_summ[j,]
         if(!is.na(newi$CV)){
           message(newi$title,' ', newi$Region,' ', newi$year)
           message('--- CV      bootstrapped = ', round(newi$CV_boot, 2))
