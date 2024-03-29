@@ -110,6 +110,8 @@ cruz_combine <- function(cruzes){
   sgev_have <- sgsg_have <- sgsit_have <- c()
   # Loop through each cohort
   for(ci in 1:length(cruzi$cohorts)){
+
+    # Now check for overlap
     (dasi <- cruzi$cohorts[[ci]]$das$datum_id %>% unique)
     das_have <- c(das_have, dasi)
 
@@ -155,6 +157,11 @@ cruz_combine <- function(cruzes){
 
         message('--- --- combining cohort "',cohorti_name,'" ...')
         cohorti <- cruzi$cohorts[[cohorti_index]]
+
+        # Make sure segment IDs are unique
+        cohorti$segments$seg_id <- paste0(ci,'.', cohorti$segments$seg_id)
+        cohorti$das$seg_id <- paste0(ci,'.', cohorti$das$seg_id)
+        cohorti$sightings$seg_id <- paste0(ci,'.', cohorti$sightings$seg_id)
 
         if(length(master_index)==0){
           # this cohort is not in the master cruz object. Just add it.

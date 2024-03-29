@@ -168,6 +168,7 @@ g0_model <- function(spp,
     return(matchi)
   })
   segments$ngrp %>% table
+  segments %>% nrow
 
   # Add to segments a column, p, with presence/absence (1 / 0)
   if(verbose){message('--- Converting to presence/absence on each segment ...')}
@@ -268,6 +269,7 @@ g0_model <- function(spp,
         dplyr::select(seg_id, ngrp, p, dist, mlat, mlon, year, bft, distance, object)
       df <- df[complete.cases(df),] # remove na's
       df %>% head
+      df$dist %>% range
 
       # Predict effective strip half-width for each segment based on bft value
       df$esw <- predict(object = dso, newdata = df, esw = TRUE)$fitted %>% as.numeric

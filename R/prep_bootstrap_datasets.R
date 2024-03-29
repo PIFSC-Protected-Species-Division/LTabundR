@@ -65,6 +65,10 @@ prep_bootstrap_datasets <- function(segments,
   segments_global <<- segments
   (seg_id_picks_i <- sapply(seg_id_picks,
                             function(i){which(segments_global$seg_id == i)}))
+  if(is.list(seg_id_picks_i)){
+    seg_id_picks_i <- seg_id_picks_i %>% unlist
+  }
+
   bs_segments <- segments[seg_id_picks_i,]
   bs_segments <- left_join(bs_segments, fake_id_key, by='seg_id')
   #rm(segments_global)
