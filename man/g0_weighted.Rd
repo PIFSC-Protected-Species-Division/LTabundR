@@ -15,6 +15,7 @@ g0_weighted(
   beta_sd_range = c(0, 0.3),
   beta_sd_step = 1e-04,
   ymax = 0.2,
+  calculate_pars = TRUE,
   toplot = TRUE,
   verbose = TRUE
 )
@@ -44,6 +45,8 @@ A smaller step means higher resolution and accuracy, but takes longer to process
 \item{beta_sd_step}{The interval between candidate values for the above SD range.}
 
 \item{ymax}{The maximum value on the y axis of the diagnostic Rg0 SD plot.}
+
+\item{calculate_pars}{Boolean with default \code{TRUE}; an option to skip estimation of \code{plogis} distribution parameters, to save time.}
 
 \item{toplot}{Boolean, with default \code{TRUE}, indicating whether results should be plotted.}
 

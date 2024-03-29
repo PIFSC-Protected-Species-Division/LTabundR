@@ -102,7 +102,7 @@
 #' \item Estimates density using the best estimates of effective strip half-width, school size, `g(0)`, and the encounter rate.
 #' \item Estimates abundance by scaling the density estimate by the provided `abundance_area`.
 #' \item Creates a bootstrap-resampled distribution of the density estimate by
-#' iteratively drawing values from the resampled distributions
+#' iteratively drawing values (without replacement) from the resampled distributions
 #' of the constituent parameters of the density equation.
 #' \item Creates a bootstrap-resampled distribtion of the abundance estimate by
 #' scaling the density distribution by `abundance_area`.
@@ -582,7 +582,7 @@ lta_subgroup <- function(df_sits, # DateTime, Lat, Lon, Cruise, PerpDistKm
                         ss = ss_boots,
                         esw = esw_boots,
                         g0 = g0_boots))
-    itsi <- itsi[sample(1:nrow(itsi), size= iterations, replace=TRUE),]
+    itsi <- itsi[sample(1:nrow(itsi), size= iterations, replace=FALSE),]
     itsi %>% head
     itsi$D <- itsi$er * (itsi$ss / (2 * itsi$esw * itsi$g0))
     itsi$N <- NA

@@ -157,7 +157,7 @@ estimate the CV of the weighted \code{g(0)} estimate.
 \item Estimates density using the best estimates of effective strip half-width, school size, \code{g(0)}, and the encounter rate.
 \item Estimates abundance by scaling the density estimate by the provided \code{abundance_area}.
 \item Creates a bootstrap-resampled distribution of the density estimate by
-iteratively drawing values from the resampled distributions
+iteratively drawing values (without replacement) from the resampled distributions
 of the constituent parameters of the density equation.
 \item Creates a bootstrap-resampled distribtion of the abundance estimate by
 scaling the density distribution by \code{abundance_area}.
