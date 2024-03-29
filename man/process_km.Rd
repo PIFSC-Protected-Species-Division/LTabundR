@@ -38,8 +38,6 @@ distance in between consecutive rows of data.}
 distance between consecutive rows of data based on timestamp differences (when lat/long coordinates are not available).}
 
 \item{debug_mode}{Boolean, with default \code{FALSE}, indicating whether details should be printed to the Console that facilitate debugging.}
-
-\item{max_km_replace}{The distance, in km, to use when the distance between rows exceeds \code{max_km_gap}.}
 }
 \value{
 A numeric vector, the same length as the number of rows in \code{das}, of distances (in km).

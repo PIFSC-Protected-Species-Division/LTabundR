@@ -14,7 +14,7 @@ process_strata(das, settings, verbose = TRUE)
 \item{verbose}{Boolean, with default \code{TRUE}, indicating whether or not updates should be printed to the Console.}
 }
 \value{
-A list with two named slots: [\link{1}] \code{settings} and [\link{2}] \code{das}.
+A list with two named slots: \code{settings} and \code{das}.
 The \code{das} slot has the dataframe of your survey data.
 For each stratum, a column named \verb{stratum_<StratumName>} is added to the \code{das} dataframe;
 each row in this column is \code{TRUE} (included) or \code{FALSE}.

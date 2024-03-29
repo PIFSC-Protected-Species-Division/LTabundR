@@ -1,6 +1,6 @@
 Package: LTabundR
 Title: Development Version 
-Version: 0.7.4
+Version: 0.7.5
 Authors@R: 
     person("Eric", "Keen", , "eric.keen@noaa.gov", role = c("aut", "cre"))
     person("Amanda", "Bradford", , "amanda.bradford@noaa.gov", role = c("aut", "cre"))
@@ -12,26 +12,17 @@ RoxygenNote: 7.3.1
 Imports: 
     cowplot,
     coxed,
-    devtools,
-    Distance,
     dplyr,
     DT,
     geosphere,
     ggbreak,
     ggplot2,
     ggpubr,
-    ggrepel,
-    ggspatial,
-    ggstance,
-    googlesheets4,
-    grDevices,
     gridExtra,
-    htmltools,
     leaflet,
     lubridate,
     lutz,
     magrittr,
-    mapproj,
     mgcv,
     miceadds,
     mrds,
@@ -44,11 +35,8 @@ Imports:
     readr,
     readtext,
     remotes,
-    rgdal,
     rintrojs,
     rnaturalearth,
-    rnaturalearthdata,
-    rstudioapi,
     scales,
     scam,
     sf,
@@ -60,11 +48,11 @@ Imports:
     stats,
     stringr,
     swfscDAS,
-    tmap,
-    tmaptools,
+    tibble,
+    tidyr,
     tools,
-    units,
-    usethis
+    units
 Depends: 
     R (>= 2.10)
 LazyData: true
+LazyDataCompression:xz

@@ -163,8 +163,6 @@ lta_subgroup <- function(df_sits, # DateTime, Lat, Lon, Cruise, PerpDistKm
   if(FALSE){ # to develop/debug, use Pelagic population in 2017
 
     #document()
-    library(dplyr)
-
     # prep cruz  ===============================================================
     data("cnp_150km_1986_2020")
     cruz <- cnp_150km_1986_2020

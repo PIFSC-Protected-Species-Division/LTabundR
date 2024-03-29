@@ -32,13 +32,6 @@
 #' @param toplot Boolean, with default `TRUE`, indiciating whether detection function plots (`Distance::plot.ds()`)
 #' should be displayed as the candidate models are tested.
 #'
-#' @param bootstrap_mode A Boolean, with default `FALSE`, indicating whether or not the `segments` and `sightings` data provided
-#' are re-sampled versions of the data for a bootstrap iteration. This is needed because, when sampled with replacement,
-#' it is possible for segment IDs to repeat themselves in the `segments` table, which is not allowed by `Distance::ds()`.
-#' So when this is `TRUE`, the function will use the column `seg_bs` ("bs" is short for bootstrap) as the `Sample.Label` expected by
-#' `Distance::ds()`, instead of the column with the actual `seg_id`. The `seg_bs` column is created by the function
-#' `prep_bootstrap_datasets()` and contains a unique arbitrary number (`1:nrow(segments)`) for each row in `segments`.
-#'
 #' @param verbose Boolean, with default `TRUE`, indicating whether or not updates should be printed to the Console.
 #'
 #' @details Model fitting is done in a forward stepwise procedure, starting fresh with each base key
@@ -57,7 +50,7 @@
 #' \item `best_objects`:  A list containing the `ds` objects (produced by package `Distance`)
 #' for each of the best-fitting models.
 #' \item `sample_size`: A `data.frame` with the detections for each species within the species pool
-#' used to fit the detection function (as well as `Other` species; see the `other_species` input).
+#' used to fit the detection function.
 #' `Ntot` is total detections for each species; `Ndet` is total detections within the truncation distance
 #' and therefore used in the detection function fitting routine; `TD` is the truncation distance.
 #' \item `tables`: A list of the data tables passed to `Distance::ds()` during model fitting.
@@ -69,7 +62,6 @@
 df_fit <- function(sightings,
                    truncation_distance = Inf,
                    covariates = NULL,
-                   other_species = NULL,
                    detection_function_base = 'hn',
                    base_model = '~1',
                    delta_aic = 2,
@@ -79,7 +71,6 @@ df_fit <- function(sightings,
 
   if(FALSE){ # debugging only -- not run! ======================================
     covariates = NULL
-    other_species = NULL
     detection_function_base = 'hn'
     base_model = '~1'
     delta_aic = 2

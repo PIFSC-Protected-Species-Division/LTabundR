@@ -5,7 +5,7 @@
 #' and may also be called if the user manually edits subgroup phase assignments using the `subgroup_phases()` function.
 #' It takes the result of the function `subgroup_events()`.
 #'
-#' @param events
+#' @param events The output of `subgroup_events()`.
 #'
 #' @return A `data.frame` with one row for each subgroup in each phase of a sighting.
 #'

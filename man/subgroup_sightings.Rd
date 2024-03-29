@@ -7,7 +7,7 @@
 subgroup_sightings(subgroups)
 }
 \arguments{
-\item{events}{}
+\item{subgroups}{The output of \code{subgroup_subgroups()}.}
 }
 \value{
 A \code{data.frame} with one row for each phase of each sighting.

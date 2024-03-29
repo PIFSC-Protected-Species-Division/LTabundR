@@ -7,7 +7,7 @@
 subgroup_subgroups(events)
 }
 \arguments{
-\item{events}{}
+\item{events}{The output of \code{subgroup_events()}.}
 }
 \value{
 A \code{data.frame} with one row for each subgroup in each phase of a sighting.

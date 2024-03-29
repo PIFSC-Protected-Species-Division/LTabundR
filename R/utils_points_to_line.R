@@ -65,7 +65,8 @@ points_to_line <- function(data,
     for (p in 2:length(paths)) {
       id <- paste0("line", as.character(p))
       l <- sp::SpatialLines(list(sp::Lines(list(sp::Line(paths[[p]])), id)))
-      sp_lines <- sp::spRbind(sp_lines, l)
+      # in the next line rbind used to be spp::spRbind, but it caused pkg build errors
+      sp_lines <- rbind(sp_lines, l) # this line may break, since sp no longer supports spRbind
     }
 
     return(sp_lines)

@@ -11,7 +11,7 @@
 #' @param settings A `settings` object, created by `load_settings()`.
 #' @param verbose Boolean, with default `TRUE`, indicating whether or not updates should be printed to the Console.
 #'
-#' @return A list with two named slots: [[1]] `settings` and [[2]] `das`.
+#' @return A list with two named slots: `settings` and `das`.
 #' The `das` slot has the dataframe of your survey data.
 #' For each stratum, a column named `stratum_<StratumName>` is added to the `das` dataframe;
 #' each row in this column is `TRUE` (included) or `FALSE`.

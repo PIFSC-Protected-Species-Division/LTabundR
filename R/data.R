@@ -396,3 +396,6 @@
 #' 1986 to 2010.
 "barlow_2015"
 #'
+#' Example of coded edits to `cruz` object.
+#' @details This is an example of the kind of object that can be passed to the `edits` input in `process_surveys()`.
+"cnp_1986_2020_edits"

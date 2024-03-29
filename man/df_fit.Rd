@@ -8,7 +8,6 @@ df_fit(
   sightings,
   truncation_distance = Inf,
   covariates = NULL,
-  other_species = NULL,
   detection_function_base = "hn",
   base_model = "~1",
   delta_aic = 2,
@@ -43,13 +42,6 @@ AICc differences of less than 2 indicate effectively equal model performance.}
 should be displayed as the candidate models are tested.}
 
 \item{verbose}{Boolean, with default \code{TRUE}, indicating whether or not updates should be printed to the Console.}
-
-\item{bootstrap_mode}{A Boolean, with default \code{FALSE}, indicating whether or not the \code{segments} and \code{sightings} data provided
-are re-sampled versions of the data for a bootstrap iteration. This is needed because, when sampled with replacement,
-it is possible for segment IDs to repeat themselves in the \code{segments} table, which is not allowed by \code{Distance::ds()}.
-So when this is \code{TRUE}, the function will use the column \code{seg_bs} ("bs" is short for bootstrap) as the \code{Sample.Label} expected by
-\code{Distance::ds()}, instead of the column with the actual \code{seg_id}. The \code{seg_bs} column is created by the function
-\code{prep_bootstrap_datasets()} and contains a unique arbitrary number (\code{1:nrow(segments)}) for each row in \code{segments}.}
 }
 \value{
 A named list:
@@ -61,7 +53,7 @@ See that function's documentation for details.
 \item \code{best_objects}:  A list containing the \code{ds} objects (produced by package \code{Distance})
 for each of the best-fitting models.
 \item \code{sample_size}: A \code{data.frame} with the detections for each species within the species pool
-used to fit the detection function (as well as \code{Other} species; see the \code{other_species} input).
+used to fit the detection function.
 \code{Ntot} is total detections for each species; \code{Ndet} is total detections within the truncation distance
 and therefore used in the detection function fitting routine; \code{TD} is the truncation distance.
 \item \code{tables}: A list of the data tables passed to \code{Distance::ds()} during model fitting.

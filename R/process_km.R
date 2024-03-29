@@ -14,7 +14,6 @@
 #' or the `max_interval` specified, whichever is smaller.
 #' @param max_km_gap Another way of avoiding long gaps in data; this is the maximum distance gap, in km, allowed between rows of data.
 #' This constraint is applied *after* the `interval` constraints above.
-#' @param max_km_replace The distance, in km, to use when the distance between rows exceeds `max_km_gap`.
 #' @param speed_filler When speed is not available in the data, this value (in kmh) will be used as a filler in order to estimate the
 #' distance between consecutive rows of data based on timestamp differences (when lat/long coordinates are not available).
 #' @param km_filler When valid speed and position information is not available (e.g., the given distance exceeds `max_km_gap`), this value (in km) will be used as an estimate of the
