@@ -148,7 +148,7 @@ of the \code{cruz} object:
 \item \code{n_best}: Number of valid best estimates of school size.
 \item \code{n_low}: Number of valid low estimates.
 \item \code{n_high}: Number of valid high estimates.
-\item \code{calibr}: Boolean indicating whether school size calibration was possible, if attempted.
+\item \code{calibr}: Boolean indicating whether school size calibration was applied.
 \item \code{ss_valid}: Boolean indicating whether or not the school size estimate
 for this sighting is valid and appropriate for use in abundance estimation and/or detection function fitting
 with a school-size covariate.

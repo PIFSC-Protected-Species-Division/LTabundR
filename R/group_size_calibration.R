@@ -46,6 +46,10 @@ group_size_calibration <- function(obs,
     glow= 50
     ghigh = 90
     calibrate_floor = 0
+    group_size_calibration(obs, bft, yr, gbest, glow, ghigh,
+                           #gs_coefficients = NULL,
+                           gs_coefficients = gs_coefficients,
+                           calibrate_floor)
   }
   #=============================================================================
 
@@ -68,17 +72,24 @@ group_size_calibration <- function(obs,
   if(is.na(bft)){bft <- 0}
   bft <- bft + 1 # do this, a la ABUND / SKOOLWT
 
-  # Check to see if you have the data for calibration
-  data_ok <- all(c(!is.null(gsc),
-               !is.na(gbest),
-               #!is.na(glow),
-               #!is.na(ghigh),
-               !is.na(bft),
-               as.numeric(obs) %in% as.numeric(gsc$obs)))
-  # that final test asks: is this observer's code in the coefficient table?
-  data_ok # review
+  # Check to see if calibration is possible
+  calibr <- all(c(!is.null(gsc),
+                   !is.na(gbest),
+                   !is.na(bft)))
 
-  # prepare weighed version of school size estimates, for this observer
+  # Check to see if you have a known observer
+  obs_ok <- all(c(as.numeric(obs) %in% as.numeric(gsc$obs)))
+
+  # Check to see if all data are ok
+  # is this observer's code in the coefficient table?
+  data_ok <- all(c(calibr, obs_ok))
+
+  # review
+  calibr
+  obs_ok
+  data_ok
+
+  # prepare weighted version of school size estimates, for this observer
   if(data_ok){
 
     # get coefficient table row that corresponds to observer
@@ -166,7 +177,8 @@ group_size_calibration <- function(obs,
 
   }else{
     # What to do if some data are missing or obs is not in coeffs file:
-    if(!is.null(gsc)){ # only do this is a calibration table has been provided
+    if(calibr){ # only do this if a calibration table has been provided
+    # if(!is.null(gsc)){ # only do this if a calibration table has been provided
 
       # If best is not available, use low
       if(!is.na(gbest) & gbest > 0){
@@ -184,10 +196,14 @@ group_size_calibration <- function(obs,
     }
   }
 
-  # Comile results
+  # Compile results
   result <- data.frame(best = new_gs,
                        var = gs_var,
-                       calibr = data_ok,
+                       calibr = calibr, # gs coefficients, bft, and best estimates valid
+                                        # calibration was attempted
+                       data_ok = data_ok, # all data valid throughout all calibration steps
+                       obs_ok = obs_ok, # observers all known
+                                        # if FALSE, the function used a generic calibration rather than an observer-specific calibration.
                        gs_slope = gs_slope,
                        gs_intercept = gs_intercept,
                        gbest = gbest,

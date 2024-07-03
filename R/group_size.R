@@ -53,11 +53,11 @@ group_size <- function(grp,
     data(example_settings)
     settings <- example_settings
     das_file <- 'data-raw/data/HICEASwinter2020.das'
-    das <- load_das(das_file)
+    das <- das_load(das_file)
     cruz <- process_strata(das, settings)
-    cruz <- format_das(cruz)
+    cruz <- das_format(cruz)
     cruz <- segmentize(cruz)
-    sits <- das_sight(cruz$cohorts$default$das, return.format = 'complete')
+    sits <- swfscDAS::das_sight(cruz$cohorts$default$das, return.format = 'complete')
     # Example of a mixed-species sightings
     siti <- sits %>% filter(SightNo == '002') ; siti
     # This is the input prepared by the process_sightings() function, which is
@@ -66,12 +66,31 @@ group_size <- function(grp,
         dplyr::filter(Event == 'S') %>%
         dplyr::select(Event, year, Bft, Prob:GsSchoolLow))
 
+    #grp$ObsEstimate <- 9999
+
     debug_mode = TRUE
     use_low_if_na <- TRUE
     data(group_size_coefficients)
     (gs_coefficients <- group_size_coefficients)
+    gs_coefficients = NULL
     (geometric_mean <- cruz$settings$cohorts[[1]]$geometric_mean_group)
     calibrate_floor = 0
+
+    group_size(grp = grp,
+               gs_coefficients = NULL,
+               calibrate_floor = calibrate_floor,
+               geometric_mean = geometric_mean,
+               use_low_if_na = use_low_if_na,
+               debug_mode = debug_mode,
+               verbose = TRUE)
+
+    group_size(grp = grp,
+               gs_coefficients = gs_coefficients,
+               calibrate_floor = calibrate_floor,
+               geometric_mean = geometric_mean,
+               use_low_if_na = use_low_if_na,
+               debug_mode = debug_mode,
+               verbose = TRUE)
   }
   #=============================================================================
 
@@ -138,73 +157,84 @@ group_size <- function(grp,
   # Calibrate group sizes ======================================================
 
   best_vars <- rep(NA,times=length(bests)) # stage vector for variance of estimates for each observer
+  calibr <- FALSE # stage indicator of whether calibration was successful
 
   # If calibration coefficients are provided ...
   if(!is.null(gs_coefficients)){
+  #}else{
+  #  if(debug_mode){message(' --- Calibration coefficients unavailable. No calibration!\n---')}
+  #}
 
-    # Stage variables
-    bft <- grp$Bft[1] %>% as.numeric ; bft
-    yr <- grp$year[1] %>% as.numeric ; yr
+  # Stage variables
+  bft <- grp$Bft[1] %>% as.numeric ; bft
+  yr <- grp$year[1] %>% as.numeric ; yr
 
-    # Loop through each observer...
-    obs_i <- 3 # for debugging
-    debugs <- data.frame() # for debugging
-    for(obs_i in 1:nrow(grp)){
-      (obsi <- grp$ObsEstimate[obs_i]) # this observer's ID
-      (besti <- bests[obs_i]) # her/his best estimate
-      (lowi <- lows[obs_i]) # low estimate
-      (highi <- highs[obs_i]) # high estimate
+  # Loop through each observer...
+  obs_i <- 3 # for debugging
+  debugs <- data.frame() # for debugging
+  for(obs_i in 1:nrow(grp)){
+    (obsi <- grp$ObsEstimate[obs_i]) # this observer's ID
+    (besti <- bests[obs_i]) # her/his best estimate
+    (lowi <- lows[obs_i]) # low estimate
+    (highi <- highs[obs_i]) # high estimate
 
-      # group_size_calibration() is a LTabundR function.
-      # See group_size_calibration.R
-      calib_results <- group_size_calibration(obs = obsi,
-                                              bft = bft,
-                                              yr = yr,
-                                              gbest = besti,
-                                              glow = lowi,
-                                              ghigh = highi,
-                                              gs_coefficients = gs_coefficients,
-                                              calibrate_floor = calibrate_floor)
-      # Return is a one-row dataframe with best estimate, variance, and other parameters
-      calib_results # review
-      if(debug_mode){ # debugging
-        debugs <- rbind(debugs,
-                        data.frame(obs = obsi,
-                                   best_raw = besti,
-                                   low_raw = lowi,
-                                   high_raw = highi,
-                                   calib_results))
-      }
+    # group_size_calibration() is a LTabundR function.
+    # See group_size_calibration.R
+    calib_results <- group_size_calibration(obs = obsi,
+                                            bft = bft,
+                                            yr = yr,
+                                            gbest = besti,
+                                            glow = lowi,
+                                            ghigh = highi,
+                                            gs_coefficients = gs_coefficients,
+                                            calibrate_floor = calibrate_floor)
+    # Return is a one-row dataframe with best estimate, variance, and other parameters
+    calib_results # review
 
-      # if less than 1, coerce to 1
-      if(!is.na(calib_results$best)){
-        if(calib_results$best < 1){calib_results$best <- 1}
-      }
+    # Update calibr status variable
+    calibr <- calib_results$calibr
 
-      # add to results vectors (each element corresponds to an observer)
-      if(!is.na(besti)){
-        bests[obs_i] <- calib_results$best
-      }else{
-        if(!is.na(lowi)){lows[obs_i] <- calib_results$best}
-      }
-      best_vars[obs_i] <- calib_results$var
-      bests
-      best_vars
+    if(debug_mode){ # debugging
+      debugs <- rbind(debugs,
+                      data.frame(obs = obsi,
+                                 best_raw = besti,
+                                 low_raw = lowi,
+                                 high_raw = highi,
+                                 calib_results))
     }
 
-    # Review in debugging mode
-    if(debug_mode){
-      message('---')
-      message('Calibrated estimates:')
-      message('--- best estimates = ',paste(round(bests,3),collapse=', '))
-      message('--- variance = ',paste(round(best_vars,3),collapse=', '))
-      message('---')
-      print(debugs)
-      message('---')
+    # if less than 1, coerce to 1
+    if(!is.na(calib_results$best)){
+      if(calib_results$best < 1){calib_results$best <- 1}
     }
+
+    # add to results vectors (each element corresponds to an observer)
+    if(!is.na(besti)){
+      bests[obs_i] <- calib_results$best
+    }else{
+      if(!is.na(lowi)){lows[obs_i] <- calib_results$best}
+    }
+    best_vars[obs_i] <- calib_results$var
+    bests
+    best_vars
+  }
+
+  # Review in debugging mode
+  if(debug_mode){
+    message('---')
+    message('Calibrated estimates:')
+    message('--- best estimates = ',paste(round(bests,3),collapse=', '))
+    message('--- variance = ',paste(round(best_vars,3),collapse=', '))
+    message('---')
+    print(debugs)
+    message('---')
+  }
   }else{
     if(debug_mode){message(' --- Calibration coefficients unavailable. No calibration!\n---')}
   }
+
+  # Check calibration status
+  calibr
 
   # Setup final estimate objects
   gs_best <- gs_low <- gs_high <- NULL
@@ -295,7 +325,7 @@ group_size <- function(grp,
                         n_best = length(bests[!is.na(bests)]), # how many best estimates were there?
                         n_low = length(bests[!is.na(lows)]),
                         n_high = length(bests[!is.na(highs)]),
-                        calibr = !is.null(group_size_coefficients) # was calibration attempted?
+                        calibr = calibr # !is.null(gs_coefficients) # was calibration applied?
       )
       dfi
       grp_results <- rbind(grp_results,dfi)

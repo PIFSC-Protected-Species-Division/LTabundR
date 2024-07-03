@@ -165,7 +165,7 @@
 #' \item `n_best`: Number of valid best estimates of school size.
 #' \item `n_low`: Number of valid low estimates.
 #' \item `n_high`: Number of valid high estimates.
-#' \item `calibr`: Boolean indicating whether school size calibration was possible, if attempted.
+#' \item `calibr`: Boolean indicating whether school size calibration was applied.
 #' \item `ss_valid`: Boolean indicating whether or not the school size estimate
 #' for this sighting is valid and appropriate for use in abundance estimation and/or detection function fitting
 #' with a school-size covariate.
