@@ -26,6 +26,8 @@ library(LTabundR)
 
 Note that this package contains large built-in datasets and may take several minutes to install.
 
+`LTabundR` depends upon `R` versions 2.10 or later. It was developed and published with `R` 4.3.1 on a 64-bit Mac OS.  You may need to download "Rtools" if it is not already installed on your computer. [You can do so here.](https://cran.r-project.org/bin/windows/Rtools/) 
+
 ### Vignette
 
 Visit [**this vignette**](https://pifsc-protected-species-division.github.io/LTabundR-vignette/) for a complete guide to using `LTabundR`.
