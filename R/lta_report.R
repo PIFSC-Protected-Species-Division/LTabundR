@@ -50,8 +50,9 @@ lta_report <- function(lta_result,
 
     # Try it
     x <- lta_result %>% lta_report(cruz)
-    x <- lta_report(ltas, cruz)
+    #x <- lta_report(ltas, cruz)
     x$table1a %>% View
+    x$table2 %>% View
     x$table3
   } # end debugging staging area  ==============================================
 
@@ -177,19 +178,22 @@ lta_report <- function(lta_result,
 
     # Stage best-fit formula
     (bestform <- best_modeli$Formula %>% unique)
-    bfi <- 2 ; alt_terms <- c()
-    if(length(bestform)>1){
-      for(bfi in 2:length(bestform)){
-        (formi <- bestform[bfi])
-
-        # Handle equally best-fitting covariates
-        (splits <- strsplit(formi,' ')[[1]])
-        (alt_term <- paste0('(+',splits[length(splits)],')'))
-        alt_terms <- c(alt_terms, alt_term)
-      }
-      (alt_terms <- paste(alt_terms, collapse=''))
-    }
-    (bestform <- paste0(bestform[1],alt_terms))
+    (bestform <- bestform[order(nchar(bestform))])
+    (bestform <- paste(bestform, collapse='; '))
+    # bfi <- 2 ; alt_terms <- c()
+    # if(length(bestform)>1){
+    #
+    #   for(bfi in 2:length(bestform)){
+    #     (formi <- bestform[bfi])
+    #
+    #     # Handle equally best-fitting covariates
+    #     (splits <- strsplit(formi,' ')[[1]])
+    #     (alt_term <- paste0('(+',splits[length(splits)],')'))
+    #     alt_terms <- c(alt_terms, alt_term)
+    #   }
+    #   (alt_terms <- paste(unique(alt_terms), collapse=''))
+    # }
+    # (bestform <- paste0(bestform[1],alt_terms))
 
     # Initiate table for pool
     (table2i <- tibble(`Detection function` = best_modeli$pool[1],
@@ -345,28 +349,66 @@ lta_report <- function(lta_result,
                         `(CV large)` = '-',
                         `(CV)` = '-'))
 
-        if('g0_small' %in% names(estimati)){
-          tabi$`g(0) small` <- as.character(format(round(as.numeric(estimati$g0_small), digits=2), nsmall=2))
-        }else{
-          tabi$`g(0) small` <- as.character(format(round(as.numeric(estimati$g0_est), digits=2), nsmall=2))
+
+
+        # Stage default values
+        g0e <- g0l <- g0s <- g0ecv <- g0lcv <- g0scv <- '-'
+
+        # Create a formatting function that handles values of diff orders of magnitude
+        g0_formatter <- function(go){
+          if(go > 0.01){
+            (gof <- as.character(format(round(as.numeric(go), digits=2),
+                                        scientific = F,
+                                        nsmall=2)))
+          }else{
+            if(go > 0.001){
+              (gof <- as.character(format(round(as.numeric(go), digits=3),
+                                          scientific = F,
+                                          nsmall=2)))
+            }else{
+              if(go > 0.0001){
+                (gof <- as.character(format(round(as.numeric(go), digits=4),
+                                            scientific = F,
+                                            nsmall=2)))
+
+              }else{
+                (gof <- as.character(format(round(as.numeric(go), digits=5),
+                                            scientific = F,
+                                            nsmall=2)))
+              }
+            }
+          }
+          return(gof)
         }
 
-        if('g0_large' %in% names(estimati)){
-          tabi$`g(0) large` <- as.character(format(round(as.numeric(estimati$g0_large), digits=2), nsmall=2))
-        }else{
-          tabi$`g(0) large` <- as.character(format(round(as.numeric(estimati$g0_est), digits=2), nsmall=2))
-        }
+        # Test it
+        g0_formatter(0.443455)
+        g0_formatter(0.0443455)
+        g0_formatter(0.00443455)
+        g0_formatter(0.000443455)
+
+        if('g0_small' %in% names(estimati)){
+           tabi$`g(0) small` <- g0_formatter(estimati$g0_small)
+         }else{
+           tabi$`g(0) small` <- g0_formatter(estimati$g0_est)
+         }
+
+         if('g0_large' %in% names(estimati)){
+           tabi$`g(0) large` <- g0_formatter(estimati$g0_large)
+         }else{
+           tabi$`g(0) large` <- g0_formatter(estimati$g0_est)
+         }
 
         if('g0_cv_small' %in% names(estimati)){
-          tabi$`(CV small)` <- as.character(format(round(as.numeric(estimati$g0_cv_small), digits=2), nsmall=2))
+          tabi$`(CV small)` <- g0_formatter(estimati$g0_cv_small)
         }else{
-          if(nrow(booti)>0){if(!is.na(booti$g0_cv)){ tabi$`(CV)` <- as.character(format(round(as.numeric(booti$g0_cv), digits=2), nsmall=2)) }}
+          if(nrow(booti)>0){if(!is.na(booti$g0_cv)){ tabi$`(CV)` <- g0_formatter(booti$g0_cv) }}
         }
 
         if('g0_cv_large' %in% names(estimati)){
-          tabi$`(CV large)` <- as.character(format(round(as.numeric(estimati$g0_cv_large), digits=2), nsmall=2))
+          tabi$`(CV large)` <- g0_formatter(estimati$g0_cv_large)
         }else{
-            if(nrow(booti)>0){if(!is.na(booti$g0_cv)){ tabi$`(CV)` <- as.character(format(round(as.numeric(booti$g0_cv), digits=2), nsmall=2)) }}
+            if(nrow(booti)>0){if(!is.na(booti$g0_cv)){ tabi$`(CV)` <- g0_formatter(booti$g0_cv) }}
         }
       }
 
@@ -521,7 +563,7 @@ lta_report <- function(lta_result,
             mutate(Species = names(cruzi$cohorts)[ci]) %>%
             ungroup() %>%
             tidyr::pivot_wider(id_cols = c(Species, stratum, Effort),
-                               names_from = bftr,
+                               names_from = Bft,
                                names_prefix = 'B',
                                values_from = prop,
                                values_fill = 0)

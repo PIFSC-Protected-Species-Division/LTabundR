@@ -202,10 +202,6 @@
 #' If `FALSE`, the assumed `g(0)` value will be 1. This can be a handy way of toggling weighted `g(0)`
 #' estimation on and off across all sublists within `estimates`.
 #'
-#' @param ss_correction Should a correction be applied to school sizes?
-#' School sizes will be scaled by this number. The default, `1`, means no changes will occur.
-#' This is a vestige of pre-2021 analysis workflows, and typically will not be invoked.
-#'
 #' @param abund_eff_types A character vector of `EffType` accepted as systematic effort
 #' (for density / abundance estimation). The default is just `"S"` (systematic effort),
 #' but in some surveys/cases you may wish to use fine-scale effort (`"F"`) too.
@@ -413,7 +409,6 @@ lta <- function(cruz,
                 df_settings,
                 estimates,
                 use_g0 = TRUE,
-                ss_correction = 1,
                 abund_eff_types = c('S'),
                 abund_bft_range = 0:6,
                 bootstraps = 0,
@@ -470,7 +465,6 @@ lta <- function(cruz,
                   g0=.3, g0_cv=.2))
 
     use_g0 = TRUE
-    ss_correction = 1
     bootstraps = 1000
     bootstraps = 5
     toplot=TRUE
@@ -962,8 +956,7 @@ lta <- function(cruz,
                                df = df_settings,
                                estimates = estimates,
                                bootstraps = bootstraps,
-                               use_g0 = use_g0,
-                               ss_correction = ss_correction),
+                               use_g0 = use_g0),
                  estimate = data.frame(), # stage result
                  df = list(),
                  g0_tables = g0_tables)
@@ -1225,7 +1218,6 @@ lta <- function(cruz,
                                 das = abund_das,
                                 strata = strata,
                                 truncation_distance = fit_filters$truncation_distance,
-                                ss_correction = ss_correction,
                                 use_g0 = use_g0,
                                 g0 = g0_i,
                                 g0_threshold = g0_threshold,

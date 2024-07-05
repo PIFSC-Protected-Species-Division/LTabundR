@@ -21,8 +21,6 @@
 #' @param strata A dataframe, drawn from a `cruz` object (e.g., `cruz$strata`),
 #'  summarizing the geostrata provided (their name and area, in square km).
 #' @param truncation_distance The truncation distance to apply to sightings.
-#' @param ss_correction Should a correction be applied to school sizes?
-#' School sizes will be scaled by this number. The default, `1`, means no changes will occur.
 #' @param use_g0 A Boolean, with default `TRUE`, indicating whether or not to use custom `g(0)` value(s).
 #' If `FALSE`, the assumed `g(0)` value will be 1.
 #' @param g0 A numeric vector of length 2: the `g(0)` for small and large groups.
@@ -76,7 +74,6 @@ abundance <- function(segments,
                       das,
                       strata,
                       truncation_distance,
-                      ss_correction = 1,
                       use_g0 = TRUE,
                       g0 = c(1, 1),
                       g0_threshold = 20,
@@ -90,7 +87,6 @@ abundance <- function(segments,
   ############################################################################
   if(FALSE){
     truncation_distance <- 5.5
-    ss_correction = 1
     use_g0 = TRUE
     g0 = c(1, 1)
     g0_threshold = 20

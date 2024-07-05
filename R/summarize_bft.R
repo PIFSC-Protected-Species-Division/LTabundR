@@ -11,7 +11,7 @@
 #' @return A list with various summary tables:
 #' \enumerate{
 #' \item `overall`: Overall summary of effort, parsed by Beaufort sea state, for the entire dataset.
-#' Three columns: `bftr` (rounded Beaufort), `km`, `prop` (the fraction of effort for this sea state).
+#' Three columns: `Bft`, `km`, `prop` (the fraction of effort for this sea state).
 #' \item `by_year`: Same table as `overall`, this time parsed by `year`.
 #' \item `by_cruise`: Same table as `overall`, this time parsed by geostratum.
 #' \item `details`: Same table as `overall`, this time parsed by each unique `Cruise`-`year`-`stratum` combination.
@@ -37,6 +37,7 @@ summarize_bft <- function(cruz,
 
     # test
     summarize_bft(cruz)$overall
+    summarize_bft(cruz)
     summarize_bft(cruz, use_only = FALSE)$overall
   }
   #=============================================================================
@@ -67,8 +68,9 @@ summarize_bft <- function(cruz,
       bft <-
         eff %>%
         dplyr::filter(use %in% uses) %>%
-        dplyr::mutate(bftr = round(Bft)) %>%
-        dplyr::group_by(bftr) %>%
+        #dplyr::mutate(bftr = round(Bft)) %>%
+        #dplyr::group_by(bftr) %>%
+        dplyr::group_by(Bft) %>%
         dplyr::summarize(km = sum(km_int)) %>%
         dplyr::mutate(prop = km / sum(km))
       bft
@@ -77,8 +79,9 @@ summarize_bft <- function(cruz,
       bft_details <-
         eff %>%
         dplyr::filter(use %in% uses) %>%
-        dplyr::mutate(bftr = round(Bft)) %>%
-        dplyr::group_by(Cruise, year, stratum, bftr) %>%
+        #dplyr::mutate(bftr = round(Bft)) %>%
+        #dplyr::group_by(Cruise, year, stratum, bftr) %>%
+        dplyr::group_by(Cruise, year, stratum, Bft) %>%
         dplyr::summarize(km = sum(km_int)) %>%
         dplyr::mutate(prop = km / sum(km))
       bft_details
@@ -87,8 +90,9 @@ summarize_bft <- function(cruz,
       bft_year <-
         eff %>%
         dplyr::filter(use %in% uses) %>%
-        dplyr::mutate(bftr = round(Bft)) %>%
-        dplyr::group_by(year, bftr) %>%
+        #dplyr::mutate(bftr = round(Bft)) %>%
+        #dplyr::group_by(year, bftr) %>%
+        dplyr::group_by(year, Bft) %>%
         dplyr::summarize(km = sum(km_int)) %>%
         dplyr::mutate(prop = km / sum(km))
       bft_year
@@ -97,8 +101,9 @@ summarize_bft <- function(cruz,
       bft_stratum <-
         eff %>%
         dplyr::filter(use %in% uses) %>%
-        dplyr::mutate(bftr = round(Bft)) %>%
-        dplyr::group_by(stratum, bftr) %>%
+        #dplyr::mutate(bftr = round(Bft)) %>%
+        #dplyr::group_by(stratum, bftr) %>%
+        dplyr::group_by(stratum, Bft) %>%
         dplyr::summarize(km = sum(km_int)) %>%
         dplyr::mutate(prop = km / sum(km))
       bft_stratum
