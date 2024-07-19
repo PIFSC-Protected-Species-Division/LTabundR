@@ -470,10 +470,11 @@ lta <- function(cruz,
     toplot=TRUE
     verbose=FALSE
     abund_bft_range = 0:6
+    abund_eff_types = c('S')
 
     # Try it
     lta_result <- lta(cruz, Rg0, fit_filters, df_settings, estimates, bootstraps=0)
-    lta_result <- lta(cruz, Rg0, fit_filters, df_settings, estimates, bootstraps=10, verbose=FALSE)
+    lta_result <- lta(cruz, Rg0, fit_filters, df_settings, estimates, bootstraps=20, verbose=FALSE)
 
     lta_result$estimate
     lta_result$bootstrap$summary
@@ -985,7 +986,7 @@ lta <- function(cruz,
     df_curves <- data.frame()
 
     # When loopi == 'estimate', this is run once *without* re-sampling, to get the formal estimate
-    iter <- 1 # for debugging
+    iter <- 10 # for debugging
     for(iter in 1:niter){
 
       # If an attempt fails, the boostrap routine will press on.
@@ -1033,8 +1034,8 @@ lta <- function(cruz,
           # Estimate detection function
           # using LTabundR function df_fit()
 
-          message('Original  n = ', nrow(fit_sightings),'\n',
-                  'Bootstrap n = ', nrow(sightings))
+          #message('Original  n = ', nrow(fit_sightings),'\n',
+          #        'Bootstrap n = ', nrow(sightings))
 
           df <- NULL
           df <- df_fit(sightings = sightings,
@@ -1049,7 +1050,8 @@ lta <- function(cruz,
           # Review
           df$all_models
           df %>% names
-          df$best_models
+          #df$best_objects[[1]]$data %>% nrow
+          #df$best_objects[[1]]$ds$aux$ddfobj$xmat %>% nrow
 
           # Add name of this species pool to the df results
           df$best_models$pool <- pool
@@ -1065,6 +1067,8 @@ lta <- function(cruz,
 
           # Get esw column from df_fit() results, then join to sightings
           fitted_sightings <- df$sightings
+          message('Fitted sightings n = ',nrow(fitted_sightings))
+
           fitted_sightings$esw
           (fit_sit_to_join <- fitted_sightings %>% dplyr::select(i_fit, esw))
 
@@ -1072,6 +1076,7 @@ lta <- function(cruz,
           new_sightings <- dplyr::left_join(sightings, fit_sit_to_join,
                                             by='i_fit', relationship = 'many-to-many')
           # # This effectively 'ungroups' the sightings that were previously grouped and made Other (if any)
+          #message('New sightings n = ',nrow(fitted_sightings))
 
           dist_sightings$SightNoDaily %>% unique %>% sort
           new_sightings$esw

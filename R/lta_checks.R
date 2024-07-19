@@ -288,7 +288,7 @@ lta_checks <- function(cruz,
   message('')
   message('To edit the sightings dataframe based on these checks, use the following workflow:')
   message('\n# save sightings in an object')
-  message('sits <- cruz$cohorts$<cohort name here>$sighitings')
+  message('sits <- cruz$cohorts$<cohort name here>$sightings')
   message('')
   message('# (perform edits on sits based on info within the lta_checks() output ...)')
   message('')

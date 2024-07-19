@@ -134,7 +134,7 @@ g0_weighted <- function(Rg0,
 
   # Use this Bft allocation as the weight
   weights <- sapply(0:6, function(x){
-    matchi <- which(bft$bftr == x)
+    matchi <- which(bft$Bft == x)
     returni <- ifelse(length(matchi)>0, bft$prop[matchi], 0)
     return(returni)
   })
