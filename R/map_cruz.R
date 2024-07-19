@@ -23,6 +23,7 @@
 #' and a legend will be provided; this argument is ignored if `sightings_show` is `FALSE`.
 #' @param sightings_radius A single postive numeric, indicating the size of the sightings markers; this argument is ignored if `sightings_show` is `FALSE`.
 #' @param sightings_opacity A single numeric between 0 and 1, indicating the opacity of sightings markers; this argument is ignored if `sightings_show` is `FALSE`.
+#' @param initial_zoom Initial zoom default for the `leaflet` map.
 #' @param verbose Boolean, with default `TRUE`, indicating whether or not updates should be printed to the Console.
 #' (The only updates occur in the preparation of effort tracks, if `effort_show` is `TRUE`)
 #'
@@ -52,10 +53,11 @@ map_cruz <- function(cruz,
                      sightings_color = 'color code',
                      sightings_radius = 1,
                      sightings_opacity = 0.5,
+                     initial_zoom = 4,
                      verbose=TRUE){
 
   if(FALSE){ # for debugging only -- not run! ==================================
-    m <- map_base()
+    #m <- map_base()
     data(example_cruz)
     cruz <- example_cruz
     cohort = 1
@@ -63,6 +65,7 @@ map_cruz <- function(cruz,
     eez_color = 'black'
     eez_weight = 0.6
     eez_opacity = 0.5
+    initial_zoom = 3
 
     strata_show=TRUE
     strata_color = 'forestgreen'
@@ -87,6 +90,7 @@ map_cruz <- function(cruz,
     # For your initial call, we recommend the default (`15`).
 
     # try it
+    strata_explore(region='cnp')
     map_cruz(cruz)
     map_cruz(cruz, sightings_color='firebrick')
     map_cruz(cruz, effort_show=TRUE, sightings_show=FALSE)
@@ -103,6 +107,10 @@ map_cruz <- function(cruz,
   sits <- ani$sightings
   das <- ani$das
 
+  # Set initial view
+  initial_lat <- mean(das$Lat, na.rm=TRUE)
+  initial_lon <- mean(das$Lon, na.rm=TRUE)
+
   # Load eez data
   #data(eez_ccs)
   #data(eez_hawaii)
@@ -110,13 +118,19 @@ map_cruz <- function(cruz,
 
   # Create base leaflet map
   m <-
-    leaflet::leaflet() %>%
-    leaflet::addTiles(options = leaflet::providerTileOptions(opacity = .5))
+    leaflet::leaflet(options = leaflet::leafletOptions(worldCopyJump = F)) %>%
+    leaflet::addTiles(options = leaflet::providerTileOptions(opacity = .5,
+                                                             noWrap = T)) %>%
+    leaflet::setView(lng = initial_lon,
+                     lat = initial_lat,
+                     zoom = initial_zoom)
     #leaflet::addProviderTiles(leaflet::providers$Esri.OceanBasemap,
     #                          options = leaflet::providerTileOptions(opacity = .5))
 
   # Add EEZ
   if(eez_show){
+
+    # IDL handle
     m <-
       m %>%
       leaflet::addPolylines(data=eez, weight=eez_weight, color=eez_color, opacity=eez_opacity)

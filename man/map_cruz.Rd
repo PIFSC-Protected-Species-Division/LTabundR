@@ -23,6 +23,7 @@ map_cruz(
   sightings_color = "color code",
   sightings_radius = 1,
   sightings_opacity = 0.5,
+  initial_zoom = 4,
   verbose = TRUE
 )
 }
@@ -65,6 +66,8 @@ and a legend will be provided; this argument is ignored if \code{sightings_show}
 \item{sightings_radius}{A single postive numeric, indicating the size of the sightings markers; this argument is ignored if \code{sightings_show} is \code{FALSE}.}
 
 \item{sightings_opacity}{A single numeric between 0 and 1, indicating the opacity of sightings markers; this argument is ignored if \code{sightings_show} is \code{FALSE}.}
+
+\item{initial_zoom}{Initial zoom default for the \code{leaflet} map.}
 
 \item{verbose}{Boolean, with default \code{TRUE}, indicating whether or not updates should be printed to the Console.
 (The only updates occur in the preparation of effort tracks, if \code{effort_show} is \code{TRUE})}

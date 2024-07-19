@@ -18,7 +18,7 @@ the effort that will be used in detection function model fitting. If \code{FALSE
 A list with various summary tables:
 \enumerate{
 \item \code{overall}: Overall summary of effort, parsed by Beaufort sea state, for the entire dataset.
-Three columns: \code{bftr} (rounded Beaufort), \code{km}, \code{prop} (the fraction of effort for this sea state).
+Three columns: \code{Bft}, \code{km}, \code{prop} (the fraction of effort for this sea state).
 \item \code{by_year}: Same table as \code{overall}, this time parsed by \code{year}.
 \item \code{by_cruise}: Same table as \code{overall}, this time parsed by geostratum.
 \item \code{details}: Same table as \code{overall}, this time parsed by each unique \code{Cruise}-\code{year}-\code{stratum} combination.

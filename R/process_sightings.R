@@ -52,6 +52,7 @@ process_sightings <- function(cruz,
 
     # test function
     sits <- process_sightings(cruz, verbose=TRUE)
+    sits$cohorts$default$sightings %>% dplyr::filter(ss_valid == FALSE)
     sits <- process_sightings(cruz, calibrate=FALSE, verbose=FALSE)
   }
   #=============================================================================
@@ -169,15 +170,15 @@ process_sightings <- function(cruz,
 
     # loop through each sighitng
     sitno <- unique(sits_sp$SightNoDaily) # unique sighting numbers
-    sitno <- sitno[!is.na(sitno)]
+    (sitno <- sitno[!is.na(sitno)])
 
     # Stage progress
     iprogs <- seq(0.05,0.95,by=.05)*length(sitno)
     iprogs <- round(iprogs) ; iprogs
 
     #which(sitno == "19861128_1") # debugging
-    i=6 # debuging
-    i=3131 # for debugging
+    which(sitno == '20120513_20')
+    i=641 # for debugging
     debugger <- c()
     for(i in 1:length(sitno)){
 
@@ -220,10 +221,11 @@ process_sightings <- function(cruz,
       (brng <- unique(siti_s$Bearing)[1])
       (perpdist <- unique(siti_s$PerpDistKm)[1])
       (radialdist <- unique(siti_s$DistNm)[1] * 1.852)
+
       # get dataframe with all columns relevant to group size estimation
       (grp <- siti %>%
           dplyr::filter(Event == 'S') %>%
-          dplyr::select(Event, year, Bft, Prob:GsSchoolLow))
+          dplyr::select(Event, year, Bft, Prob:GsSchoolLow)) %>% as.data.frame
 
       if(nrow(siti_s)>0){
         #stage inclusion variables. These assumptions will be tested/modified by downstream tests.
@@ -357,7 +359,7 @@ process_sightings <- function(cruz,
 
         # Estimate group sizes, including calibration coefficients
         # output will have one row for each species in detection:
-        grp # review grp dataframe
+        grp %>% as.data.frame # review grp dataframe
         # group_size() is a LTabundR function. See 'group_size.R'.
         grp_results <- LTabundR::group_size(grp,
                                             gs_coefficients = group_size_coefficients,
@@ -376,22 +378,24 @@ process_sightings <- function(cruz,
         # That function returns a dataframe with one row for each species in the sighting (if multi-species)
         # (the vast majority of sightings are single-species, meaning the grp output will be nrow=1)
 
+        # Flag invalid group size estimate
+        if(any(grp_results$ss_valid == FALSE)){
+          # If any best estimates are valid/finite, flag the the school size is not valid.
+          message('--- DateTime = ', dti,', line_num = ',line_num_i, 'i = ', i,' | Species ', paste(grp_results$species, collapse=', '), ' | Some group size best estimates are NOT valid! *****')
+        }
+
         # First add an indicator if this species is the largest part of the mixed school
-        grp_results$ss_valid <- FALSE
         grp_results$mixed_max <- FALSE
         grp_results$spp_max <- NA
-        if(any(is.finite(grp_results$best))){
-          grp_results$ss_valid <- TRUE
+        if(any(grp_results$ss_valid)){
           max_best <- max(grp_results$best, na.rm=TRUE)
           # Is it the max species?
           grp_results$mixed_max[grp_results$best == max_best] <- TRUE
           # Who is the max species?
           spp_max <- grp_results$species[which(grp_results$best == max_best)[1]]
           grp_results$spp_max <- spp_max
-        }else{
-          # If no best estimates are valid/finite, flag the the school size is not valid.
-          message('--- DateTime = ', dti,', line_num = ',line_num_i, 'i = ', i,' | Species ', paste(grp_results$species, collapse=', '), ' | No group size best estimate is valid! Changing column ss_valid to FALSE *****')
         }
+
         grp_results
 
         # Take these results, loop through each species and finish up.
@@ -401,14 +405,6 @@ process_sightings <- function(cruz,
         for(grp_i in 1:nrow(grp_results)){
           grpi <- grp_results[grp_i,] # group size estimates for this species
           grpi
-
-          # if best is still NA, just make it 1, even if ss_valid == FALSE.
-          if(is.na(grpi$best)){
-            grpi$best <- 1
-          }else{
-            # make sure it is at least 1, since percent composition can estimate a size less than 1
-            if(grpi$best < 1){grpi$best <- 1}
-          }
 
           included_i <- included # store species-specific version of inclusion status, so that loop does not confound
           reason_i <- reason_excluded # same

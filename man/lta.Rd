@@ -11,7 +11,6 @@ lta(
   df_settings,
   estimates,
   use_g0 = TRUE,
-  ss_correction = 1,
   abund_eff_types = c("S"),
   abund_bft_range = 0:6,
   bootstraps = 0,
@@ -218,10 +217,6 @@ This term is only referenced if \code{area} is not specified manually.
 \item{use_g0}{A Boolean, with default \code{TRUE}, indicating whether or not to use custom \code{g(0)} value(s).
 If \code{FALSE}, the assumed \code{g(0)} value will be 1. This can be a handy way of toggling weighted \code{g(0)}
 estimation on and off across all sublists within \code{estimates}.}
-
-\item{ss_correction}{Should a correction be applied to school sizes?
-School sizes will be scaled by this number. The default, \code{1}, means no changes will occur.
-This is a vestige of pre-2021 analysis workflows, and typically will not be invoked.}
 
 \item{abund_eff_types}{A character vector of \code{EffType} accepted as systematic effort
 (for density / abundance estimation). The default is just \code{"S"} (systematic effort),

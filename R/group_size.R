@@ -72,7 +72,7 @@ group_size <- function(grp,
     use_low_if_na <- TRUE
     data(group_size_coefficients)
     (gs_coefficients <- group_size_coefficients)
-    gs_coefficients = NULL
+    #gs_coefficients = NULL
     (geometric_mean <- cruz$settings$cohorts[[1]]$geometric_mean_group)
     calibrate_floor = 0
 
@@ -156,85 +156,88 @@ group_size <- function(grp,
 
   # Calibrate group sizes ======================================================
 
+  # stage results variables
   best_vars <- rep(NA,times=length(bests)) # stage vector for variance of estimates for each observer
-  calibr <- FALSE # stage indicator of whether calibration was successful
-
-  # If calibration coefficients are provided ...
-  if(!is.null(gs_coefficients)){
-  #}else{
-  #  if(debug_mode){message(' --- Calibration coefficients unavailable. No calibration!\n---')}
-  #}
+  grpnew <- data.frame() # for debugging
 
   # Stage variables
   bft <- grp$Bft[1] %>% as.numeric ; bft
   yr <- grp$year[1] %>% as.numeric ; yr
 
   # Loop through each observer...
-  obs_i <- 3 # for debugging
-  debugs <- data.frame() # for debugging
+  obs_i <- 1 # for debugging
   for(obs_i in 1:nrow(grp)){
-    (obsi <- grp$ObsEstimate[obs_i]) # this observer's ID
-    (besti <- bests[obs_i]) # her/his best estimate
-    (lowi <- lows[obs_i]) # low estimate
-    (highi <- highs[obs_i]) # high estimate
+    # Get this observer's estimates
+    (obsi <- grp$ObsEstimate[obs_i])
+    (besti <- bests[obs_i])
+    (lowi <- lows[obs_i])
+    (highi <- highs[obs_i])
+    grpi <- group_size_calibration(obs = obsi,
+                                   bft = bft,
+                                   yr = yr,
+                                   gbest = besti,
+                                   glow = lowi,
+                                   ghigh = highi,
+                                   gs_coefficients = gs_coefficients,
+                                   calibrate_floor = calibrate_floor)
+    grpi # review
 
-    # group_size_calibration() is a LTabundR function.
-    # See group_size_calibration.R
-    calib_results <- group_size_calibration(obs = obsi,
-                                            bft = bft,
-                                            yr = yr,
-                                            gbest = besti,
-                                            glow = lowi,
-                                            ghigh = highi,
-                                            gs_coefficients = gs_coefficients,
-                                            calibrate_floor = calibrate_floor)
-    # Return is a one-row dataframe with best estimate, variance, and other parameters
-    calib_results # review
-
-    # Update calibr status variable
-    calibr <- calib_results$calibr
-
-    if(debug_mode){ # debugging
-      debugs <- rbind(debugs,
-                      data.frame(obs = obsi,
-                                 best_raw = besti,
-                                 low_raw = lowi,
-                                 high_raw = highi,
-                                 calib_results))
+    if(all(c(debug_mode,
+             is.null(gs_coefficients),
+             obs_i == 1))){
+      message(' --- Calibration coefficients unavailable. No calibration!')
     }
 
-    # if less than 1, coerce to 1
-    if(!is.na(calib_results$best)){
-      if(calib_results$best < 1){calib_results$best <- 1}
+    # add validity check
+    validi <- TRUE
+    if(validi & is.na(grpi$best)){
+      validi <- FALSE
+      # replace best with low
+      grpi$best <- grpi$low_raw
     }
+    if(validi & grpi$best < 0){ validi <- FALSE }
+    # if less than 1, coerce to 1 (does not affect validity)
+    if(validi & grpi$best < 1){ grpi$best <- 1 }
+    validi
+    grpi$valid <- validi
 
-    # add to results vectors (each element corresponds to an observer)
-    if(!is.na(besti)){
-      bests[obs_i] <- calib_results$best
-    }else{
-      if(!is.na(lowi)){lows[obs_i] <- calib_results$best}
-    }
-    best_vars[obs_i] <- calib_results$var
-    bests
-    best_vars
-  }
+    # add to results vectors
+    grpnew <- rbind(grpnew, grpi)
+
+  } # end of obs loop
 
   # Review in debugging mode
   if(debug_mode){
     message('---')
     message('Calibrated estimates:')
-    message('--- best estimates = ',paste(round(bests,3),collapse=', '))
-    message('--- variance = ',paste(round(best_vars,3),collapse=', '))
+    message('--- best estimates = ',paste(round(grpnew$best,3),collapse=', '))
+    message('--- variance = ',paste(round(grpnew$var,3),collapse=', '))
+    message('--- calibration adjustment? = ',paste(grpnew$calibr,collapse=', '))
+    message('--- valid estimates? = ',paste(grpnew$valid,collapse=', '))
     message('---')
-    print(debugs)
+    print(grpnew)
     message('---')
-  }
-  }else{
-    if(debug_mode){message(' --- Calibration coefficients unavailable. No calibration!\n---')}
   }
 
-  # Check calibration status
-  calibr
+  # Filter to only valid estimates
+  (grpvalid <- grpnew %>% dplyr::filter(valid == TRUE))
+  if(nrow(grpvalid)>0){
+    # update bests
+    (bests <- grpvalid$best)
+    (best_vars <- grpvalid$var)
+    # track other important qa/qc terms
+    (valids <- grpvalid$valid)
+    (calibs <- grpvalid$calibr)
+  }else{
+    bests <- NA
+    best_vars <- NA
+    valids <- FALSE
+    calibs <- FALSE
+  }
+  bests
+  best_vars
+  valids
+  calibs
 
   # Setup final estimate objects
   gs_best <- gs_low <- gs_high <- NULL
@@ -247,7 +250,7 @@ group_size <- function(grp,
 
   # Keep this estimate, if settings say so
   if(geometric_mean){
-    if(!is.null(gs_coefficients)){
+    if(all(calibs)){ # only perform if calibration variance was provided
       gs_best <- gs_besti
       gs_low <- gs_lowi
       gs_high <- gs_highi
@@ -281,21 +284,34 @@ group_size <- function(grp,
     gs_high <- gs_highi
   }
 
-  # If best estimate is negative, make it NA
-  if(!is.na(gs_best)){if(gs_best < 0){gs_best <- NA}}
-
-  # If best is NA for all users, use the Low
-  if(use_low_if_na){
-    if(is.na(gs_best)){gs_best <- gs_low}
-    if(!is.na(gs_best)){if(gs_best < 0){gs_best <- NA}}
+  # Final validity checks
+  (validi <- all(valids)) # starting point: all kept observer estimates are valid
+  # Is gs_best NA?
+  if(validi & is.na(gs_best)){
+    validi <- FALSE
+    # replace with low estimate?
+    if(use_low_if_na){
+      gs_best <- ifelse(gs_low < 0, NA, gs_low) }
   }
-  gs_best ; gs_low ; gs_high
-
+  # If best estimate is negative, make it NA
+  if(validi & gs_best < 0){
+    validi <- FALSE
+    gs_best <- NA
+  }
   # If the best group size estimate is still NA, just use 1
-  if(is.na(gs_best)){gs_best <- 1}
-  gs_best ; gs_low ; gs_high
+  if(validi==FALSE && is.na(gs_best)){
+    gs_best <- 1
+  }
+  # Make sure non-na estimates are not less than 1
+  if(!is.na(gs_best) && gs_best < 1){
+    gs_best <- 1
+  }
+  validi; gs_best ; gs_low ; gs_high
 
-  if(debug_mode){message('---\nFinal estimate = ',round(gs_best,2))}
+  if(debug_mode){
+    message('---\nFinal estimate = ',round(gs_best,2))
+    message('Estimate is valid? = ',validi)
+  }
 
   # Get group for each species by percentage ===================================
   (sp_percs <- grp %>% dplyr::select(SpPerc1:SpPerc4))
@@ -310,7 +326,9 @@ group_size <- function(grp,
   for(i in 1:length(spcodes)){
     spi <- spcodes[i] ; spi # species in this row
     if(!is.na(spi)){ # if it is not NA
-      perci <- sp_percs[i] ; perci # group percentage for this species
+      perci <- sp_percs[i] %>% as.numeric ; perci # group percentage for this species
+      # final validity check -- perci must be valid
+      (validi_spi <- ifelse(is.na(perci), FALSE, validi))
       dfi <- data.frame(species = as.character(spi[1,1]), # species code
                         best = gs_best * perci, # number for this species only
                         low = gs_low * perci,
@@ -325,7 +343,8 @@ group_size <- function(grp,
                         n_best = length(bests[!is.na(bests)]), # how many best estimates were there?
                         n_low = length(bests[!is.na(lows)]),
                         n_high = length(bests[!is.na(highs)]),
-                        calibr = calibr # !is.null(gs_coefficients) # was calibration applied?
+                        calibr = all(calibs), # was calibration adjustment applied?
+                        ss_valid = validi_spi # is this estimate valid?
       )
       dfi
       grp_results <- rbind(grp_results,dfi)

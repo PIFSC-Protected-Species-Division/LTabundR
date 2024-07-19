@@ -115,7 +115,9 @@ abundance <- function(segments,
   ############################################################################
   # Deal with invalid school size estimates
 
-  if('ss_valid' %in% names(sightings)){
+  if(FALSE){   # skipping this as of july 2024 -- no longer interpolating missing values for users
+
+    if('ss_valid' %in% names(sightings)){
     if(any(sightings$ss_valid == FALSE)){
       (bads <- which(sightings$ss_valid == FALSE))
       i=1 # for debugging
@@ -129,6 +131,8 @@ abundance <- function(segments,
       }
       #sightings$best[bads]
     }
+    }
+
   }
 
   (data_table <- sightings)
@@ -153,7 +157,10 @@ abundance <- function(segments,
 
       # Get rid of invalid group size estimates
       nrow(data_table)
-      data_table <- data_table %>% dplyr::filter(best > 0)
+      data_table <-
+        data_table %>%
+        dplyr::filter(best > 0) %>%
+        dplyr::filter(ss_valid == TRUE) # adding this line in july 2024
       nrow(data_table)
     }
 

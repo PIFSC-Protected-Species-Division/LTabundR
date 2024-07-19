@@ -750,6 +750,68 @@ lta <- function(cruz,
 
   ##############################################################################
   ##############################################################################
+  # Handle NAs in the numeric covariates & invalid school sizes in sightings
+
+  if(!is.null(covariates)){
+    if(length(covariates)>0){
+      (numeric_covars <- covariates[!covariates_factor])
+      # Get indices for which one of the numeric covariates is NA
+      if(length(numeric_covars)>0){
+        bads <-
+          sapply(numeric_covars, function(x){
+            #coli <- which(tolower(names(fit_sightings)) == x)
+            coli <- which(tolower(names(dist_sightings)) == x)
+            #bads <- which(is.na(as.numeric(fit_sightings[,coli])))
+            bads <- which(is.na(as.numeric(dist_sightings[,coli])))
+            return(bads)
+          }) %>%
+          unlist %>% unique
+        bads
+        # If there are any, remove them and announce that you are doing so.
+        if(length(bads)>0){
+          if(verbose){
+            message('\nRemoving rows with invalid numeric covariate data from the detection-function-fitting dataset: ***')
+          }
+          # Show which rows are being removed:
+          #covarcols <- which(tolower(names(fit_sightings)) %in% numeric_covars)
+          covarcols <- which(tolower(names(dist_sightings)) %in% numeric_covars)
+          #baddf <- fit_sightings[bads,] %>% select(Cruise, DateTime, SightNoDaily, line_num, species, all_of(covarcols))
+          baddf <- dist_sightings[bads,] %>% select(Cruise, DateTime, SightNoDaily, line_num, species, all_of(covarcols))
+          if(verbose){
+            print(baddf)
+          }
+          # Remove the rows
+          #fit_sightings <- fit_sightings[-bads, ]
+          dist_sightings <- dist_sightings[-bads, ]
+        }
+      }
+    }
+  }
+
+  # Handle invalid school size estimates
+  if(!is.null(covariates)){
+    if('lnsstot' %in% tolower(covariates)){
+      if('ss_valid' %in% names(dist_sightings)){
+        (bads <- which(dist_sightings$ss_valid == FALSE))
+        # If there are any, remove them and announce that you are doing so.
+        if(length(bads)>0){
+          if(verbose){
+            message('\nRemoving rows with invalid school size estimates from the detection-function-fitting dataset: ***')
+          }
+          # Show which rows are being removed:
+          baddf <- dist_sightings[bads,] %>% select(Cruise, DateTime, SightNoDaily, line_num, species, best, ss_valid)
+          if(verbose){
+            print(baddf)
+          }
+          # Remove the rows
+          dist_sightings <- dist_sightings[-bads, ]
+        }
+      }
+    }
+  }
+
+  ##############################################################################
+  ##############################################################################
   # Handle 'Other' species designations for mixed-species school
   # (species that are not the plurality in a mixed sighting become Other)
 
@@ -785,60 +847,9 @@ lta <- function(cruz,
 
   ##############################################################################
   ##############################################################################
+  # Note that this is where the following step used to be
+  # (it has now been moved upstream):
   # Handle NAs in the numeric covariates & invalid school sizes
-
-  if(!is.null(covariates)){
-    if(length(covariates)>0){
-      (numeric_covars <- covariates[!covariates_factor])
-      # Get indices for which one of the numeric covariates is NA
-      if(length(numeric_covars)>0){
-        bads <-
-          sapply(numeric_covars, function(x){
-            coli <- which(tolower(names(fit_sightings)) == x)
-            bads <- which(is.na(as.numeric(fit_sightings[,coli])))
-            return(bads)
-          }) %>%
-          unlist %>% unique
-        bads
-        # If there are any, remove them and announce that you are doing so.
-        if(length(bads)>0){
-          if(verbose){
-            message('\nRemoving rows with invalid numeric covariate data from the detection-function-fitting dataset: ***')
-          }
-          # Show which rows are being removed:
-          covarcols <- which(tolower(names(fit_sightings)) %in% numeric_covars)
-          baddf <- fit_sightings[bads,] %>% select(Cruise, DateTime, SightNoDaily, line_num, species, all_of(covarcols))
-          if(verbose){
-            print(baddf)
-          }
-          # Remove the rows
-          fit_sightings <- fit_sightings[-bads, ]
-        }
-      }
-    }
-  }
-
-  # Handle invalid school size estimates
-  if(!is.null(covariates)){
-    if('lnsstot' %in% tolower(covariates)){
-      if('ss_valid' %in% names(fit_sightings)){
-        (bads <- which(fit_sightings$ss_valid == FALSE))
-        # If there are any, remove them and announce that you are doing so.
-        if(length(bads)>0){
-          if(verbose){
-            message('\nRemoving rows with invalid school size estimates from the detection-function-fitting dataset: ***')
-          }
-          # Show which rows are being removed:
-          baddf <- fit_sightings[bads,] %>% select(Cruise, DateTime, SightNoDaily, line_num, species, best, ss_valid)
-          if(verbose){
-            print(baddf)
-          }
-          # Remove the rows
-          fit_sightings <- fit_sightings[-bads, ]
-        }
-      }
-    }
-  }
 
   ##############################################################################
   ##############################################################################

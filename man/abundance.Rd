@@ -10,7 +10,6 @@ abundance(
   das,
   strata,
   truncation_distance,
-  ss_correction = 1,
   use_g0 = TRUE,
   g0 = c(1, 1),
   g0_threshold = 20,
@@ -43,9 +42,6 @@ by the mean best estimate for their respective species.}
 summarizing the geostrata provided (their name and area, in square km).}
 
 \item{truncation_distance}{The truncation distance to apply to sightings.}
-
-\item{ss_correction}{Should a correction be applied to school sizes?
-School sizes will be scaled by this number. The default, \code{1}, means no changes will occur.}
 
 \item{use_g0}{A Boolean, with default \code{TRUE}, indicating whether or not to use custom \code{g(0)} value(s).
 If \code{FALSE}, the assumed \code{g(0)} value will be 1.}
