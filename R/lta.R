@@ -468,12 +468,12 @@ lta <- function(cruz,
     bootstraps = 1000
     bootstraps = 5
     toplot=TRUE
-    verbose=TRUE
+    verbose=FALSE
     abund_bft_range = 0:6
 
     # Try it
     lta_result <- lta(cruz, Rg0, fit_filters, df_settings, estimates, bootstraps=0)
-    lta_result <- lta(cruz, Rg0, fit_filters, df_settings, estimates, bootstraps=10)
+    lta_result <- lta(cruz, Rg0, fit_filters, df_settings, estimates, bootstraps=10, verbose=FALSE)
 
     lta_result$estimate
     lta_result$bootstrap$summary
@@ -859,7 +859,7 @@ lta <- function(cruz,
 
   (sample_size <- fit_sightings %>%
       dplyr::group_by(species) %>%
-      dplyr::summarize(Ntot = n(),
+      dplyr::summarize(Ntot = dplyr::n(),
                        Ndet = length(which(PerpDistKm <= truncation_distance))) %>%
       dplyr::mutate(TD = truncation_distance,
                     pool = pool))
@@ -1032,6 +1032,9 @@ lta <- function(cruz,
           #=========================================================================
           # Estimate detection function
           # using LTabundR function df_fit()
+
+          message('Original  n = ', nrow(fit_sightings),'\n',
+                  'Bootstrap n = ', nrow(sightings))
 
           df <- NULL
           df <- df_fit(sightings = sightings,

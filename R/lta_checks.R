@@ -186,7 +186,7 @@ lta_checks <- function(cruz,
       invalids <- data.frame()
       message('--- --- all group size estimates are valid.')
     }else{
-      message('--- --- invalid group size estimates found on ', nrow(invalids),' row(s): ', paste(invalids$check_id, collapse=', '))
+      message('--- --- invalid group size estimates found on ', nrow(invalids),' row(s): ', paste(invalids$check_id, collapse=', '),' **********')
     }
     return(invalids)
   }
@@ -199,7 +199,7 @@ lta_checks <- function(cruz,
       invalids <- data.frame()
       message('--- --- all perpendicular distances are valid.')
     }else{
-      message('--- --- invalid perpendicular distances found on ', nrow(invalids),' row(s): ', paste(invalids$check_id, collapse=', '))
+      message('--- --- invalid perpendicular distances found on ', nrow(invalids),' row(s): ', paste(invalids$check_id, collapse=', '),' **********')
     }
     return(invalids)
   }
@@ -242,7 +242,7 @@ lta_checks <- function(cruz,
   i=1
   for(i in 1:length(estimates)){
     (estimati <- estimates[[i]])
-    message(i,' :: ', estimati$title, ' (', estimati$spp, ') :: ',
+    message(i,' :: ', estimati$title, ' (', paste(estimati$spp, collapse=', '), ') :: ',
             paste(estimati$regions, collapse=', '), ' :: ',
             paste(estimati$years, collapse=', '),
             ' ================')
@@ -254,7 +254,9 @@ lta_checks <- function(cruz,
     # Filter sits
     siti <- sits %>% dplyr::filter(species %in% estimati$spp,
                                    year %in% estimati$years,
-                                   stratum %in% estimati$regions)
+                                   stratum %in% estimati$regions,
+                                   OnEffort == TRUE,
+                                   included == TRUE)
 
     if(nrow(siti) == 0){
       message('Zero sightings for this estimate scenario. Moving on...\n')
