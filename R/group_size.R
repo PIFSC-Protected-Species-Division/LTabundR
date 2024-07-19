@@ -240,7 +240,8 @@ group_size <- function(grp,
   calibs
 
   # Setup final estimate objects
-  gs_best <- gs_low <- gs_high <- NULL
+  gs_best <- gs_low <- gs_high <- NA
+  #gs_best <- gs_low <- gs_high <- NULL
 
   # Geometric weighted mean
   (gs_besti <- geometric_weighted_mean(bests,best_vars))
@@ -287,19 +288,19 @@ group_size <- function(grp,
   # Final validity checks
   (validi <- all(valids)) # starting point: all kept observer estimates are valid
   # Is gs_best NA?
-  if(validi & is.na(gs_best)){
+  if(validi && is.na(gs_best)){
     validi <- FALSE
     # replace with low estimate?
     if(use_low_if_na){
       gs_best <- ifelse(gs_low < 0, NA, gs_low) }
   }
   # If best estimate is negative, make it NA
-  if(validi & gs_best < 0){
+  if(validi && gs_best < 0){
     validi <- FALSE
     gs_best <- NA
   }
   # If the best group size estimate is still NA, just use 1
-  if(validi==FALSE && is.na(gs_best)){
+  if(validi==FALSE && any(c(is.null(gs_best), is.na(gs_best)))){
     gs_best <- 1
   }
   # Make sure non-na estimates are not less than 1
