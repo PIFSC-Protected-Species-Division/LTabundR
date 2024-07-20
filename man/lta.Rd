@@ -14,6 +14,7 @@ lta(
   abund_eff_types = c("S"),
   abund_bft_range = 0:6,
   bootstraps = 0,
+  max_attempts = 5,
   results_file = NULL,
   toplot = TRUE,
   verbose = TRUE
@@ -226,6 +227,11 @@ but in some surveys/cases you may wish to use fine-scale effort (\code{"F"}) too
 (for density / abundance estimation). The default is \code{0:6}.}
 
 \item{bootstraps}{The number of bootstrap iterations. If 0 or 1, no bootstrapping will be carried out.}
+
+\item{max_attempts}{The maximum number of attempts for each bootstrap iteration;
+the bootstrap can fail at the detection-function fitting stage if the \code{mrds} df model fails to converge.
+This input sets the maximum number of tries before skipping the iteration and moving on, which means that,
+if \code{max_attempts} is reached for any iteration the total number of successful iterations in the final result may be less than the \code{bootstraps} input value.}
 
 \item{results_file}{If not \code{NULL}, this input will be taken as the name of the file
 in which to save the results as this function works. This can be a handy way of saving

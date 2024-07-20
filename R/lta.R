@@ -211,6 +211,11 @@
 
 #' @param bootstraps The number of bootstrap iterations. If 0 or 1, no bootstrapping will be carried out.
 #'
+#' @param max_attempts The maximum number of attempts for each bootstrap iteration;
+#' the bootstrap can fail at the detection-function fitting stage if the `mrds` df model fails to converge.
+#' This input sets the maximum number of tries before skipping the iteration and moving on, which means that,
+#' if `max_attempts` is reached for any iteration the total number of successful iterations in the final result may be less than the `bootstraps` input value.
+#'
 #' @param toplot Boolean, with default `TRUE`, indicating whether detection function plots (`Distance::plot.ds()`)
 #' should be displayed as the candidate models are tested.
 #'
@@ -412,6 +417,7 @@ lta <- function(cruz,
                 abund_eff_types = c('S'),
                 abund_bft_range = 0:6,
                 bootstraps = 0,
+                max_attempts = 5,
                 results_file = NULL,
                 toplot=TRUE,
                 verbose=TRUE){
@@ -989,11 +995,11 @@ lta <- function(cruz,
     iter <- 10 # for debugging
     for(iter in 1:niter){
 
-      # If an attempt fails, the boostrap routine will press on.
+      # If an attempt fails, the bootstrap routine will press on.
       # This means that the function may return fewer than niter boostraps.
       try_counter <- 0
       try_status <- NULL
-      while(try_counter < 1 && is.null(try_status)){
+      while(try_counter < max_attempts && is.null(try_status)){
         try({
 
           if(niter > 1 & verbose){
@@ -1339,7 +1345,9 @@ lta <- function(cruz,
         }) # end of try
         try_counter <- try_counter + 1
       } # end of while loop
-      if(is.null(try_status)){stop(try_counter,' failed attempts to complete the analysis for this iteration! Stopped trying!')}
+      # we used to throw an error if a bootstrap iteration attempt failed; now we are just moving on, allowing there to be fewer than B iterations in the final result.
+      #if(is.null(try_status)){stop(try_counter,' failed attempts to complete the analysis for this iteration! Stopped trying!')}
+      if(is.null(try_status)){message('\n********* ', try_counter,' failed attempts to complete the analysis for this iteration! Skipping this bootstrap iteration and moving on! *********\n')}
     } # end of iter-th bootstrapping loop
   } # end of estimate/bootstrap loop
 
