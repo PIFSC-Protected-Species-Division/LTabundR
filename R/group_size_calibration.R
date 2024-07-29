@@ -202,6 +202,7 @@ group_size_calibration <- function(obs,
     } # end if !data_ok | !status_ok
   }else{
     # calibr is FALSE
+    status_ok <- FALSE # full calibration not possible
     new_gs <- best_raw
   } # end if calibr
 

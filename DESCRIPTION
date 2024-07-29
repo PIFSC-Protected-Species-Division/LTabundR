@@ -1,6 +1,6 @@
 Package: LTabundR
 Title: Development Version 
-Version: 1.33
+Version: 1.34
 Authors@R: 
     person("Eric", "Keen", , "eric.keen@noaa.gov", role = c("aut", "cre"))
     person("Amanda", "Bradford", , "amanda.bradford@noaa.gov", role = c("aut", "cre"))
@@ -22,6 +22,7 @@ Imports:
     leaflet,
     lubridate,
     lutz,
+    lwgeom,
     magrittr,
     mgcv,
     miceadds,
@@ -55,4 +56,4 @@ Imports:
 Depends: 
     R (>= 2.10)
 LazyData: true
-LazyDataCompression:xz
+LazyDataCompression: xz

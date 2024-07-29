@@ -30,21 +30,29 @@
 #' the Great Circle distance between rows to be calculated. Intervals less than this number
 #' will be assigned a distance of 0 km.
 #'
-#' @param max_row_interval The maximum alloweable time interval, in seconds, between rows before
-#' the function assumes that there has been a break in survey data logging.
+#' @param max_row_interval The maximum allowable time interval, in seconds,
+#' between rows before `LTabundR` assumes that there has been a break in survey data logging.
+#' The default of 3600 seconds (6 hours) was chosen because there is usually at least 6 hours
+#' of nighttime darkness between the end of effort on one day and the start of effort on the next.
 #'
-#' @param max_row_km The maximum alloweable distance interval, in km, between rows before
-#' the function assumes that there has been a break in survey data logging.
+#' @param max_row_km The maximum allowable distance interval, in km,
+#' between rows before the function assumes that there has been a break in survey data logging.
+#' The default was chosen arbitrarily to find a value that replicates the
+#' processing results from `ABUND`.
 #'
 #' @param speed_filler When speed is not available in the data, this value (in kph)
 #' will be used as a filler in order to estimate the
 #' distance between consecutive rows of data based on timestamp differences
 #' (when lat/long coordinates are not available).
+#' The default was chosen arbitrarily to find a value that replicates
+#' the processing results from `ABUND`.
 #'
 #' @param km_filler When valid speed and position information is not available
 #' (e.g., the given distance exceeds `max_km_gap`),
 #' this value (in km) will be used as an estimate of the
 #' distance in between consecutive rows of data.
+#' The default was chosen arbitrarily to find a value that replicates the
+#' processing results from `ABUND`.
 #'
 #' @param segment_method The two method options are `"day"` --
 #' all effort within the same Cruise-StudyArea-Stratum-Year-Effort scenario (i.e., an effort bloc)
@@ -112,7 +120,7 @@
 #' group of animals will be "smeared" by adding a uniformly distributed random number between -5 and +5 degrees.
 #' This has not been used in any recent analyses because observers have not been rounding angles as much as they used to,
 #' according to the release notes for `ABUND9`.
-#' It was suggested by Buckland as a method for dealing with rounding which is
+#' It was suggested by Buckland as a method for dealing with rounding, which is
 #' especially influential when rounding to zero places many sightings at zero perpendicular distance.
 #'
 #' @return A list with named slots, equivalent to your input arguments.

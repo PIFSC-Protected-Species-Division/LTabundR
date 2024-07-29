@@ -311,7 +311,7 @@ process_sightings <- function(cruz,
         (io <- unique(as.character(siti_s$ObsInd))[1]) # who is the IO in this sighting?
         (obs_i <- unique(siti_s$Obs)[1]) # who observed the sighting?
         (sit_by_io <- !is.na(io) && io == obs_i) # was the sighting from the IO?
-        if(all(sit_by_io, io_sightings == '_1')){io_good <- TRUE} # _1 = include IO sightings with all others
+        if(all(sit_by_io, io_sightings == '-1')){io_good <- TRUE} # -1 = include IO sightings with all others
         if(all(!sit_by_io,  io_sightings == '0')){io_good <- TRUE} # 0 = ignore IO sightings
         if(all(sit_by_io,  io_sightings == '0')){io_good <- FALSE} # 0 = ignore IO sightings
         if(all(sit_by_io,  io_sightings == '2')){io_good <- TRUE} # 2 = include only sighting made by IO

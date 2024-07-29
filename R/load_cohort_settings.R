@@ -66,7 +66,7 @@
 #'
 #' @param io_sightings A coded integer which specifies how sightings by the independent observer will be handled.
 #' Allowable codes, which are inherited from those used in `ABUND7/9`, are
-#' `"_1"`=include independent observer sightings wih all other sightings,
+#' `"-1"`=include independent observer sightings with all other sightings,
 #' `"0"`=ignore sightings by independent observer,
 #' `"1"`=use only sightings made by regular observer team WHEN an independent observer was present,
 #' `"2"`=include only sightings made by the independent observer.
