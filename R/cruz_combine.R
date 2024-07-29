@@ -55,14 +55,17 @@ cruz_combine <- function(cruzes){
       # Create unique identifiers for each row of data in each list within the cohort
       cohorti$das$datum_id <- paste(names(cruzi$cohorts)[[ci]],
                                     cohorti$das$Cruise,
+                                    cohorti$das$stratum,
                                     lubridate::date(cohorti$das$DateTime),
                                     sep='-')
       cohorti$segments$datum_id <- paste(names(cruzi$cohorts)[[ci]],
                                          cohorti$segments$Cruise,
+                                         cohorti$segments$stratum,
                                          lubridate::date(cohorti$segments$DateTime1),
                                          sep='-')
       cohorti$sightings$datum_id <- paste(names(cruzi$cohorts)[[ci]],
                                           cohorti$sightings$Cruise,
+                                          cohorti$sightings$stratum,
                                           lubridate::date(cohorti$sightings$DateTime),
                                           sep='-')
 
@@ -72,18 +75,25 @@ cruz_combine <- function(cruzes){
         if(!is.null(cohorti$subgroups$events)){
           cohorti$subgroups$events$datum_id <- paste(names(cruzi$cohorts)[[ci]],
                                                      cohorti$subgroups$events$Cruise,
+                                                     cohorti$subgroups$events$stratum,
+                                                     cohorti$subgroups$events$sgid,
                                                      lubridate::date(cohorti$subgroups$events$DateTime),
                                                      sep='-')
         }
         if(!is.null(cohorti$subgroups$sightings)){
           cohorti$subgroups$sightings$datum_id <- paste(names(cruzi$cohorts)[[ci]],
                                                         cohorti$subgroups$sightings$Cruise,
+                                                        cohorti$subgroups$sightings$stratum,
+                                                        cohorti$subgroups$sightings$SightNo,
+                                                        cohorti$subgroups$sightings$Phase,
                                                         lubridate::date(cohorti$subgroups$sightings$DateTime),
                                                         sep='-')
         }
         if(!is.null(cohorti$subgroups$subgroups)){
           cohorti$subgroups$subgroups$datum_id <- paste(names(cruzi$cohorts)[[ci]],
                                                         cohorti$subgroups$subgroups$Cruise,
+                                                        cohorti$subgroups$subgroups$stratum,
+                                                        cohorti$subgroups$subgroups$sgid,
                                                         lubridate::date(cohorti$subgroups$subgroups$DateTime),
                                                         sep='-')
         }
@@ -214,9 +224,9 @@ cruz_combine <- function(cruzes){
           }
 
           if('subgroups' %in% names(cohorti)){
-            if(all(!is.null(cohorti$subgroups),
-                   !is.null(cohorti$sightings),
-                   !is.null(cohorti$events))){
+            if(all(!is.null(cohorti$subgroups$subgroups),
+                   !is.null(cohorti$subgroups$sightings),
+                   !is.null(cohorti$subgroups$events))){
 
               if(! 'subgroups' %in% names(cruz$cohorts[[master_index]])){
                 # the master cohort does not have subgroups yet. Just add it.
