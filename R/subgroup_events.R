@@ -126,7 +126,7 @@ subgroup_events <- function(das,
     # Filter to species?
     nrow(mr)
     if(!is.null(species_filter)){
-      mr <- mr %>% dplyr::filter(gsub(' ','',Species) == species_filter)
+      mr <- mr %>% dplyr::filter(gsub(' ','',Species) %in% species_filter)
     }
     nrow(mr)
 
