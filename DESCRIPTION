@@ -1,6 +1,6 @@
 Package: LTabundR
 Title: Development Version 
-Version: 1.35
+Version: 1.36
 Authors@R: 
     person("Eric", "Keen", , "eric.keen@noaa.gov", role = c("aut", "cre"))
     person("Amanda", "Bradford", , "amanda.bradford@noaa.gov", role = c("aut", "cre"))

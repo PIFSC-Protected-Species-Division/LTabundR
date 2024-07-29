@@ -103,14 +103,15 @@ filter_cruz <- function(cruz,
 
     # Try it
     newcruz <- filter_cruz(cruz,
-                            analysis_only = TRUE,
-                            years = 2020,
-                            regions = 'WHICEAS',
-                            not_regions = 'SD_BI',
-                            bft_range = 0:6,
-                            eff_types = c('S'),
-                            lat_range = c(18, 22),
-                            lon_range = c(-160, -154))
+                            #analysis_only = TRUE,
+                            #years = 2020,
+                            regions = 'MHI',
+                            #not_regions = 'SD_BI',
+                            #bft_range = 0:6,
+                            #eff_types = c('S'),
+                            #lat_range = c(18, 22),
+                            #lon_range = c(-160, -154)
+                           )
     newcruz$cohorts$most$das$Lat %>% range
     newcruz$cohorts$most$das$Lon %>% range
   } # end debugging area =======================================================
@@ -223,16 +224,24 @@ filter_cruz <- function(cruz,
       sits <- sightings
       segs <- segments
       dasi <- das
-      (seg_ids <- region_segments(das, regions))
+      #(seg_ids <- region_segments(das, regions))
+      (das_lines <- region_das(das, regions))
 
       # Filter segments and sightings to those seg_ids
-      segi <- segs %>% dplyr::filter(seg_id %in% seg_ids)
-      siti <- sits %>% dplyr::filter(seg_id %in% seg_ids)
-      dasi <- dasi %>% dplyr::filter(seg_id %in% seg_ids)
+      (line_segs <- das %>% filter(line_num %in% das_lines) %>% pull(seg_id) %>% unique)
+      segi <- segs %>% dplyr::filter(seg_id %in% line_segs)
+      siti <- sits %>% dplyr::filter(line_num %in% das_lines)
+      dasi <- dasi %>% dplyr::filter(line_num %in% das_lines)
+      #segi <- segs %>% dplyr::filter(seg_id %in% seg_ids)
+      #siti <- sits %>% dplyr::filter(seg_id %in% seg_ids)
+      #dasi <- dasi %>% dplyr::filter(seg_id %in% seg_ids)
       if(!is.null(sg_sightings)){
-        sg_sightings <- sg_sightings %>% dplyr::filter(seg_id %in% seg_ids)
-        sg_subgroups <- sg_subgroups %>% dplyr::filter(seg_id %in% seg_ids)
-        sg_events <- sg_events %>% dplyr::filter(seg_id %in% seg_ids)
+        sg_sightings <- sg_sightings %>% dplyr::filter(seg_id %in% line_segs)
+        sg_subgroups <- sg_subgroups %>% dplyr::filter(seg_id %in% line_segs)
+        sg_events <- sg_events %>% dplyr::filter(seg_id %in% line_segs)
+        #sg_sightings <- sg_sightings %>% dplyr::filter(seg_id %in% seg_ids)
+        #sg_subgroups <- sg_subgroups %>% dplyr::filter(seg_id %in% seg_ids)
+        #sg_events <- sg_events %>% dplyr::filter(seg_id %in% seg_ids)
       }
 
       sightings <- siti
@@ -245,16 +254,24 @@ filter_cruz <- function(cruz,
       sits <- sightings
       segs <- segments
       dasi <- das
-      (seg_ids <- region_segments(das, not_regions))
+      #(seg_ids <- region_segments(das, not_regions))
+      (das_lines <- region_das(das, regions))
 
       # Filter segments and sightings to **NOT** those seg_ids
-      segi <- segs %>% dplyr::filter(! seg_id %in% seg_ids)
-      siti <- sits %>% dplyr::filter(! seg_id %in% seg_ids)
-      dasi <- dasi %>% dplyr::filter(! seg_id %in% seg_ids)
+      (line_segs <- das %>% filter(line_num %in% das_lines) %>% pull(seg_id) %>% unique)
+      segi <- segs %>% dplyr::filter(! line_num %in% das_lines)
+      siti <- sits %>% dplyr::filter(! line_num %in% das_lines)
+      dasi <- dasi %>% dplyr::filter(! line_num %in% das_lines)
+      #segi <- segs %>% dplyr::filter(! seg_id %in% seg_ids)
+      #siti <- sits %>% dplyr::filter(! seg_id %in% seg_ids)
+      #dasi <- dasi %>% dplyr::filter(! seg_id %in% seg_ids)
       if(!is.null(sg_sightings)){
-        sg_sightings <- sg_sightings %>% dplyr::filter(! seg_id %in% seg_ids)
-        sg_subgroups <- sg_subgroups %>% dplyr::filter(! seg_id %in% seg_ids)
-        sg_events <- sg_events %>% dplyr::filter(! seg_id %in% seg_ids)
+        sg_sightings <- sg_sightings %>% dplyr::filter(! seg_id %in% line_segs)
+        sg_subgroups <- sg_subgroups %>% dplyr::filter(! seg_id %in% line_segs)
+        sg_events <- sg_events %>% dplyr::filter(! seg_id %in% line_segs)
+        #sg_sightings <- sg_sightings %>% dplyr::filter(! seg_id %in% seg_ids)
+        #sg_subgroups <- sg_subgroups %>% dplyr::filter(! seg_id %in% seg_ids)
+        #sg_events <- sg_events %>% dplyr::filter(! seg_id %in% seg_ids)
       }
 
       sightings <- siti

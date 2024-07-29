@@ -49,18 +49,20 @@ summarize_effort <- function(cruz,
   length(eff)
   nrow(eff)
   head(eff)
+  eff %>% data.frame %>% head
+  #cbind(eff$yday1, eff$yday2)
 
   suppressWarnings({
     suppressMessages({
 
-      # Grup effory by Cruise, year, stratum, and analysis use/not use
+      # Group effort by Cruise, year, stratum, and analysis use/not use
       eff_stratum <-
         eff %>%
         dplyr::group_by(Cruise, year, stratum, use) %>%
         dplyr::summarize(km = round(sum(dist, na.rm=TRUE)),
                          days = length(unique(c(yday1, yday2))))
 
-      # Group by Cruise, year use/not usre
+      # Group by Cruise, year use/not use
       eff_eff <-
         eff %>%
         dplyr::group_by(Cruise, year, use) %>%
