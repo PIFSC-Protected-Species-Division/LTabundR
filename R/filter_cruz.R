@@ -105,8 +105,9 @@ filter_cruz <- function(cruz,
     newcruz <- filter_cruz(cruz,
                             #analysis_only = TRUE,
                             #years = 2020,
-                            regions = 'MHI',
-                            #not_regions = 'SD_BI',
+                            #regions = 'MHI',
+                            not_regions = 'MHI',
+                           #not_regions = 'SD_BI',
                             #bft_range = 0:6,
                             #eff_types = c('S'),
                             #lat_range = c(18, 22),
@@ -225,10 +226,10 @@ filter_cruz <- function(cruz,
       segs <- segments
       dasi <- das
       #(seg_ids <- region_segments(das, regions))
-      (das_lines <- region_das(das, regions))
+      (das_lines <- region_das(dasi, regions))
 
       # Filter segments and sightings to those seg_ids
-      (line_segs <- das %>% filter(line_num %in% das_lines) %>% pull(seg_id) %>% unique)
+      (line_segs <- dasi %>% filter(line_num %in% das_lines) %>% pull(seg_id) %>% unique)
       segi <- segs %>% dplyr::filter(seg_id %in% line_segs)
       siti <- sits %>% dplyr::filter(line_num %in% das_lines)
       dasi <- dasi %>% dplyr::filter(line_num %in% das_lines)
@@ -255,10 +256,10 @@ filter_cruz <- function(cruz,
       segs <- segments
       dasi <- das
       #(seg_ids <- region_segments(das, not_regions))
-      (das_lines <- region_das(das, regions))
+      (das_lines <- region_das(dasi, not_regions))
 
       # Filter segments and sightings to **NOT** those seg_ids
-      (line_segs <- das %>% filter(line_num %in% das_lines) %>% pull(seg_id) %>% unique)
+      (line_segs <- dasi %>% filter(line_num %in% das_lines) %>% pull(seg_id) %>% unique)
       segi <- segs %>% dplyr::filter(! seg_id %in% line_segs)
       siti <- sits %>% dplyr::filter(! line_num %in% das_lines)
       dasi <- dasi %>% dplyr::filter(! line_num %in% das_lines)
