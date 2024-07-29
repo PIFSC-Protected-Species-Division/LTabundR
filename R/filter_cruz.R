@@ -259,7 +259,7 @@ filter_cruz <- function(cruz,
 
       # Filter segments and sightings to **NOT** those seg_ids
       (line_segs <- das %>% filter(line_num %in% das_lines) %>% pull(seg_id) %>% unique)
-      segi <- segs %>% dplyr::filter(! line_num %in% das_lines)
+      segi <- segs %>% dplyr::filter(! seg_id %in% line_segs)
       siti <- sits %>% dplyr::filter(! line_num %in% das_lines)
       dasi <- dasi %>% dplyr::filter(! line_num %in% das_lines)
       #segi <- segs %>% dplyr::filter(! seg_id %in% seg_ids)
