@@ -45,52 +45,103 @@ summarize_effort <- function(cruz,
   survey <- cohorti
   cohort_settings <- cruz$settings$cohorts[[cohort]]
   names(survey)
-  eff <- survey$segments
-  length(eff)
-  nrow(eff)
-  head(eff)
-  eff %>% data.frame %>% head
-  #cbind(eff$yday1, eff$yday2)
+  das <-
+    survey$das %>%
+    dplyr::filter(km_valid == TRUE) %>%
+    dplyr::mutate(base_date = lubridate::date(DateTime)) %>%
+    dplyr::mutate(dcs = paste(Cruise, ship, base_date, sep='_'))
+
+  das %>% names
+
 
   suppressWarnings({
     suppressMessages({
 
-      # Group effort by Cruise, year, stratum, and analysis use/not use
-      eff_stratum <-
-        eff %>%
-        dplyr::group_by(Cruise, year, stratum, use) %>%
-        dplyr::summarize(km = round(sum(dist, na.rm=TRUE)),
-                         days = length(unique(c(yday1, yday2))))
-
-      # Group by Cruise, year use/not use
-      eff_eff <-
-        eff %>%
-        dplyr::group_by(Cruise, year, use) %>%
-        dplyr::summarize(km = round(sum(dist, na.rm=TRUE)),
-                         days = length(unique(c(yday1, yday2))))
-
-      # Group by Cruise and year
-      eff_cruise <-
-        eff %>%
-        dplyr::group_by(Cruise, year) %>%
-        dplyr::summarize(km = round(sum(dist, na.rm=TRUE)),
-                         days = length(unique(c(yday1, yday2))))
-
-      # Group by year
-      eff_year <-
-        eff %>%
-        dplyr::group_by(year) %>%
-        dplyr::summarize(km = round(sum(dist, na.rm=TRUE)),
-                         days = length(unique(c(yday1, yday2))))
-
       # Total effort
-      eff_tot <-
-        eff %>%
-        dplyr::summarize(km = round(sum(dist, na.rm=TRUE)),
-                         days = length(unique(c(yday1, yday2))))
+      (eff_tot <-
+        das %>%
+        dplyr::summarize(km = round(sum(km_int, na.rm=TRUE)),
+                         days = length(unique(base_date)),
+                         cruise_days = length(unique(dcs))))
 
+      # Group effort by Cruise, year, stratum, and analysis use/not use
+      (eff_stratum <-
+         das %>%
+          dplyr::group_by(Cruise, year, stratum, use) %>%
+          dplyr::summarize(km = round(sum(km_int, na.rm=TRUE)),
+                           days = length(unique(base_date))))
+
+       # Group by Cruise, year use/not use
+       (eff_eff <-
+         das %>%
+         dplyr::group_by(Cruise, year, use) %>%
+         dplyr::summarize(km = round(sum(km_int, na.rm=TRUE)),
+                          days = length(unique(base_date))))
+
+       # Group by Cruise and year
+       (eff_cruise <-
+         das %>%
+         dplyr::group_by(Cruise, year) %>%
+           dplyr::summarize(km = round(sum(km_int, na.rm=TRUE)),
+                            days = length(unique(base_date))))
+       # Group by year
+       (eff_year <-
+         das %>%
+         dplyr::group_by(year) %>%
+           dplyr::summarize(km = round(sum(km_int, na.rm=TRUE)),
+                            days = length(unique(base_date)),
+                            cruise_days = length(unique(dcs))))
     })
   })
+
+  #
+    # old way was to use segments
+    #eff <- survey$segments
+    #length(eff)
+    #nrow(eff)
+    #head(eff)
+    #eff %>% data.frame %>% head
+    #cbind(eff$yday1, eff$yday2)
+
+  # suppressWarnings({
+  #   suppressMessages({
+  #
+  #     # Group effort by Cruise, year, stratum, and analysis use/not use
+  #     (eff_stratum <-
+  #       eff %>%
+  #       dplyr::group_by(Cruise, year, stratum, use) %>%
+  #       dplyr::summarize(km = round(sum(dist, na.rm=TRUE)),
+  #                        days = length(unique(c(yday1, yday2))))
+  #
+  #     # Group by Cruise, year use/not use
+  #     eff_eff <-
+  #       eff %>%
+  #       dplyr::group_by(Cruise, year, use) %>%
+  #       dplyr::summarize(km = round(sum(dist, na.rm=TRUE)),
+  #                        days = length(unique(c(yday1, yday2))))
+  #
+  #     # Group by Cruise and year
+  #     eff_cruise <-
+  #       eff %>%
+  #       dplyr::group_by(Cruise, year) %>%
+  #       dplyr::summarize(km = round(sum(dist, na.rm=TRUE)),
+  #                        days = length(unique(c(yday1, yday2))))
+  #
+  #     # Group by year
+  #     eff_year <-
+  #       eff %>%
+  #       dplyr::group_by(year) %>%
+  #       dplyr::summarize(km = round(sum(dist, na.rm=TRUE)),
+  #                        days = length(unique(c(yday1, yday2))))
+  #
+  #     # Total effort
+  #     eff_tot <-
+  #       eff %>%
+  #       dplyr::summarize(km = round(sum(dist, na.rm=TRUE)),
+  #                        days = length(unique(c(yday1, yday2))))
+  #
+  #   })
+  # })
 
   # Prepare return
   return_list <- list(total = eff_tot,
