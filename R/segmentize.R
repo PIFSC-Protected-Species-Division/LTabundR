@@ -167,7 +167,7 @@ segmentize <- function(cruz,
 
     cruz_demo$cohorts$all$segments %>%
       arrange(dist) %>%
-      tail(1) %>%
+      tail(3) %>%
       as.data.frame
 
     cruz_demo$cohorts$all$das %>%
@@ -327,6 +327,9 @@ segmentize <- function(cruz,
       group_by(Cruise) %>%
       arrange(DateTime) %>%
       mutate(next_dt = lead(DateTime)) %>%
+      mutate(next_lat = lead(Lat)) %>%
+      mutate(next_lon = lead(Lon)) %>%
+      mutate(next_cruise = lead(Cruise)) %>%
       mutate(int_time_og = as.numeric(next_dt) - as.numeric(DateTime)) %>%
       ungroup() %>%
       # Make sure that no int_time_og exceeds the max_row_interval
@@ -753,6 +756,12 @@ segmentize <- function(cruz,
       mutate(use = ifelse(tot_seg_km == 0, FALSE, use)) %>%
       mutate(seg_id = ifelse(tot_seg_km == 0, NA, seg_id)) %>%
       mutate(use = tidyr::replace_na(use, FALSE)) %>%
+      mutate(next_lat = ifelse(lubridate::as_date(DateTime) == lubridate::as_date(next_dt) &
+                               Cruise == next_cruise,
+                               next_lat, NA)) %>%
+      mutate(next_lon = ifelse(lubridate::as_date(DateTime) == lubridate::as_date(next_dt) &
+                                 Cruise == next_cruise,
+                               next_lon, NA)) %>%
       arrange(temp_i) %>%
       select(- temp_i)
     segs %>% head
@@ -975,15 +984,15 @@ segmentize <- function(cruz,
                 timestamp1 = as.numeric(DateTime[1]),
                 yday1 = yday[1],
                 # Ending point
-                lat2 = Lat[n()],
-                lon2 = Lon[n()],
+                lat2 = ifelse(n()>2, Lat[n()], next_lat),
+                lon2 = ifelse(n()>2, Lon[n()], next_lon),
                 DateTime2 = DateTime[n()] + min(c(segment_max_interval, int_time_og[n()])),
                 timestamp2 = as.numeric(DateTime2),
                 yday2 = lubridate::yday(DateTime2),
-                mlat = Lat[mean(1:n())],
-                mlon = Lon[mean(1:n())],
-                mDateTime = DateTime[mean(1:n())],
-                mtimestamp = as.numeric(DateTime[mean(1:n())]),
+                mlat = ifelse(n()>2, Lat[mean(1:n())], mean(c(lat1, lat2), na.rm=TRUE)),
+                mlon = ifelse(n()>2, Lon[mean(1:n())], mean(c(lon1, lon2), na.rm=TRUE)),
+                mDateTime = ifelse(n()>2, DateTime[mean(1:n())], mean(c(DateTime1, DateTime2), na.rm=TRUE)),
+                mtimestamp = as.numeric(mDateTime),
                 avgBft = stats::weighted.mean(Bft, km_int, na.rm=TRUE),
                 avgSwellHght = stats::weighted.mean(SwellHght, km_int, na.rm=TRUE),
                 avgHorizSun = stats::weighted.mean(HorizSun, km_int, na.rm=TRUE),
