@@ -241,7 +241,8 @@ segmentize <- function(cruz,
     # If a list, this means the input was a fully processed cruz object.
     # in which case, revert to the pre-segmentized state
     if('list' %in% class(dass)){
-      dass <- dass$das %>% select(-use, -eff_bloc, -seg_id, -datum_id)
+      dass <- dass$das %>% select(-use, -eff_bloc, -seg_id)
+      if('datum_id' %in% names(dass)){dass <- dass %>% select(-datum_id)}
       dass %>% names
     }
     dass %>% head
@@ -411,19 +412,8 @@ segmentize <- function(cruz,
       arrange(DateTime) %>%
       mutate(last_time = lag(this_time)) %>%
       mutate(int_time = this_time - last_time) %>%
-
-      # commenting out the next line and trying it differently below to
       # accommodate rare instances in which the first row's KM is problematic
       mutate(int_flag = ifelse(int_time >= segment_max_interval, 1, 0)) %>%
-
-      # trying next stuff here
-      #mutate(int_flag = ifelse(int_time >= segment_max_interval |
-      #                           all(c(segment_method == 'equallength',
-      #                                 km_int[1] >= segment_target_km)),
-      #                         1,
-      #                         0)) %>%
-      # end of new stuff
-
       mutate(int_flag = ifelse(is.na(int_flag), 0, int_flag)) %>%
       # where big time gaps exist, make new eff bloc by adding a suffix to bloc number
       mutate(new_bloc = paste0(eff_bloc[1], '-', cumsum(int_flag))) %>%
@@ -496,9 +486,19 @@ segmentize <- function(cruz,
         message('--- --- Determining the remainder for each bloc...')
       }
 
+      # Check to see if any single row exceeds the target_km
+      blocs3 <- blocs2
+      blocs3$ex_flag <- 0
+      blocs3$ex_flag[blocs3$km_int >= segment_target_km] <- 1
+
       blocs3 <-
-        blocs2 %>%
-        # For each bloc...
+        blocs3 %>%
+        # where km exceedances exist, make new eff bloc by adding a suffix to bloc number
+        group_by(new_bloc) %>%
+        mutate(new_bloc = paste0(new_bloc[1], '-', cumsum(ex_flag))) %>%
+        ungroup() %>%
+
+        # Now go through each bloc...
         group_by(new_bloc) %>%
         # Based on target_km, get n_segments & remainder
         mutate(n_seg_raw = tot_bloc_km / target_km) %>%
@@ -508,6 +508,10 @@ segmentize <- function(cruz,
                                  segment_remainder_handling[1],
                                  segment_remainder_handling[2])) %>%
         ungroup()
+
+        blocs3$ex_flag %>% table
+        blocs2$new_bloc %>% unique %>% length
+        blocs3$new_bloc %>% unique %>% length
 
       #=======================================================================
       # Segmentize by one of the remainder handling methods
