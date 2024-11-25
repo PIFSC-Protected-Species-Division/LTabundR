@@ -1039,8 +1039,9 @@ segmentize <- function(cruz,
 
     # Add back out events
     if(length(outs)>0){
-      dass_out$seg_id <- NA # add these columns
       dass_out$use <- FALSE
+      dass_out$eff_bloc <- 'OUT'
+      dass_out$seg_id <- NA # add these columns
       dass_out$km_int[dass_out$km_int > 30] <- 0
       cohort_list$das <- rbind(cohort_list$das, dass_out)
     }
