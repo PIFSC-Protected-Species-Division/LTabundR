@@ -186,6 +186,10 @@ summarize_bft(cruz, use_only = FALSE)$overall
 
 cruz$cohorts$all$das %>% filter(Bft > 6) %>% group_by(use, Bft) %>% tally()
 
+# Check group sizes
+which(cruz$cohorts$all$sightings$high < cruz$cohorts$all$sightings$best)
+cruz$cohorts$all$sightings %>% select(DateTime, species, low, best, high) %>% head(10)
+
 # Rename
 cnp_150km_1986_2020 <- cruz
 

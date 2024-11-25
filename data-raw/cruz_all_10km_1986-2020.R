@@ -28,7 +28,7 @@ survey <- load_survey_settings(
   out_handling = 'stratum',
   min_row_interval = 2,
   max_row_interval = 3600,
-  max_row_km = 100,
+  max_row_km = 10, # was 100
   km_filler = 1,
   speed_filler = 10 * 1.852,
   segment_method = "equallength",
@@ -90,8 +90,8 @@ if(exists('pifsc')){rm(pifsc)}
 das_file = c("/Users/ekezell/Desktop/projects/noaa ltabundr/swfsc_1986_2020.das")
 swfsc <- process_surveys(das_file,
                          settings = settings,
-                         process_sightings = TRUE,
-                         process_subgroups = TRUE,
+                         process_sightings = FALSE,
+                         process_subgroups = FALSE,
                          save_local = FALSE) # change to TRUE if you want to save result as RData file
 #cruz_explorer(swfsc)
 
@@ -101,10 +101,13 @@ data(cnp_1986_2020_edits)
 pifsc <- process_surveys(das_file,
                          settings = settings,
                          edits = cnp_1986_2020_edits,
-                         process_sightings = TRUE,
-                         process_subgroups = TRUE,
+                         process_sightings = FALSE,
+                         process_subgroups = FALSE,
                          save_local = FALSE) # change to TRUE if you want to save result as RData file
 #cruz_explorer(pifsc)
+
+# check segment lengths
+
 
 # But there is some overlap/redundancy in these datasets.
 # cruz_combine will check for redundancies and remove them.

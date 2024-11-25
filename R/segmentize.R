@@ -133,12 +133,6 @@ segmentize <- function(cruz,
     # segment_max_interval <- .5
     # segment_target_km <- 10
 
-    segment_method = 'equallength'
-    segment_target_km = 20
-    segment_max_interval = 6
-    segment_remainder_handling = 'segment'
-
-
     # try it
     #cruz$settings$cohorts[[1]]$beaufort_range <- 0:4
     cruz_demo <- segmentize(cruz, segment_method = 'day', segment_max_interval = 2, verbose=TRUE, debug_mode=TRUE)
@@ -183,6 +177,16 @@ segmentize <- function(cruz,
                             segment_remainder_handling = c('append','segment'), verbose=TRUE, debug_mode=TRUE)
     cruz_demo <- segmentize(cruz, segment_method = 'equallength', segment_target_km = 20,
                             segment_remainder_handling = c('disperse','segment'), verbose=TRUE, debug_mode=TRUE)
+
+    cruz_demo <- segmentize(cruz, segment_method = 'equallength',
+                            segment_target_km = 10,
+                            segment_remainder_handling = 'disperse',
+                            segment_max_interval = 1,
+                            verbose=TRUE, debug_mode=TRUE)
+    segment_method = 'equallength'
+    segment_target_km = 10
+    segment_max_interval = 1
+    segment_remainder_handling = 'segment'
 
   } # end debugging
   #=============================================================================
@@ -282,7 +286,7 @@ segmentize <- function(cruz,
     if(length(outs)>0){
       dass_out <- dass[outs,] # keep to add back later
       dass <- dass[-outs,]
-      if(debug){
+      if(debug_mode){
         message('\n', length(outs),' DAS rows fell outside of a stratum. They will not be segmentized.\n')
       }
     }
@@ -407,7 +411,19 @@ segmentize <- function(cruz,
       arrange(DateTime) %>%
       mutate(last_time = lag(this_time)) %>%
       mutate(int_time = this_time - last_time) %>%
+
+      # commenting out the next line and trying it differently below to
+      # accommodate rare instances in which the first row's KM is problematic
       mutate(int_flag = ifelse(int_time >= segment_max_interval, 1, 0)) %>%
+
+      # trying next stuff here
+      #mutate(int_flag = ifelse(int_time >= segment_max_interval |
+      #                           all(c(segment_method == 'equallength',
+      #                                 km_int[1] >= segment_target_km)),
+      #                         1,
+      #                         0)) %>%
+      # end of new stuff
+
       mutate(int_flag = ifelse(is.na(int_flag), 0, int_flag)) %>%
       # where big time gaps exist, make new eff bloc by adding a suffix to bloc number
       mutate(new_bloc = paste0(eff_bloc[1], '-', cumsum(int_flag))) %>%
@@ -707,6 +723,7 @@ segmentize <- function(cruz,
       message('--- --- unique segments created = ', segids %>% unique %>% length)
       message('--- --- mean length = ', segs$tot_seg_km %>% mean(na.rm=TRUE) %>% round(2),' km')
       message('--- --- median length = ', segs$tot_seg_km %>% median(na.rm=TRUE) %>% round(2),' km')
+      message('--- --- max length = ', segs$tot_seg_km %>% max(na.rm=TRUE) %>% round(2),' km')
     }
 
     # Diagnostic tests
@@ -840,6 +857,21 @@ segmentize <- function(cruz,
           message('    Look into `line_num` ',paste(ids, collapse=' '))
         }
       }
+
+      # Look into stray 42
+      (maxkm <- segs$tot_seg_km %>% max(na.rm=TRUE))
+      segs %>% filter(tot_seg_km == maxkm) %>% select(1:7, 62:65) %>% as.data.frame
+
+      segs %>%
+        group_by(seg_id) %>%
+        summarize(km_int_1 = km_int[1]) %>%
+        pull(km_int_1) %>%
+        hist
+
+      21.12383 -159.6328
+      21.20817 -159.9768
+      swfscMisc::distance(lat1 = 21.12383 , lon1 = -159.6328, lat2 = 21.20817 , lon2 = -159.9768, units='km')
+
     }
 
 
@@ -1033,7 +1065,6 @@ segmentize <- function(cruz,
     segs %>% filter(seg_id == 151)
 
   }
-
 
   # review
   cohorts_new %>% names

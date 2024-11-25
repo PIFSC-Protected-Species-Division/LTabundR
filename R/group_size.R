@@ -126,7 +126,7 @@ group_size <- function(grp,
   ##############################################################################
 
   # review input
-  grp
+  grp %>% as.data.frame
 
   # Stage results
   (sp_mixed <- grp$Mixed %>% unique) # is this a mixed species sighting?
@@ -180,6 +180,16 @@ group_size <- function(grp,
                                    ghigh = highi,
                                    gs_coefficients = gs_coefficients,
                                    calibrate_floor = calibrate_floor)
+    # for debugging
+    if(FALSE){
+      obs = obsi
+      bft = bft
+      yr = yr
+      gbest = besti
+      glow = lowi
+      ghigh = highi
+    }
+
     grpi # review
 
     if(all(c(debug_mode,

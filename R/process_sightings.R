@@ -38,8 +38,9 @@ process_sightings <- function(cruz,
   if(FALSE){
     data(example_settings)
     settings <- example_settings
+    das_file = c("/Users/ekezell/Desktop/projects/noaa ltabundr/swfsc_1986_2020.das")
     #das_file <- '../test_code/eric/cnp/CenPac1986-2020_Final_alb.das'
-    das_file <- 'data-raw/data/HICEASwinter2020.das'
+    #das_file <- 'data-raw/data/HICEASwinter2020.das'
     das <- das_load(das_file)
     cruz <- process_strata(das, settings)
     cruz <- das_format(cruz)
@@ -54,6 +55,26 @@ process_sightings <- function(cruz,
     sits <- process_sightings(cruz, verbose=TRUE)
     sits$cohorts$default$sightings %>% dplyr::filter(ss_valid == FALSE)
     sits <- process_sightings(cruz, calibrate=FALSE, verbose=FALSE)
+
+    grp_check <- function(cruz){
+      which(cruz$cohorts[[1]]$sightings$high < cruz$cohorts[[1]]$sightings$best)
+    }
+
+    # No problems
+    grp_check(sits) # well only two
+    sits$settings$survey[1:11]
+    sits$settings$survey$group_size_coefficients
+    sits$settings$cohorts[[1]]
+
+    # problems
+    data("cnp_150km_1986_2020")
+    cruz <- cnp_150km_1986_2020
+    grp_check(cruz)
+
+    cruz$settings$survey %>% names
+    cruz$settings$survey$group_size_coefficients
+    cruz$settings$cohorts[[1]]
+
   }
   #=============================================================================
 
@@ -176,9 +197,14 @@ process_sightings <- function(cruz,
     iprogs <- seq(0.05,0.95,by=.05)*length(sitno)
     iprogs <- round(iprogs) ; iprogs
 
+    #sits_sp %>% names
+    #sits_sp %>% filter(year == 2008, month==10, day == 31) %>% select(DateTime, SightNoDaily) %>% head(20)
+
     #which(sitno == "19861128_1") # debugging
     which(sitno == '20120513_20')
-    i=641 # for debugging
+    which(sitno == '20081031_650')
+    i=25477
+    #i=641 # for debugging
     debugger <- c()
     for(i in 1:length(sitno)){
 
@@ -367,6 +393,14 @@ process_sightings <- function(cruz,
                                             geometric_mean = geometric_mean_group,
                                             use_low_if_na = use_low_if_na)
         grp_results
+
+        if(FALSE){
+          # for debugging
+          gs_coefficients = group_size_coefficients
+          calibrate_floor = calibrate_floor
+          geometric_mean = geometric_mean_group
+          use_low_if_na = use_low_if_na
+        }
 
         # That function incorporates 3 settings:
         # group size coefficients

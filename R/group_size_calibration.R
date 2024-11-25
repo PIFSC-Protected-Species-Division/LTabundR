@@ -99,13 +99,13 @@ group_size_calibration <- function(obs,
       (gsci <- gsc[as.numeric(gsc$obs) == as.numeric(obs),])
 
       # Determine best, high, low values after applying observer-specific weights
-      w <- as.numeric(gsci$w_best[1])
+      (w <- as.numeric(gsci$w_best[1]))
       (yi_best <- ifelse(w>0, w*gbest, 0))
 
-      w <- as.numeric(gsci$w_high[1])
+      (w <- as.numeric(gsci$w_high[1]))
       (yi_high <- ifelse(w>0, w*ghigh, 0))
 
-      w <- as.numeric(gsci$w_low[1])
+      (w <- as.numeric(gsci$w_low[1]))
       (yi_low <- ifelse(w>0, w*glow, 0))
 
       # Get sum of weighted best high low estimates to see if at least one of them is valid
@@ -169,13 +169,15 @@ group_size_calibration <- function(obs,
         yi
         gs_slope
         gs_intercept
-        (new_gs <- exp((log(yi) - (V/2) - gs_intercept) / gs_slope))
-
+        V
+        #(new_gs <- exp((log(yi) - (V/2) - gs_intercept)) / gs_slope)
+        ( new_gs <- exp((log(yi) - (V/2) - gs_intercept) / gs_slope) )
       }
       status_ok
     }else{
       (status_ok <- FALSE) # full calibration was not possible
     }
+
     #===== end of attempt at full calibration ====================================
 
     status_ok
