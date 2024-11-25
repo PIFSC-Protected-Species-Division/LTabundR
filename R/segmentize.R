@@ -162,6 +162,18 @@ segmentize <- function(cruz,
     cruz_demo <- segmentize(cruz, segment_method = 'equallength', segment_target_km = 20,
                             segment_max_interval = .6, verbose=TRUE, debug_mode=TRUE)
 
+    cruz_demo <- segmentize(cruz, segment_method = 'equallength', segment_target_km = 10,
+                            segment_max_interval = .6, verbose=TRUE, debug_mode=TRUE)
+
+    cruz_demo$cohorts$all$segments %>%
+      arrange(dist) %>%
+      tail(1) %>%
+      as.data.frame
+
+    cruz_demo$cohorts$all$das %>%
+      filter(seg_id == 19765) %>%
+      select(seg_id, Event, DateTime, Lat, Lon, km_int)
+
     #cruz_demo$cohorts$default$das %>%
     #  group_by(seg_id) %>%
     #  summarize(cruises = length(unique(Cruise))) %>%
@@ -487,19 +499,42 @@ segmentize <- function(cruz,
       }
 
       # Check to see if any single row exceeds the target_km
+      # if so, flag that row and the next to trigger new segments
       blocs3 <- blocs2
       blocs3$ex_flag <- 0
-      blocs3$ex_flag[blocs3$km_int >= segment_target_km] <- 1
+      (bads <- which(blocs3$km_int >= segment_target_km))
+      if(length(bads)>0){
+        blocs3$ex_flag[bads] <- 1
+        next_bads <- bads + 1
+        next_bads <- next_bads[next_bads <= nrow(blocs3)]
+        blocs3$ex_flag[next_bads] <- 1
+      }
 
       blocs3 <-
         blocs3 %>%
-        # where km exceedances exist, make new eff bloc by adding a suffix to bloc number
-        group_by(new_bloc) %>%
-        mutate(new_bloc = paste0(new_bloc[1], '-', cumsum(ex_flag))) %>%
+        # where km excedances exist, make new eff bloc by adding a suffix to bloc number
+        group_by(eff_bloc) %>%
+        mutate(cum_flag = cumsum(ex_flag)) %>%
+        ungroup() %>%
+        rowwise %>%
+        mutate(new_bloc = paste0(eff_bloc,'-',cum_flag)) %>%
+        ungroup %>%
+        mutate(eff_bloc = new_bloc) %>%
+
+        # Get distance covered within new effort bloc
+        group_by(eff_bloc) %>%
+        # Make sure lines are arranged chronologically
+        arrange(DateTime) %>%
+        # Replace NAs with 0
+        mutate(km_int = tidyr::replace_na(km_int, 0)) %>%
+        # Get length logged
+        mutate(cum_bloc_km = cumsum(km_int),
+               tot_bloc_km = sum(km_int, na.rm=TRUE),
+               target_km = segment_target_km) %>%
         ungroup() %>%
 
         # Now go through each bloc...
-        group_by(new_bloc) %>%
+        group_by(eff_bloc) %>%
         # Based on target_km, get n_segments & remainder
         mutate(n_seg_raw = tot_bloc_km / target_km) %>%
         mutate(remainder = tot_bloc_km %% target_km) %>%
@@ -510,10 +545,10 @@ segmentize <- function(cruz,
         ungroup()
 
         blocs3$ex_flag %>% table
-        blocs2$new_bloc %>% unique %>% length
-        blocs3$new_bloc %>% unique %>% length
+        blocs2$eff_bloc %>% unique %>% length
+        blocs3$eff_bloc %>% unique %>% length
 
-      #=======================================================================
+        #=======================================================================
       # Segmentize by one of the remainder handling methods
 
       (disperse_blocs <- blocs3 %>% filter(handling == 'disperse')) %>% nrow
@@ -536,7 +571,8 @@ segmentize <- function(cruz,
         segi <-
           disperse_blocs %>%
           # For each bloc...
-          group_by(new_bloc) %>%
+          group_by(eff_bloc) %>%
+          #group_by(new_bloc) %>%
           arrange(DateTime) %>%
           # Adjust the target_km to perfectly fit bloc km
           mutate(remainder_seg = NA) %>% # placeholder so that seg methods can be combined
@@ -599,7 +635,8 @@ segmentize <- function(cruz,
           segment_blocs %>%
           #filter(eff_bloc == 97) %>% # use this as a test bloc during debugging
           # For each bloc...
-          group_by(new_bloc) %>%
+          group_by(eff_bloc) %>%
+          #group_by(new_bloc) %>%
           arrange(DateTime) %>%
           # randomly select a segment in which to place the remainder
           mutate(remainder_seg = sample(1:(floor(n_seg_raw[1])+1), 1)) %>%
@@ -664,7 +701,8 @@ segmentize <- function(cruz,
           append_blocs %>%
           #filter(eff_bloc == 97) %>% # use this as a test bloc during debugging
           # For each bloc...
-          group_by(new_bloc) %>%
+          group_by(eff_bloc) %>%
+          #group_by(new_bloc) %>%
           arrange(DateTime) %>%
           # randomly select a segment in which to place the remainder
           mutate(remainder_seg = sample(1:(floor(n_seg_raw[1])), 1)) %>%
