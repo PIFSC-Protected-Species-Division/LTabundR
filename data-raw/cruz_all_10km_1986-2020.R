@@ -90,7 +90,7 @@ if(exists('pifsc')){rm(pifsc)}
 das_file = c("/Users/ekezell/Desktop/projects/noaa ltabundr/swfsc_1986_2020.das")
 swfsc <- process_surveys(das_file,
                          settings = settings,
-                         process_sightings = FALSE,
+                         process_sightings = TRUE,
                          process_subgroups = FALSE,
                          save_local = FALSE) # change to TRUE if you want to save result as RData file
 #cruz_explorer(swfsc)
@@ -101,7 +101,7 @@ data(cnp_1986_2020_edits)
 pifsc <- process_surveys(das_file,
                          settings = settings,
                          edits = cnp_1986_2020_edits,
-                         process_sightings = FALSE,
+                         process_sightings = TRUE,
                          process_subgroups = FALSE,
                          save_local = FALSE) # change to TRUE if you want to save result as RData file
 #cruz_explorer(pifsc)
