@@ -911,18 +911,17 @@ segmentize <- function(cruz,
 
       # Look into stray 42
       (maxkm <- segs$tot_seg_km %>% max(na.rm=TRUE))
-      segs %>% filter(tot_seg_km == maxkm) %>% select(1:7, 62:65) %>% as.data.frame
+      #segs %>% filter(tot_seg_km == maxkm) %>% select(1:7, (ncol(segs)-4):ncol(segs)) %>% as.data.frame
 
-      segs %>%
-        group_by(seg_id) %>%
-        summarize(km_int_1 = km_int[1]) %>%
-        pull(km_int_1) %>%
-        hist
+      #segs %>%
+      #  group_by(seg_id) %>%
+      #  summarize(km_int_1 = km_int[1]) %>%
+      #  pull(km_int_1) %>%
+      #  hist
 
-      21.12383 -159.6328
-      21.20817 -159.9768
-      swfscMisc::distance(lat1 = 21.12383 , lon1 = -159.6328, lat2 = 21.20817 , lon2 = -159.9768, units='km')
-
+      #21.12383 -159.6328
+      #21.20817 -159.9768
+      #swfscMisc::distance(lat1 = 21.12383 , lon1 = -159.6328, lat2 = 21.20817 , lon2 = -159.9768, units='km')
     }
 
 
