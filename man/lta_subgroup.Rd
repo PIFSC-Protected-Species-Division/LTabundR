@@ -19,6 +19,7 @@ lta_subgroup(
   g0_jackknife_fraction = 0.1,
   abundance_area = NULL,
   iterations = 5000,
+  seed = NULL,
   output_dir = NULL,
   toplot = FALSE,
   verbose = TRUE
@@ -90,6 +91,9 @@ estimate will be scaled by this area.}
 \item{iterations}{Number of iterations to use in the various CV bootstrapping procedures
 occurring throughout this function, specifically: Effective Strip Half-Width CV estimation,
 school size CV estimation, weighted \code{g(0)} CV estimation, encounter rate estimation, and density/abundance estimation.}
+
+\item{seed}{Set a seed (any integer) to ensure that the bootstrap results are reproducible.
+If left \code{NULL}, the bootstrap results are liable to differ slightly for each run of this function.}
 
 \item{output_dir}{The path in which results \code{RData} files should be stored. If left \code{NULL}, no results will be stored.
 To use your current working directory, simply provide \code{""}.}

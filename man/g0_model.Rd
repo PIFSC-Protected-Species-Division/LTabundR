@@ -11,6 +11,7 @@ g0_model(
   cohort = 1,
   eff_types = "S",
   jackknife_fraction = 0.1,
+  seed = NULL,
   constrain_shape = FALSE,
   k = 4,
   toplot = TRUE,
@@ -35,6 +36,9 @@ default is systematic effort only (\code{"S"}). Can be \code{NULL}.}
 \item{jackknife_fraction}{The proportion of data to leave out within each jackknife permutation,
 which is used to calculate the CV of the \emph{Rg(0)} estimates.
 The default is 0.1 (i.e., 10\% of the data, yielding 10 jackknife loops), after Barlow (2015).}
+
+\item{seed}{Set a seed (any integer) to ensure that the result is reproducible.
+If left \code{NULL}, the results are liable to differ slightly for each run of this function.}
 
 \item{constrain_shape}{Some \emph{Rg(0)} curves will not decline monotonically due to sample size
 issues at low Bft (0-2) or high Bft (5-6) states. To coerce monotonic decline, set this to

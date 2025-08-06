@@ -68,6 +68,7 @@ g0_weighted <- function(Rg0,
     cruz <- cnp_150km_1986_2020
     cruz <- filter_cruz(cruz, years = 2017, regions = 'HI_EEZ')
     iterations = 1000
+    seed = NULL
     cohort = 1
     beta_range <- c(-1.5, 0)
     beta_step <- 0.001
@@ -187,7 +188,7 @@ g0_weighted <- function(Rg0,
     for(bi in 1:length(beta_ops)){
       if(verbose){setTxtProgressBar(pb, bi)} # update progress bar
       (beti <- beta_ops[bi])
-      if(!is.null(seed)){set.seed(seed)}
+      if(!is.null(seed)){set.seed(seed + bi)}
       beta.i = rnorm(iterations, mean=beti, sd=beti_sd)  # draw random beta's from a normal distribution
 
       # this is adapted from jeff moore's / jay barlow's code, and i don't fully understand its details (eric k)
@@ -297,7 +298,7 @@ g0_weighted <- function(Rg0,
     for(bi in 1:length(beta_ops)){
       if(verbose){setTxtProgressBar(pb, bi)} # update progress bar
       (beti_sd <- beta_ops[bi])
-      if(!is.null(seed)){set.seed(seed)}
+      if(!is.null(seed)){set.seed(seed + bi)}
       beta.i = rnorm(iterations, mean=beti, sd=beti_sd)  # draw random beta's from a normal distribution
 
       # empty matrix to store the g0(x) vals

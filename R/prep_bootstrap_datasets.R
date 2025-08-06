@@ -33,6 +33,7 @@ prep_bootstrap_datasets <- function(segments,
     segments <- cruz$cohorts$all$segments
     sightings <- cruz$cohorts$all$sightings
     segment_picks = NULL
+    seed=NULL
   }
   #=============================================================================
 

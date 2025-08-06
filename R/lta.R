@@ -704,8 +704,8 @@ lta <- function(cruz,
       (g0_cv <- est_filters$g0_cv)
       g0_threshold <- est_filters$g0_threshold
       # Use the LTabundR function g0_optimize
-      g0_small <- g0_optimize(g0[1], g0_cv[1], try_count = 40, verbose = verbose) ; g0_small # Estimate g0[1] (small schools)
-      g0_large <- if(g0[1] == g0[2]){g0_small}else{g0_optimize(g0[2], g0_cv[2], try_count = 40, verbose = verbose)} ; g0_large
+      g0_small <- g0_optimize(g0[1], g0_cv[1], try_count = 40, seed=seed, verbose = verbose) ; g0_small # Estimate g0[1] (small schools)
+      g0_large <- if(g0[1] == g0[2]){g0_small}else{g0_optimize(g0[2], g0_cv[2], try_count = 40, seed=seed, verbose = verbose)} ; g0_large
       (g0_i <- c(g0_small$g0_mean, g0_large$g0_mean))
       (g0_cvi <- c(g0_small$g0_cv, g0_large$g0_cv))
       g0_param <- matrix(data=NA, nrow=2, ncol=2)
@@ -986,6 +986,7 @@ lta <- function(cruz,
 
   # Prepare instructions for estimates/bootstrap loop(s)
   loops <- c('estimate')
+  seediter <- seed
   if(bootstraps > 1){ loops <- c(loops, 'bootstrap') }
   loopi <- loops[1] # for debugging
   loopi <- loops[2] # for debugging
@@ -1032,7 +1033,8 @@ lta <- function(cruz,
             # If bootstrapping is happening, re-sample the data
             # this function maintains the relative distribution of effort across strata
             if(verbose){message('Preparing bootstrap dataset ...')}
-            bs_data <- prep_bootstrap_datasets(segments,sightings)
+            if(!is.null(seed)){seediter <- seed + iter}
+            bs_data <- prep_bootstrap_datasets(segments, sightings, seed = seediter)
             segments <- bs_data$segments
             sightings <- bs_data$sightings
             sightings$i_fit <- 1:nrow(sightings) # Replace unique identifier
@@ -1209,10 +1211,12 @@ lta <- function(cruz,
               #g0_i <- c(1,1)
               if(use_g0){
                 if(g0[1] != 1 & g0_cv[1] != 0 & all(!is.na(g0_param[1,]))){
+                  if(!is.null(seediter)){set.seed(seediter)}
                   g0_i[1]= plogis(rnorm(1,g0_param[1,1],g0_param[1,2]))
                 }
                 g0_i[2] <- g0_i[1]
                 if(g0[2] != g0[1] & g0[2] != 1 & g0_cv[2] != 0 & all(!is.na(g0_param[2,]))){
+                  if(!is.null(seediter)){set.seed(seediter)}
                   g0_i[2]= plogis(rnorm(1,g0_param[2,1],g0_param[2,2]))
                 }
                 g0_i

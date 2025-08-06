@@ -76,6 +76,9 @@
 #' occurring throughout this function, specifically: Effective Strip Half-Width CV estimation,
 #' school size CV estimation, weighted `g(0)` CV estimation, encounter rate estimation, and density/abundance estimation.
 #'
+#' @param seed Set a seed (any integer) to ensure that the bootstrap results are reproducible.
+#' If left `NULL`, the bootstrap results are liable to differ slightly for each run of this function.
+#'
 #' @param output_dir The path in which results `RData` files should be stored. If left `NULL`, no results will be stored.
 #' To use your current working directory, simply provide `""`.
 #'
@@ -153,6 +156,7 @@ lta_subgroup <- function(df_sits, # DateTime, Lat, Lon, Cruise, PerpDistKm
                          g0_jackknife_fraction = 0.1,
                          abundance_area = NULL,
                          iterations = 5000,
+                         seed = NULL,
                          output_dir = NULL,
                          toplot = FALSE,
                          verbose = TRUE){
@@ -283,6 +287,7 @@ lta_subgroup <- function(df_sits, # DateTime, Lat, Lon, Cruise, PerpDistKm
 
     # final params
     iterations <- 20
+    seed = NULL
     output_dir <- '../test_code/subgroup/'
     output_dir <- "/Users/ekezell/Desktop"
     toplot = TRUE
@@ -305,6 +310,7 @@ lta_subgroup <- function(df_sits, # DateTime, Lat, Lon, Cruise, PerpDistKm
                  g0_jackknife_fraction,
                  abundance_area,
                  iterations = 20,
+                 seed = seed,
                  output_dir,
                  toplot,
                  verbose)
@@ -327,6 +333,7 @@ lta_subgroup <- function(df_sits, # DateTime, Lat, Lon, Cruise, PerpDistKm
   esw_boots <- c()
   i = 1
   for(i in 1:iterations){
+    if(!is.null(seed)){set.seed(seed + i)}
     resamples <- sample(1:nrow(df_sits), size=nrow(df_sits), replace=TRUE)
     siti <- df_sits[resamples, ]
     dfi <- df_fit(sightings = siti, truncation_distance = truncation_distance, toplot=FALSE, verbose=FALSE)
@@ -350,6 +357,7 @@ lta_subgroup <- function(df_sits, # DateTime, Lat, Lon, Cruise, PerpDistKm
   ss_boots <- c()
   i = 1
   for(i in 1:iterations){
+    if(!is.null(seed)){set.seed(seed + i)}
     resamples <- sample(1:length(ss), size=length(ss), replace=TRUE)
     (ssi <- ss[resamples] %>% mean)
     ss_boots <- c(ss_boots, ssi)
@@ -379,6 +387,7 @@ lta_subgroup <- function(df_sits, # DateTime, Lat, Lon, Cruise, PerpDistKm
           cruz = cruz10,
           constrain_shape = g0_constrain_shape,
           jackknife_fraction = g0_jackknife_fraction,
+          seed=seed,
           toplot = toplot,
           verbose = verbose)
       if(!is.null(output_dir)){saveRDS(g0_result, file=paste0(output_dir,'g0_result.RData'))}
@@ -409,7 +418,8 @@ lta_subgroup <- function(df_sits, # DateTime, Lat, Lon, Cruise, PerpDistKm
   er_subgroup <- function(density_sightings,
                           density_segments,
                           populations,
-                          stochastic = FALSE){
+                          stochastic = FALSE,
+                          seed = NULL){
 
     if(nrow(density_sightings)>0){
       # Make a key with one sighting per row, summing subgroups in each sighting
@@ -446,6 +456,7 @@ lta_subgroup <- function(df_sits, # DateTime, Lat, Lon, Cruise, PerpDistKm
                 mutate(prob_cum = cumsum(prob)))
 
             # Take a stochastic draw to determine population
+            if(!is.null(seed)){set.seed(seed + j)}
             (drawi <- runif(1, 0, 1))
             (popi <- splits$population[splits$prob_cum >= drawi][1])
 
@@ -499,20 +510,25 @@ lta_subgroup <- function(df_sits, # DateTime, Lat, Lon, Cruise, PerpDistKm
   (er_estimate <- er_subgroup(density_sightings,
                               density_segments,
                               populations,
-                              stochastic = FALSE))
+                              stochastic = FALSE,
+                              seed = seed))
 
   # Bootstrapped estimates =====================================================
   # include stochastic reassignment
 
   er_boots <- data.frame()
+  seediter <- seed
   i = 1
   for(i in 1:iterations){
+    if(!is.null(seed)){seediter <- seed + i}
     boot_data <- prep_bootstrap_datasets(segments = density_segments,
-                                         sightings = density_sightings)
+                                         sightings = density_sightings,
+                                         seed=seediter)
     eri <- er_subgroup(boot_data$sightings,
                        boot_data$segments,
                        populations,
-                       stochastic = TRUE)
+                       stochastic = TRUE,
+                       seed=seediter)
     #(Li <- boot_data$segments$dist %>% sum)
     #(ni <- boot_data$sightings %>% nrow)
     #(eri <- ni / Li)
@@ -537,7 +553,7 @@ lta_subgroup <- function(df_sits, # DateTime, Lat, Lon, Cruise, PerpDistKm
   # Automatically find the survey-specific weighted mean and CV
   if(verbose){message('--- --- calculating CV ...')}
   cruz <- list(cohorts = list(all = list(das = density_das)))
-  g0w <- g0_weighted(Rg0, Rg0_cv, cruz = cruz)
+  g0w <- g0_weighted(Rg0, Rg0_cv, cruz = cruz, seed=seed)
   g0w
 
   (g0_wt_mn <- g0w$g0$wt.mean)
@@ -545,7 +561,8 @@ lta_subgroup <- function(df_sits, # DateTime, Lat, Lon, Cruise, PerpDistKm
 
   # Model g0 as a logit-transformed deviate
   if(verbose){message('\n--- creating bootstrap distribution of weighted g(0) values ...')}
-  (g0_param <- g0_optimize(g0_wt_mn, g0_wt_cv, try_count = 20, verbose = FALSE)$bestFit)
+  (g0_param <- g0_optimize(g0_wt_mn, g0_wt_cv, try_count = 20, seed=seed, verbose = FALSE)$bestFit)
+  if(!is.null(seed)){set.seed(seed)}
   g0_boots <- plogis(rnorm(iterations,g0_param[1],g0_param[2]))
   if(toplot){hist(g0_boots)}
 
@@ -580,6 +597,7 @@ lta_subgroup <- function(df_sits, # DateTime, Lat, Lon, Cruise, PerpDistKm
                         ss = ss_boots,
                         esw = esw_boots,
                         g0 = g0_boots))
+    if(!is.null(seed)){set.seed(seed + i)}
     itsi <- itsi[sample(1:nrow(itsi), size= iterations, replace=FALSE),]
     itsi %>% head
     itsi$D <- itsi$er * (itsi$ss / (2 * itsi$esw * itsi$g0))

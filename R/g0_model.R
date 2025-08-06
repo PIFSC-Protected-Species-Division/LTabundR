@@ -24,6 +24,9 @@
 #' which is used to calculate the CV of the *Rg(0)* estimates.
 #' The default is 0.1 (i.e., 10% of the data, yielding 10 jackknife loops), after Barlow (2015).
 #'
+#' @param seed Set a seed (any integer) to ensure that the result is reproducible.
+#' If left `NULL`, the results are liable to differ slightly for each run of this function.
+#'
 #' @param constrain_shape Some *Rg(0)* curves will not decline monotonically due to sample size
 #' issues at low Bft (0-2) or high Bft (5-6) states. To coerce monotonic decline, set this to
 #' `TRUE`, and the function will use a shape-constrained GAM (`scam()` from package `scam`) instead of a
@@ -87,6 +90,7 @@ g0_model <- function(spp,
                      cohort=1,
                      eff_types = 'S',
                      jackknife_fraction=0.1,
+                     seed = NULL,
                      constrain_shape = FALSE,
                      k = 4,
                      toplot = TRUE,
@@ -107,6 +111,7 @@ g0_model <- function(spp,
     eff_types = 'S'
     truncation_distance <- 4.0
     jackknife_fraction <- .1
+    seed = NULL
     constrain_shape = TRUE
     k = 4
     verbose = TRUE
@@ -118,7 +123,8 @@ g0_model <- function(spp,
                    cruz = cruz,
                    constrain_shape = constrain_shape,
                    k = k,
-                   jackknife_fraction = 0)
+                   jackknife_fraction = 0,
+                   seed = seed)
 
     mr$summary
     mr$sightings$bft %>% table
@@ -181,6 +187,7 @@ g0_model <- function(spp,
   head(segments)
 
   # Prepare jackknife version of the data, by randomizing order of rows
+  if(!is.null(seed)){set.seed(seed)}
   new_order <- sample(1:nrow(segments),size=nrow(segments), replace=FALSE)
   jk_segments <- segments[new_order,]
 
@@ -349,8 +356,7 @@ g0_model <- function(spp,
       ps
 
       # Calculate relative g(0)
-      #(pslogis <- plogis(ps) / plogis(ps[1]))
-      #(ps <- plogis(ps) / plogis(ps[1]))
+      #(ps <- plogis(ps) / plogis(ps[1])) # should we change to this?
       (ps <- exp(ps) / exp(ps[1])) # OG code 2022
       #plot(ps, type='o', pch=16, lwd=2, ylim=c(0,1))
 
