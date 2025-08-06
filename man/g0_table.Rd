@@ -9,6 +9,7 @@ g0_table(
   species,
   eff_types = "S",
   jackknife_fraction = NULL,
+  seed = NULL,
   toplot = TRUE,
   verbose = TRUE
 )
@@ -44,6 +45,9 @@ default is systematic effort only (\code{"S"}). Can be \code{NULL}.}
 \item{jackknife_fraction}{The proportion of data to leave out within each jackknife permutation,
 which is used for estimating the CV of \emph{Rg(0)} estimates.
 The default is 0.1 (i.e., 10\% of the data, yielding 10 jackknife loops), after Barlow (2015).}
+
+\item{seed}{Set a seed (any integer) to ensure that the result is reproducible.
+If left \code{NULL}, the results are liable to differ for each run of this function.}
 
 \item{toplot}{Boolean, with default \code{TRUE}, indicating whether segment length histograms and detection function plots (\code{Distance::plot.ds()})
 should be displayed (during estimation of effective strip width).}

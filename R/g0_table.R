@@ -32,6 +32,8 @@
 #' @param jackknife_fraction The proportion of data to leave out within each jackknife permutation,
 #' which is used for estimating the CV of *Rg(0)* estimates.
 #' The default is 0.1 (i.e., 10% of the data, yielding 10 jackknife loops), after Barlow (2015).
+#' @param seed Set a seed (any integer) to ensure that the result is reproducible.
+#' If left `NULL`, the results are liable to differ for each run of this function.
 #' @param toplot Boolean, with default `TRUE`, indicating whether segment length histograms and detection function plots (`Distance::plot.ds()`)
 #' should be displayed (during estimation of effective strip width).
 #' @param verbose Boolean, with default `TRUE`, indicating whether or not updates should be printed to the Console.
@@ -62,6 +64,7 @@ g0_table <- function(cruz,
                      species,
                      eff_types = 'S',
                      jackknife_fraction = NULL,
+                     seed=NULL,
                      toplot = TRUE,
                      verbose = TRUE){
 
@@ -113,6 +116,8 @@ g0_table <- function(cruz,
     if(is.null(ki)){ki <- 4}
 
     # Carry out Rg0 estimation
+    seediter <- NULL
+    if(!is.null(seed)){seediter <- seed + i}
     rg0_sp  <- g0_model(spp = sppi,
                         truncation_distance = tdi,
                         cruz = cruzii,
@@ -120,7 +125,8 @@ g0_table <- function(cruz,
                         cohort = cohorti,
                         constrain_shape = constrain_shapi,
                         k=ki,
-                        jackknife_fraction = jackknife_fraction)
+                        jackknife_fraction = jackknife_fraction,
+                        seed=seediter)
 
     # Look at GAM object (but do nothing with it for now)
     (gami <- rg0_sp$gam %>% summary)

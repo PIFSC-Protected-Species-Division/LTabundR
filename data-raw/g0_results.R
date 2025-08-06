@@ -145,7 +145,8 @@ Rg0 <-
   g0_table(cruzi,
            species,
            eff_types = 'S',
-           jackknife_fraction = 0.1)
+           jackknife_fraction = 0.1,
+           seed = 123)
 
 Rg0 %>% head
 

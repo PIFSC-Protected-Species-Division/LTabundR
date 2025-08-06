@@ -4,7 +4,14 @@
 \alias{er_simulator}
 \title{Encounter Rate simulator test}
 \usage{
-er_simulator(spp, cohort = 1, cruz, iterations = 1000, verbose = FALSE)
+er_simulator(
+  spp,
+  cohort = 1,
+  cruz,
+  iterations = 1000,
+  seed = NULL,
+  verbose = FALSE
+)
 }
 \arguments{
 \item{spp}{Species code}
@@ -15,10 +22,13 @@ er_simulator(spp, cohort = 1, cruz, iterations = 1000, verbose = FALSE)
 
 \item{iterations}{Number of iterations}
 
+\item{seed}{Set a seed (any integer) to ensure that the result is reproducible.
+If left \code{NULL}, the results are liable to differ for each run of this function.}
+
 \item{verbose}{Boolean; print updates to the console?}
 }
 \value{
-A dataframe with a row for each year. Columns provide the number of observations of
+A \code{dataframe} with a row for each year. Columns provide the number of observations of
 the species of interest during systematic effort, and the p-value of the test.
 The p-value represents the fraction of simulated encounter rates that exceed the observed encounter rate.
 }

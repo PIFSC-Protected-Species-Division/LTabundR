@@ -9,6 +9,8 @@
 #' @param cohort The cohort whose data you would like to analyze, provided as a number indicating which slot in `cruz$cohorts` should be referenced.
 #' @param cruz Your `cruz` object (produced from `LTabundR::process_surveys()`).
 #' @param iterations Number of iterations
+#' @param seed Set a seed (any integer) to ensure that the result is reproducible.
+#' If left `NULL`, the results are liable to differ for each run of this function.
 #' @param verbose Boolean; print updates to the console?
 #'
 #' @details See the Appendix to Bradford et al. (2020) for analytical details, but briefly:
@@ -23,7 +25,7 @@
 #' The number of simulated sightings counts that exceed the observed count reflects
 #' the probability that the observed count is due to random sample variation alone.
 #'
-#' @return A dataframe with a row for each year. Columns provide the number of observations of
+#' @return A `dataframe` with a row for each year. Columns provide the number of observations of
 #' the species of interest during systematic effort, and the p-value of the test.
 #' The p-value represents the fraction of simulated encounter rates that exceed the observed encounter rate.
 #'
@@ -35,6 +37,7 @@ er_simulator <- function(spp,
                          cohort = 1,
                          cruz,
                          iterations = 1000,
+                         seed = NULL,
                          verbose = FALSE){
 
   if(FALSE){ #==================================================================
@@ -45,11 +48,13 @@ er_simulator <- function(spp,
     cruz <- cnp_150km_1986_2020
     cruz <- filter_cruz(cruz, years= c(2002, 2010, 2017))
     iterations = 1000
+    seed = NULL
 
     # try it
     er_simulator(spp = '072',
                  cruz = cruz,
                  iterations = 1000,
+                 seed = seed,
                  verbose = TRUE)
 
   } #===========================================================================
@@ -88,6 +93,7 @@ er_simulator <- function(spp,
     # Simulate the overall encounter rate w bootstrap resampling
     kms <- c()
     sits <- c()
+    seediter <- seed
     yi <- 1
     for(yi in 1:length(years)){
       (yeari <- years[yi])
@@ -95,7 +101,8 @@ er_simulator <- function(spp,
       # Resample the data
       segi <- segments %>% dplyr::filter(year == yeari)
       siti <- sightings %>% dplyr::filter(year == yeari)
-      bs <- prep_bootstrap_datasets(segi, siti)
+      if(!is.null(seed)){seediter <- seed + bi + yi}
+      bs <- prep_bootstrap_datasets(segi, siti, seed = seediter)
       # Save km surveyed and sightings
       kms[yi] <- bs$segments$dist %>% sum
       sits[yi] <- bs$sightings %>% nrow
