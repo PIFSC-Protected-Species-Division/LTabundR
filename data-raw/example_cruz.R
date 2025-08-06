@@ -39,7 +39,8 @@ if(FALSE){
 cruz_structure(cruz_proc)
 #cruz_explorer(cruz_proc)
 #summarize_effort(cruz_proc)
-
+#cruz_proc$settings$survey
+cruz_proc$cohorts$default$segments$dist %>% hist
 cruz_proc$cohorts$default$subgroups$sightings
 cruz_proc$cohorts$default$subgroups$subgroups %>%
   filter(SightNo == 102)

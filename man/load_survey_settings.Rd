@@ -16,6 +16,7 @@ load_survey_settings(
   segment_target_km = 150,
   segment_max_interval = 48,
   segment_remainder_handling = "segment",
+  seed = NULL,
   ship_list = NULL,
   species_codes = NULL,
   group_size_coefficients = NULL,
@@ -49,21 +50,29 @@ the interpolation routine will skip to the next pair of related rows. Interpolat
 the Great Circle distance between rows to be calculated. Intervals less than this number
 will be assigned a distance of 0 km.}
 
-\item{max_row_interval}{The maximum alloweable time interval, in seconds, between rows before
-the function assumes that there has been a break in survey data logging.}
+\item{max_row_interval}{The maximum allowable time interval, in seconds,
+between rows before \code{LTabundR} assumes that there has been a break in survey data logging.
+The default of 3600 seconds (6 hours) was chosen because there is usually at least 6 hours
+of nighttime darkness between the end of effort on one day and the start of effort on the next.}
 
-\item{max_row_km}{The maximum alloweable distance interval, in km, between rows before
-the function assumes that there has been a break in survey data logging.}
+\item{max_row_km}{The maximum allowable distance interval, in km,
+between rows before the function assumes that there has been a break in survey data logging.
+The default was chosen arbitrarily to find a value that replicates the
+processing results from \code{ABUND}.}
 
 \item{km_filler}{When valid speed and position information is not available
 (e.g., the given distance exceeds \code{max_km_gap}),
 this value (in km) will be used as an estimate of the
-distance in between consecutive rows of data.}
+distance in between consecutive rows of data.
+The default was chosen arbitrarily to find a value that replicates the
+processing results from \code{ABUND}.}
 
 \item{speed_filler}{When speed is not available in the data, this value (in kph)
 will be used as a filler in order to estimate the
 distance between consecutive rows of data based on timestamp differences
-(when lat/long coordinates are not available).}
+(when lat/long coordinates are not available).
+The default was chosen arbitrarily to find a value that replicates
+the processing results from \code{ABUND}.}
 
 \item{segment_method}{The two method options are \code{"day"} --
 all effort within the same Cruise-StudyArea-Stratum-Year-Effort scenario (i.e., an effort bloc)
@@ -113,6 +122,13 @@ the second element will be used. This feature allows for replication
 of the segmentizing methods in Becker et al. (2010).
 If segmentizinng by \code{"day"}, this argument is ignored.}
 
+\item{seed}{Set a seed (any integer) to ensure that your survey is processed reproducibly:
+namely, segments will be chopped the exact same way every time.
+Some of the segment remainder handling methods (namely \code{"segment"} and \code{"append"}) will place the remainder
+to a randomly selected segment. Supplying a number here will ensure the remainder goes in the same place with each run.
+If left \code{NULL}, the segment breaks are liable to differ each time this function is run, and the segments to which
+sightings are assigned are liable to vary as well.}
+
 \item{ship_list}{A \code{data.frame} containing a list of ship names.
 If not provided the default version, which was current as of the release of \code{ABUND9} in 2020, will be used (\code{data(ships)}).
 Supplied \code{data.frames} must match the column naming structure of \code{data(ships)}.}
@@ -131,7 +147,7 @@ Supplied \code{data.frame}'s must match the column naming structure of that buil
 group of animals will be "smeared" by adding a uniformly distributed random number between -5 and +5 degrees.
 This has not been used in any recent analyses because observers have not been rounding angles as much as they used to,
 according to the release notes for \code{ABUND9}.
-It was suggested by Buckland as a method for dealing with rounding which is
+It was suggested by Buckland as a method for dealing with rounding, which is
 especially influential when rounding to zero places many sightings at zero perpendicular distance.}
 }
 \value{

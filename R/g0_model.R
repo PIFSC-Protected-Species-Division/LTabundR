@@ -349,7 +349,9 @@ g0_model <- function(spp,
       ps
 
       # Calculate relative g(0)
-      (ps <- exp(ps) / exp(ps[1]))
+      #(pslogis <- plogis(ps) / plogis(ps[1]))
+      #(ps <- plogis(ps) / plogis(ps[1]))
+      (ps <- exp(ps) / exp(ps[1])) # OG code 2022
       #plot(ps, type='o', pch=16, lwd=2, ylim=c(0,1))
 
       # If relative g(0) does not decline at bft 7, force all g(0) to 1.

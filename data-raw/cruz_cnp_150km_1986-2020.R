@@ -35,6 +35,7 @@ survey <- load_survey_settings(
   segment_target_km = 150,
   segment_max_interval = 24,
   segment_remainder_handling = c("segment"),
+  seed = NULL,
   ship_list = NULL, # use package list
   species_codes = NULL, # use package codes
   group_size_coefficients = group_size_coefficients, # use package coefficients
@@ -176,6 +177,7 @@ cruz$cohorts$all$das$stratum %>% table
 cruz$cohorts$bottlenose$das$stratum %>% table
 cruz$cohorts$spotted$das$stratum %>% table
 cruz$cohorts$pseudorca$das$stratum %>% table
+cruz$settings$survey$seed
 
 # Verify
 cruz_structure(cruz)

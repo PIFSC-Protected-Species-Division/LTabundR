@@ -12,7 +12,7 @@
 #'
 #' @param segment_method This and the remainder of inputs allow you to override
 #' the settings contained within the `cruz` object. Leaving them as `NULL`
-#' means the original settinsg will be used.
+#' means the original settings will be used.
 #' For `segment_method`, the two method options are `"day"` --
 #' all effort within the same Cruise-Stratum-Year-Effort scenario (i.e., an effort bloc)
 #' will be binned into segments by calendar date -- and `"equallength"` --
@@ -76,6 +76,11 @@
 #' detection function estimation,
 #' and therefore considered in effort segmentizing.
 #'
+#' @param seed Supply a number to ensure that segment chopping is exactly reproducible.
+#' Some of the remainder handling methods (namely `segment` and `append`) will place the remainder
+#' to a randomly selected segment. Supplying a number here will ensure the remainder goes in the same place with each run.
+#' If left `NULL`, the segment breaks are liable to differ each time this function is run.
+#'
 #' @param to_plot  Boolean, with default `FALSE`, indicating whether or not histograms showing segment lengths should be produced.
 #'
 #' @param debug_mode  Boolean, with default `FALSE`, indicating whether details should be printed to the Console that facilitate debugging.
@@ -99,6 +104,7 @@ segmentize <- function(cruz,
                        distance_types = NULL,
                        distance_modes = NULL,
                        distance_on_off = NULL,
+                       seed = NULL,
                        to_plot = TRUE,
                        debug_mode = FALSE,
                        verbose=FALSE){
@@ -115,6 +121,7 @@ segmentize <- function(cruz,
     cruz <- process_strata(das, settings)
     cruz <- das_format(cruz)
 
+    seed <- NULL
     debug_mode = TRUE
     verbose=TRUE
     to_plot = TRUE
@@ -200,6 +207,22 @@ segmentize <- function(cruz,
     segment_max_interval = 1
     segment_remainder_handling = 'segment'
 
+    # Explore seed
+    cruz_demo <- segmentize(cruz, segment_method = 'equallength', segment_target_km = 10,
+                            segment_remainder_handling = 'append', seed = NULL,
+                            verbose=TRUE, debug_mode=TRUE)
+    cruz_demo <- segmentize(cruz, segment_method = 'equallength', segment_target_km = 10,
+                            segment_remainder_handling = 'append', seed = 123,
+                            verbose=TRUE, debug_mode=TRUE)
+
+    cruz_demo <- segmentize(cruz, segment_method = 'equallength', segment_target_km = 10,
+                            segment_remainder_handling = 'segment',  seed = NULL,
+                            verbose=TRUE, debug_mode=TRUE)
+    cruz_demo <- segmentize(cruz, segment_method = 'equallength', segment_target_km = 10,
+                            segment_remainder_handling = 'segment',  seed = 123,
+                            verbose=TRUE, debug_mode=TRUE)
+
+
   } # end debugging
   #=============================================================================
   # Handle settings and inputs =================================================
@@ -218,6 +241,9 @@ segmentize <- function(cruz,
   }
   if(is.null(segment_remainder_handling)){
     segment_remainder_handling <- settings$survey$segment_remainder_handling
+  }
+  if(is.null(seed)){
+    seed <- settings$survey$seed
   }
 
   # Stage cohort-specific input arguments
@@ -633,6 +659,9 @@ segmentize <- function(cruz,
           seg_assign(0, 20, 0, 0, 0)
         }
 
+        # Set seed? (to make remainder handling reproducible?)
+        if(!is.null(seed)){ set.seed(seed) }
+
         # Segmentize
         segi <-
           segment_blocs %>%
@@ -698,6 +727,9 @@ segmentize <- function(cruz,
           # Test what happens with length 0 segments
           seg_assign(0, 20, 0, 0, 0)
         }
+
+        # Set seed? (to make remainder handling reproducible?)
+        if(!is.null(seed)){ set.seed(seed) }
 
         # Segmentize
         segi <-

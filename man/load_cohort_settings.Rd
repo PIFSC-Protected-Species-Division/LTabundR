@@ -90,7 +90,7 @@ This will be done only if no observer has a "best" estimate.}
 
 \item{io_sightings}{A coded integer which specifies how sightings by the independent observer will be handled.
 Allowable codes, which are inherited from those used in \code{ABUND7/9}, are
-\code{"_1"}=include independent observer sightings wih all other sightings,
+\code{"-1"}=include independent observer sightings with all other sightings,
 \code{"0"}=ignore sightings by independent observer,
 \code{"1"}=use only sightings made by regular observer team WHEN an independent observer was present,
 \code{"2"}=include only sightings made by the independent observer.

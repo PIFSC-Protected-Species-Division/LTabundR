@@ -14,6 +14,7 @@ segmentize(
   distance_types = NULL,
   distance_modes = NULL,
   distance_on_off = NULL,
+  seed = NULL,
   to_plot = TRUE,
   debug_mode = FALSE,
   verbose = FALSE
@@ -25,7 +26,7 @@ or a fully processed \code{cruz} object if you want to experiment with segmentiz
 
 \item{segment_method}{This and the remainder of inputs allow you to override
 the settings contained within the \code{cruz} object. Leaving them as \code{NULL}
-means the original settinsg will be used.
+means the original settings will be used.
 For \code{segment_method}, the two method options are \code{"day"} --
 all effort within the same Cruise-Stratum-Year-Effort scenario (i.e., an effort bloc)
 will be binned into segments by calendar date -- and \code{"equallength"} --
@@ -88,6 +89,11 @@ Accepted values are \code{"P"} (passing) and \code{"C"} (closing)}
 (On Effort is \code{TRUE}, Off Effort is \code{FALSE}) that will be included in
 detection function estimation,
 and therefore considered in effort segmentizing.}
+
+\item{seed}{Supply a number to ensure that segment chopping is exactly reproducible.
+Some of the remainder handling methods (namely \code{segment} and \code{append}) will place the remainder
+to a randomly selected segment. Supplying a number here will ensure the remainder goes in the same place with each run.
+If left \code{NULL}, the segment breaks are liable to differ each time this function is run.}
 
 \item{to_plot}{Boolean, with default \code{FALSE}, indicating whether or not histograms showing segment lengths should be produced.}
 

@@ -102,6 +102,13 @@
 #' of the segmentizing methods in Becker et al. (2010).
 #' If segmentizinng by `"day"`, this argument is ignored.
 #'
+#' @param seed Set a seed (any integer) to ensure that your survey is processed reproducibly:
+#' namely, segments will be chopped the exact same way every time.
+#' Some of the segment remainder handling methods (namely `"segment"` and `"append"`) will place the remainder
+#' to a randomly selected segment. Supplying a number here will ensure the remainder goes in the same place with each run.
+#' If left `NULL`, the segment breaks are liable to differ each time this function is run, and the segments to which
+#' sightings are assigned are liable to vary as well.
+#'
 #' @param ship_list  A `data.frame` containing a list of ship names.
 #' If not provided the default version, which was current as of the release of `ABUND9` in 2020, will be used (`data(ships)`).
 #' Supplied `data.frames` must match the column naming structure of `data(ships)`.
@@ -139,6 +146,7 @@ load_survey_settings <- function(out_handling = 'remove',
                                  segment_target_km = 150,
                                  segment_max_interval = 48,
                                  segment_remainder_handling = 'segment',
+                                 seed = NULL,
                                  ship_list = NULL,
                                  species_codes = NULL,
                                  group_size_coefficients = NULL,
