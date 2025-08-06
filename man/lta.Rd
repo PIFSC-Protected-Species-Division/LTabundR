@@ -241,6 +241,9 @@ results as you go, in the event of a major error or system crash.}
 should be displayed as the candidate models are tested.}
 
 \item{verbose}{Boolean, with default \code{TRUE}, indicating whether or not updates should be printed to the Console.}
+
+\item{seed}{Set a seed (any integer) to ensure that the bootstrap results are reproducible.
+If left \code{NULL}, the bootstrap results are liable to differ for each run of this function.}
 }
 \value{
 A named list:

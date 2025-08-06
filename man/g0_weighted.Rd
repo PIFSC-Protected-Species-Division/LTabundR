@@ -10,6 +10,7 @@ g0_weighted(
   cruz,
   cohort = 1,
   iterations = 10000,
+  seed = NULL,
   beta_range = c(-1.5, 0),
   beta_step = 0.001,
   beta_sd_range = c(0, 0.3),
@@ -34,6 +35,9 @@ See same documentation as above for details.}
 \item{cohort}{The cohort name within your \code{cruz} object that you want to analyze.}
 
 \item{iterations}{The number of draws used to simulate the underlying distribution.}
+
+\item{seed}{Set a seed (any integer) to ensure that the result is reproducible.
+If left \code{NULL}, the results are liable to differ for each run of this function.}
 
 \item{beta_range}{The range in distribution parameters for simulating the g(0) mean.}
 

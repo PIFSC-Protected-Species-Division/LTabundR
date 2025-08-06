@@ -12,6 +12,8 @@
 #' @param sightings Sightings dataframe, drawn from a `cruz` object (e.g., `cruz$cohorts[[1]]$sightings`),
 #' already filtered to contain the sightings you wish to use to fit the detection function.
 #' @param segment_picks If segment IDs have been previously selected for this dataset, provide them here.
+#' @param seed Set a seed (any integer) to ensure that the result is reproducible.
+#' If left `NULL`, the results are liable to differ for each run of this function.
 #'
 #' @return A list with resampled data: `segments`, `sightings`, and `segment_picks`
 #' (a numeric vector of segment IDs that have been re-sampled).
@@ -20,7 +22,8 @@
 #'
 prep_bootstrap_datasets <- function(segments,
                                     sightings,
-                                    segment_picks = NULL){
+                                    segment_picks = NULL,
+                                    seed = NULL){
 
   #=============================================================================
   # For debugging -- not run!
@@ -44,6 +47,7 @@ prep_bootstrap_datasets <- function(segments,
       (strati <- bs_strata[i]) # stratum name
       strata_segments <- segments %>% dplyr::filter(stratum == strati) # segments in this strata
       strata_segments %>% nrow
+      if(!is.null(seed)){set.seed(seed)}
       (bs_segi <- sample(1:nrow(strata_segments), size=nrow(strata_segments), replace=TRUE)) # sample the seg_ids indices w replacement
       (bs_segs <- strata_segments$seg_id[bs_segi])
       segment_picks <- c(segment_picks, bs_segs)

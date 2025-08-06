@@ -211,6 +211,9 @@
 
 #' @param bootstraps The number of bootstrap iterations. If 0 or 1, no bootstrapping will be carried out.
 #'
+#' @param seed Set a seed (any integer) to ensure that the bootstrap results are reproducible.
+#' If left `NULL`, the bootstrap results are liable to differ for each run of this function.
+
 #' @param max_attempts The maximum number of attempts for each bootstrap iteration;
 #' the bootstrap can fail at the detection-function fitting stage if the `mrds` df model fails to converge.
 #' This input sets the maximum number of tries before skipping the iteration and moving on, which means that,
@@ -473,6 +476,7 @@ lta <- function(cruz,
     use_g0 = TRUE
     bootstraps = 1000
     bootstraps = 5
+    seed = NULL
     toplot=TRUE
     verbose=FALSE
     abund_bft_range = 0:6
@@ -629,6 +633,7 @@ lta <- function(cruz,
                                  Rg0_cv = rg0ii$Rg0_CV,
                                  cruz = cruzg0,
                                  cohort = cohort,
+                                 seed = seed,
                                  toplot = toplot,
                                  verbose = FALSE)
               bft <- g0w$bft # save the bft proportions

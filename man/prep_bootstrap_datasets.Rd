@@ -4,7 +4,7 @@
 \alias{prep_bootstrap_datasets}
 \title{Prepare bootstrapped versions of datasets}
 \usage{
-prep_bootstrap_datasets(segments, sightings, segment_picks = NULL)
+prep_bootstrap_datasets(segments, sightings, segment_picks = NULL, seed = NULL)
 }
 \arguments{
 \item{segments}{Effort segments dataframe, drawn from a \code{cruz} object (e.g., \code{cruz$cohorts[[1]]$segments}),
@@ -14,6 +14,9 @@ already filtered to contain the effort you wish to use to fit the detection func
 already filtered to contain the sightings you wish to use to fit the detection function.}
 
 \item{segment_picks}{If segment IDs have been previously selected for this dataset, provide them here.}
+
+\item{seed}{Set a seed (any integer) to ensure that the result is reproducible.
+If left \code{NULL}, the results are liable to differ for each run of this function.}
 }
 \value{
 A list with resampled data: \code{segments}, \code{sightings}, and \code{segment_picks}

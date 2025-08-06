@@ -4,7 +4,7 @@
 \alias{g0_optimize}
 \title{Find g0 values Nelder-Mead using optimization}
 \usage{
-g0_optimize(g0, g0_cv, try_count = 20, verbose = TRUE)
+g0_optimize(g0, g0_cv, try_count = 20, seed = NULL, verbose = TRUE)
 }
 \arguments{
 \item{g0}{Initial estimate of g(0).}
@@ -12,6 +12,9 @@ g0_optimize(g0, g0_cv, try_count = 20, verbose = TRUE)
 \item{g0_cv}{Initial estimate of g(0) coeffiient of variation.}
 
 \item{try_count}{Number of times to attempt optimization before giving up.}
+
+\item{seed}{Set a seed (any integer) to ensure that the result is reproducible.
+If left \code{NULL}, the results are liable to differ for each run of this function.}
 
 \item{verbose}{Print updates to the Console?}
 }

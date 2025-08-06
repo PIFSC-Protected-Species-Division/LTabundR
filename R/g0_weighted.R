@@ -21,6 +21,8 @@
 #' @param beta_sd_step The interval between candidate values for the above SD range.
 #' @param calculate_pars Boolean with default `TRUE`; an option to skip estimation of `plogis` distribution parameters, to save time.
 #' @param iterations The number of draws used to simulate the underlying distribution.
+#' @param seed Set a seed (any integer) to ensure that the result is reproducible.
+#' If left `NULL`, the results are liable to differ for each run of this function.
 #' @param ymax The maximum value on the y axis of the diagnostic Rg0 SD plot.
 #' @param toplot Boolean, with default `TRUE`, indicating whether results should be plotted.
 #' @param verbose Boolean, with default `TRUE`, indicating whether or not updates should be printed to the Console.
@@ -51,6 +53,7 @@ g0_weighted <- function(Rg0,
                         cruz,
                         cohort = 1,
                         iterations = 10000,
+                        seed = NULL,
                         beta_range = c(-1.5, 0),
                         beta_step = 0.001,
                         beta_sd_range = c(0, 0.3),
@@ -184,6 +187,7 @@ g0_weighted <- function(Rg0,
     for(bi in 1:length(beta_ops)){
       if(verbose){setTxtProgressBar(pb, bi)} # update progress bar
       (beti <- beta_ops[bi])
+      if(!is.null(seed)){set.seed(seed)}
       beta.i = rnorm(iterations, mean=beti, sd=beti_sd)  # draw random beta's from a normal distribution
 
       # this is adapted from jeff moore's / jay barlow's code, and i don't fully understand its details (eric k)
@@ -293,6 +297,7 @@ g0_weighted <- function(Rg0,
     for(bi in 1:length(beta_ops)){
       if(verbose){setTxtProgressBar(pb, bi)} # update progress bar
       (beti_sd <- beta_ops[bi])
+      if(!is.null(seed)){set.seed(seed)}
       beta.i = rnorm(iterations, mean=beti, sd=beti_sd)  # draw random beta's from a normal distribution
 
       # empty matrix to store the g0(x) vals
