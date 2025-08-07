@@ -51,11 +51,16 @@ er_simulator <- function(spp,
     seed = NULL
 
     # try it
-    er_simulator(spp = '072',
-                 cruz = cruz,
-                 iterations = 1000,
-                 seed = seed,
-                 verbose = TRUE)
+    {
+      test <- er_simulator(spp = '072',
+                           cruz = cruz,
+                           iterations = 1000,
+                           seed = 123, # reproducible (2002 p=0.467)
+                           #seed = seed, # not reproducible
+                           verbose = TRUE)
+      test$summary
+    }
+    test
 
   } #===========================================================================
 

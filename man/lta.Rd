@@ -14,6 +14,7 @@ lta(
   abund_eff_types = c("S"),
   abund_bft_range = 0:6,
   bootstraps = 0,
+  seed = NULL,
   max_attempts = 5,
   results_file = NULL,
   toplot = TRUE,
@@ -228,6 +229,9 @@ but in some surveys/cases you may wish to use fine-scale effort (\code{"F"}) too
 
 \item{bootstraps}{The number of bootstrap iterations. If 0 or 1, no bootstrapping will be carried out.}
 
+\item{seed}{Set a seed (any integer) to ensure that the bootstrap results are reproducible.
+If left \code{NULL}, the bootstrap results are liable to differ for each run of this function.}
+
 \item{max_attempts}{The maximum number of attempts for each bootstrap iteration;
 the bootstrap can fail at the detection-function fitting stage if the \code{mrds} df model fails to converge.
 This input sets the maximum number of tries before skipping the iteration and moving on, which means that,
@@ -241,9 +245,6 @@ results as you go, in the event of a major error or system crash.}
 should be displayed as the candidate models are tested.}
 
 \item{verbose}{Boolean, with default \code{TRUE}, indicating whether or not updates should be printed to the Console.}
-
-\item{seed}{Set a seed (any integer) to ensure that the bootstrap results are reproducible.
-If left \code{NULL}, the bootstrap results are liable to differ for each run of this function.}
 }
 \value{
 A named list:

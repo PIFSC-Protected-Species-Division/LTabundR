@@ -74,6 +74,7 @@ group_size <- function(grp,
     (gs_coefficients <- group_size_coefficients)
     #gs_coefficients = NULL
     (geometric_mean <- cruz$settings$cohorts[[1]]$geometric_mean_group)
+    geometric_mean <- TRUE
     calibrate_floor = 0
 
     group_size(grp = grp,
@@ -87,7 +88,8 @@ group_size <- function(grp,
     group_size(grp = grp,
                gs_coefficients = gs_coefficients,
                calibrate_floor = calibrate_floor,
-               geometric_mean = geometric_mean,
+               geometric_mean = FALSE,
+               #geometric_mean = geometric_mean,
                use_low_if_na = use_low_if_na,
                debug_mode = debug_mode,
                verbose = TRUE)
@@ -257,12 +259,21 @@ group_size <- function(grp,
   (gs_besti <- geometric_weighted_mean(bests,best_vars))
   (gs_lowi <- geometric_weighted_mean(lows,best_vars))
   (gs_highi <- geometric_weighted_mean(highs,best_vars))
-  if(debug_mode){message('--- geometric weighted mean = ',round(gs_besti,2))}
+  if(debug_mode){
+    message('--- geometric weighted means (using variance of *best* estimate from calibration for *all three*)')
+    message('--- --- best = ',round(gs_besti,2))
+    message('--- --- low = ',round(gs_lowi,2))
+    message('--- --- high = ',round(gs_highi,2))
+  }
 
   # Keep this estimate, if settings say so
   if(geometric_mean){
     if(all(calibs)){ # only perform if calibration variance was provided
       gs_best <- gs_besti
+
+      # Re-calculate highs and lows with unweighted means?
+      #(gs_lowi <- geometric_unweighted_mean(lows))
+      #(gs_highi <- geometric_unweighted_mean(highs))
       gs_low <- gs_lowi
       gs_high <- gs_highi
     }
@@ -273,7 +284,12 @@ group_size <- function(grp,
   (gs_besti <- geometric_unweighted_mean(bests))
   (gs_lowi <- geometric_unweighted_mean(lows))
   (gs_highi <- geometric_unweighted_mean(highs))
-  if(debug_mode){message('--- geometric unweighted mean  = ',round(gs_besti,2))}
+  if(debug_mode){
+    message('--- geometric unweighted means')
+    message('--- --- best = ',round(gs_besti,2))
+    message('--- --- low = ',round(gs_lowi,2))
+    message('--- --- high = ',round(gs_highi,2))
+  }
 
   # Keep this estimate, if settings say so
   if(geometric_mean & is.null(gs_coefficients)){
@@ -286,7 +302,12 @@ group_size <- function(grp,
   (gs_besti <- mean(bests,na.rm=TRUE))
   (gs_lowi <- mean(lows,na.rm=TRUE))
   (gs_highi <- mean(highs,na.rm=TRUE))
-  if(debug_mode){message('--- simple arithmetic mean = ',round(gs_besti,2))}
+  if(debug_mode){
+    message('--- simple arithmetic means')
+    message('--- --- best = ',round(gs_besti,2))
+    message('--- --- low = ',round(gs_lowi,2))
+    message('--- --- high = ',round(gs_highi,2))
+    }
 
   # Keep this estimate, if settings say so
   if(!geometric_mean){

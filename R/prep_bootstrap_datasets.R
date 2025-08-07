@@ -34,6 +34,14 @@ prep_bootstrap_datasets <- function(segments,
     sightings <- cruz$cohorts$all$sightings
     segment_picks = NULL
     seed=NULL
+
+    # no reproducible
+    test <- prep_bootstrap_datasets(segments, sightings, segment_picks, seed)
+    test$segment_picks %>% head
+
+    # with
+    test <- prep_bootstrap_datasets(segments, sightings, segment_picks, seed=123)
+    test$segment_picks %>% head
   }
   #=============================================================================
 

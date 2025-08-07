@@ -77,16 +77,19 @@ g0_weighted <- function(Rg0,
     toplot = TRUE
     verbose = TRUE
     ymax = .2
+    seed = NULL
 
-    Rg0 = rg0ii$Rg0
-    Rg0_cv = rg0ii$Rg0_CV
-    cruz = cruzg0
+    #Rg0 = rg0ii$Rg0
+    #Rg0_cv = rg0ii$Rg0_CV
+    #cruz = cruzg0
 
     # Minke whale (no pooling)
     Rg0 = c(1,0.503,0.262,0.148,0.094,0.067,0.050)  # Jay's values, mean and SD (from ALB)
     Rg0_sd = c(0,0.181,0.183,0.130,0.077,0.048,0.046)
     (Rg0_cv <- Rg0_sd / Rg0)
     g0_weighted(Rg0, Rg0_cv, cruz, ymax = 0.3) # try it
+    # reproducible:
+    g0_weighted(Rg0, Rg0_cv, cruz, seed = 123, ymax = 0.3)
 
     # Test to ensure that the simple weighted g0 is always the same
     wg0s <- c()

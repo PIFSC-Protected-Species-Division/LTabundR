@@ -286,17 +286,19 @@ lta_subgroup <- function(df_sits, # DateTime, Lat, Lon, Cruise, PerpDistKm
     (abundance_area <- cruz$strata$area[cruz$strata$stratum == 'HI_EEZ'])
 
     # final params
-    iterations <- 20
-    seed = NULL
+    iterations <- 10
+    seed = 123
     output_dir <- '../test_code/subgroup/'
     output_dir <- "/Users/ekezell/Desktop"
     toplot = TRUE
     verbose = TRUE
+    stochastic = TRUE
 
     # cruz <- cruzi
 
     # try it ===================================================================
-    lta_subgroup(df_sits,
+    test <-
+      lta_subgroup(df_sits,
                  truncation_distance,
                  ss,
                  density_segments,
@@ -309,11 +311,22 @@ lta_subgroup <- function(df_sits, # DateTime, Lat, Lon, Cruise, PerpDistKm
                  g0_constrain_shape,
                  g0_jackknife_fraction,
                  abundance_area,
-                 iterations = 20,
-                 seed = seed,
-                 output_dir,
+                 iterations = 10,
+                 #seed = NULL,
+                 seed = 123,
+                 output_dir = NULL,
                  toplot,
                  verbose)
+    test$estimate$D
+    #[1] 0.003256424
+    test$bootstraps$D
+    #[1] 0.003679436 0.001844027 0.003449246 0.002388588 0.002896210 0.003450336
+    #[7] 0.004759967 0.004894897 0.002043226 0.003788407
+    test$g0_details$jackknife$g0[3,]
+    #jk1       jk2       jk3       jk4       jk5       jk6       jk7
+    #bft_2 0.5633002 0.5514641 0.5116939 0.5007765 0.5276637 0.5338514 0.5840611
+    #jk8       jk9      jk10
+    #bft_2 0.5453523 0.5526397 0.5442016
 
   } # end of debugging staging area
 
@@ -470,38 +483,44 @@ lta_subgroup <- function(df_sits, # DateTime, Lat, Lon, Cruise, PerpDistKm
 
     # Stage encounter rate result
     er <- data.frame()
+    L <- density_segments$dist %>% sum
 
     # Loop through each population
-    i=1
-    for(i in 1:length(populations)){
-      (popi <- populations[i])
-
-      n <- 0
-      if(nrow(density_sightings)>0){
-        ni <- c()
-        j=6
-        for(j in 1:nrow(sit_key)){
-          (sitj <- sit_key[j, ])
-          (popj <- sitj$population)
-          (pop_splits <- (stringr::str_split(popj, ';')[[1]]))
-          (matchj <- which(pop_splits == popi))
-          (probj <- sitj$pop_prob)
-          (prob_splits <- (stringr::str_split(probj, ';')[[1]]) %>% as.numeric)
-          if(length(matchj)>0){
-            (probj <- prob_splits[matchj])
-            (nj <- sitj$n * probj)
-            ni <- c(ni, nj)
+    if(length(populations) == 1 && is.na(populations)){
+      n <- sit_key$n %>% sum
+      er <- data.frame(population = NA, n, L)
+    }else{
+      i=1
+      for(i in 1:length(populations)){
+        (popi <- populations[i])
+        n <- 0
+        if(nrow(density_sightings)>0){
+          ni <- c()
+          j=6
+          for(j in 1:nrow(sit_key)){
+            (sitj <- sit_key[j, ])
+            (popj <- sitj$population)
+            (pop_splits <- (stringr::str_split(popj, ';')[[1]]))
+            (matchj <- which(pop_splits == popi))
+            (probj <- sitj$pop_prob)
+            (prob_splits <- (stringr::str_split(probj, ';')[[1]]) %>% as.numeric)
+            if(length(matchj)>0){
+              (probj <- prob_splits[matchj])
+              (nj <- sitj$n * probj)
+              ni <- c(ni, nj)
+            }
           }
-        }
-        ni
-        n <- ni %>% sum
-      }     # end of if nrow density_sightings > 0
-      L <- density_segments$dist %>% sum
-      eri <- data.frame(population = popi, n, L)
-      er <- rbind(er, eri)
-    }
+          ni
+          n <- ni %>% sum
+        }     # end of if nrow density_sightings > 0
+        eri <- data.frame(population = popi, n, L)
+        er <- rbind(er, eri)
+      } # end of loop through populations
+    } # end of NA check
     er
+
     er$er <- er$n / er$L
+    er
     return(er)
   }
   # end of convenience function ================================================
@@ -582,7 +601,11 @@ lta_subgroup <- function(df_sits, # DateTime, Lat, Lon, Cruise, PerpDistKm
     message('--- --- population = ', popi)
 
     message('--- --- --- point estimate...')
-    (eri <- er_estimate %>% filter(population == popi))
+    if(is.na(popi)){
+      (eri <- er_estimate %>% filter(is.na(population)))
+    }else{
+      (eri <- er_estimate %>% filter(population == popi))
+    }
     (D <- eri$er * (as.numeric(ss_estimate) / (2 * esw * g0_wt_mn)))
     D * 100
     er_estimate$D[i] <- D
@@ -592,7 +615,11 @@ lta_subgroup <- function(df_sits, # DateTime, Lat, Lon, Cruise, PerpDistKm
     }
 
     message('--- --- --- bootstraps...\n')
-    (booti <- er_boots %>% filter(population == popi))
+    if(is.na(popi)){
+      (booti <- er_boots %>% filter(is.na(population)))
+    }else{
+      (booti <- er_boots %>% filter(population == popi))
+    }
     (itsi <- data.frame(booti,
                         ss = ss_boots,
                         esw = esw_boots,

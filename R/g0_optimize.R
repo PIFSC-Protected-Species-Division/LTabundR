@@ -25,6 +25,11 @@ g0_optimize <- function(g0, g0_cv, try_count = 20, seed = NULL, verbose = TRUE){
       try_count = 20
       seed = NULL
       verbose = TRUE
+      # without reproducibility
+      test <- g0_optimize(g0, g0_cv, try_count, seed, verbose)
+      # with
+      test <- g0_optimize(g0, g0_cv, try_count, seed=123, verbose)
+      test <- g0_optimize(g0=.7, g0_cv=.5, try_count, seed=123, verbose)
   } # end not run ================================================================
 
   # This code is adapted closely from Jay Barlow's / Jeff Moore's code,
