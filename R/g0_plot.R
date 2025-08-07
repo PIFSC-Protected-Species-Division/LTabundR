@@ -8,7 +8,7 @@
 #' as produced by the `LTabundR` function `g0_table()`. See its documentation for details.
 #'
 #' @param panes The number of plot panes to produce. Species will be assigned to each
-#' pane according to their minimum Rg(0) estimate, such that species with similar
+#' pane according to their mean Rg(0) estimate, such that species with similar
 #' detectability will be grouped together.
 #'
 #' @param legend_key Height of each legend key, in cm, to allow for fine-tuning the formatting of the plot.
@@ -30,7 +30,7 @@ if(FALSE){ # debugging only === not run ========================================
   Rg0 <- g0_results
   #data(barlow_2015)
   #Rg0 <- barlow_2015
-  panes = 1
+  panes = 3
   legend_key = 0.4
   legend_font = 7
 
@@ -47,12 +47,14 @@ if(!is.data.frame(Rg0)){
   Rg0$title <- 'Model result'
 }
 
-# Rank species groups by their lowest Rg0 value
+# Rank species groups by their mean Rg0 value
+# no longer lowest Rg0 value
 gtab <-
   Rg0 %>%
   dplyr::group_by(title) %>%
-  dplyr::summarize(gmin = min(Rg0)) %>%
-  dplyr::arrange(desc(gmin))
+  dplyr::summarize(gmean = mean(Rg0),
+                   gmin = min(Rg0)) %>%
+  dplyr::arrange(desc(gmean))
 gtab
 
 # Set up group assignments

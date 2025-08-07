@@ -11,7 +11,7 @@ g0_plot(Rg0, panes = 3, legend_key = 0.4, legend_font = 7)
 as produced by the \code{LTabundR} function \code{g0_table()}. See its documentation for details.}
 
 \item{panes}{The number of plot panes to produce. Species will be assigned to each
-pane according to their minimum Rg(0) estimate, such that species with similar
+pane according to their mean Rg(0) estimate, such that species with similar
 detectability will be grouped together.}
 
 \item{legend_key}{Height of each legend key, in cm, to allow for fine-tuning the formatting of the plot.}
