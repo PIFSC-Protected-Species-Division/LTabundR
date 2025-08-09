@@ -17,16 +17,28 @@ process_sightings(
 
 \item{calibrate}{An argument allowing you to override the settings contained within the \code{cruz} object.
 This argument accepts a Boolean; if \code{TRUE}, school size calibration will be attempted,
-but only if calibration coefficients are provided in \code{cruz$settings$survey}.}
+but only if calibration coefficients are provided in \code{cruz$settings$survey}.
+Note that only the best estimates of schol size will be calibrated;
+the high and low estimates are \emph{never} calibrated.}
 
 \item{calibrate_floor}{Another argument allowing for settings override.
 This argument accepts a number indicating the minimum raw school size estimate
 for which school size calibration will be attempted.}
 
 \item{geometric_mean}{Another argument allowing settings override.
-This argument accepts a Boolean; if \code{TRUE}, geometric means will be calculated instead of arithmetic means.
-If school size calibration is carried out, the geometric mean will be weighted by calibration variance, such that
-estimates from observers with low variance will receive more weight.}
+This argument accepts a Boolean;
+if \code{TRUE}, geometric means will be calculated instead of arithmetic means.
+If school size calibration is carried out,
+the geometric mean will be weighted by calibration variance, such that
+estimates from observers with low variance will receive more weight.
+When this function is used withing \code{process_sightings()},
+this setting from the \code{cruz} object will be provided.
+Note that, although only the best estimates may be calibrated if specified above (never the highs and lows),
+the \emph{same} kind of averaging function \emph{is} applied to the highs and lows as is applied to the bests.
+That is, when \code{geometric_mean} is \code{TRUE}, the geometric mean of the highs and the lows is returned.
+If the best estimates are calibrated, the geometric \emph{weighted} mean will be applied to the highs and lows,
+using the variance of the calibrated best estimates as weights. If the best estimates are \emph{not} calibrated,
+the \emph{unweighted} geometric mean is used to estimate the highs, lows, and bests.}
 
 \item{verbose}{Boolean, with default \code{FALSE}, indicating whether or not updates should be printed to the Console.}
 }

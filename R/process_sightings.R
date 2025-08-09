@@ -4,16 +4,32 @@
 #' It is the fifth subroutine called within `process_surveys()`, after `segmentize()` and before `process_subgroups()`.
 #'
 #' @param cruz A `cruz` object passed from `segmentize()`.
+#'
 #' @param calibrate An argument allowing you to override the settings contained within the `cruz` object.
 #' This argument accepts a Boolean; if `TRUE`, school size calibration will be attempted,
 #' but only if calibration coefficients are provided in `cruz$settings$survey`.
+#' Note that only the best estimates of schol size will be calibrated;
+#' the high and low estimates are *never* calibrated.
+#'
 #' @param calibrate_floor Another argument allowing for settings override.
 #' This argument accepts a number indicating the minimum raw school size estimate
 #' for which school size calibration will be attempted.
+#'
 #' @param geometric_mean Another argument allowing settings override.
-#' This argument accepts a Boolean; if `TRUE`, geometric means will be calculated instead of arithmetic means.
-#' If school size calibration is carried out, the geometric mean will be weighted by calibration variance, such that
+#' This argument accepts a Boolean;
+#' if `TRUE`, geometric means will be calculated instead of arithmetic means.
+#' If school size calibration is carried out,
+#' the geometric mean will be weighted by calibration variance, such that
 #' estimates from observers with low variance will receive more weight.
+#' When this function is used withing `process_sightings()`,
+#' this setting from the `cruz` object will be provided.
+#' Note that, although only the best estimates may be calibrated if specified above (never the highs and lows),
+#' the *same* kind of averaging function *is* applied to the highs and lows as is applied to the bests.
+#' That is, when `geometric_mean` is `TRUE`, the geometric mean of the highs and the lows is returned.
+#' If the best estimates are calibrated, the geometric *weighted* mean will be applied to the highs and lows,
+#' using the variance of the calibrated best estimates as weights. If the best estimates are *not* calibrated,
+#' the *unweighted* geometric mean is used to estimate the highs, lows, and bests.
+#'
 #' @param verbose Boolean, with default `FALSE`, indicating whether or not updates should be printed to the Console.
 #'
 #' @return A modified `cruz` object, in which a `sightings` dataframe

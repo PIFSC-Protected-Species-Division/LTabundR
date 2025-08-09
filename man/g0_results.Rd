@@ -5,7 +5,7 @@
 \alias{g0_results}
 \title{Relative trackline detection probabilities -- Rg(0)}
 \format{
-An object of class \code{data.frame} with 175 rows and 13 columns.
+An object of class \code{data.frame} with 182 rows and 13 columns.
 }
 \usage{
 g0_results

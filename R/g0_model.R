@@ -99,14 +99,14 @@ g0_model <- function(spp,
   if(FALSE){ # not run -- for debugging only ===================================
     data('noaa_10km_1986_2020')
     cruz <- noaa_10km_1986_2020
-    cruz <- filter_cruz(cruz, regions = 'CCS')
     spp <- '051' # mesoplodon
-    spp <- '075' # blue
-    spp <- '076' # humpback
-    spp <- '071' # minke
     spp <- '046' # sperm
     spp <- '036' # pilot whale # usually needs pooling
     spp <- c('047', '048','080') # kogia
+    #cruz <- filter_cruz(cruz, regions = 'CCS')
+    #spp <- '075' # blue
+    #spp <- '076' # humpback
+    #spp <- '071' # minke
     cohort = 1
     eff_types = 'S'
     truncation_distance <- 4.0
@@ -317,14 +317,16 @@ g0_model <- function(spp,
       if(!constrain_shape){
         bm <- mgcv::gam(formula = as.logical(ngrp) ~ s(bft, k=k) +
                         s(mlat, mlon, bs='tp') + s(year, k=4) + offset(log(esa)),
-                        family=binomial,
+                        family = poisson, # changed in august 2025
+                        #family=binomial,
                         data=df,
                         gamma=1.4)
       }else{
         bm <- scam::scam(formula = as.logical(ngrp) ~ s(bft, bs='mpd', k=k) +
                          s(mlat, mlon, bs='tp') + s(year, k=4) +
                          offset(log(esa)),
-                       family=binomial,
+                       family = poisson, # changed in august 2025
+                       #family=binomial,
                        data=df,
                        not.exp=TRUE,
                        gamma=1.4)
@@ -356,8 +358,8 @@ g0_model <- function(spp,
       ps
 
       # Calculate relative g(0)
-      (ps <- plogis(ps) / plogis(ps[1])) # changed to plogis in Aug 2025
-      #(ps <- exp(ps) / exp(ps[1])) # Original code from Jay Barlow (2015)
+      #(ps <- plogis(ps) / plogis(ps[1])) # considered changing to plogis in Aug 2025
+      (ps <- exp(ps) / exp(ps[1])) # original code from Jay Barlow (2015)
       #plot(ps, type='o', pch=16, lwd=2, ylim=c(0,1))
 
       # If relative g(0) does not decline at bft 7, force all g(0) to 1.

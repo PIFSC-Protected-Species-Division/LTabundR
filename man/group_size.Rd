@@ -20,7 +20,9 @@ and each column is a column from the \code{DAS} dataframe that is relevant to sc
 (columns Event, year, Bft, and Prob:GsSchoolLow).}
 
 \item{gs_coefficients}{If not \code{NULL}, a dataframe of school size calibration
-coefficients (see description in \code{load_survey_settings()}).}
+coefficients (see description in \code{load_survey_settings()}). Supplying this input will
+allow calibration to be attempted on the best estimates of group size from each observer.
+Note that the high and low estimates are \emph{never} calibrated; only the best estimates are.}
 
 \item{calibrate_floor}{This argument accepts a number
 indicating the minimum raw school size estimate
@@ -34,7 +36,13 @@ If school size calibration is carried out,
 the geometric mean will be weighted by calibration variance, such that
 estimates from observers with low variance will receive more weight.
 When this function is used withing \code{process_sightings()},
-this setting from the \code{cruz} object will be provided.}
+this setting from the \code{cruz} object will be provided.
+Note that, although only the best estimates may be calibrated if specified above (never the highs and lows),
+the \emph{same} kind of averaging function \emph{is} applied to the highs and lows as is applied to the bests.
+That is, when \code{geometric_mean} is \code{TRUE}, the geometric mean of the highs and the lows is returned.
+If the best estimates are calibrated, the geometric \emph{weighted} mean will be applied to the highs and lows,
+using the variance of the calibrated best estimates as weights. If the best estimates are \emph{not} calibrated,
+the \emph{unweighted} geometric mean is used to estimate the highs, lows, and bests.}
 
 \item{use_low_if_na}{If this setting is \code{TRUE},
 when no observer makes a best estimate of group size,
@@ -52,7 +60,7 @@ indicating whether or not updates should be printed to the Console.}
 \value{
 A dataframe in which each row is a species within the sighting,
 with final estimates of best / high / low and metadata regarding calibration.
-Passed back to \code{process_sightings()}.
+When this function is used internally by \code{LTabundR}, the results are passed back to \code{process_sightings()}.
 }
 \description{
 This is an internal function typically not called by a user directly.

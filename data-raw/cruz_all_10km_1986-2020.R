@@ -35,7 +35,7 @@ survey <- load_survey_settings(
   segment_target_km = 10,
   segment_max_interval = 6,
   segment_remainder_handling = c("segment"),
-  seed=NULL,
+  seed=123,
   group_size_coefficients = group_size_coefficients)
 
 

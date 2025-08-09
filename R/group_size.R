@@ -9,7 +9,9 @@
 #' and each column is a column from the `DAS` dataframe that is relevant to school size estimation
 #' (columns Event, year, Bft, and Prob:GsSchoolLow).
 #' @param gs_coefficients If not `NULL`, a dataframe of school size calibration
-#' coefficients (see description in `load_survey_settings()`).
+#' coefficients (see description in `load_survey_settings()`). Supplying this input will
+#' allow calibration to be attempted on the best estimates of group size from each observer.
+#' Note that the high and low estimates are *never* calibrated; only the best estimates are.
 #' @param calibrate_floor This argument accepts a number
 #' indicating the minimum raw school size estimate
 #' for which school size calibration will be attempted.
@@ -22,6 +24,12 @@
 #' estimates from observers with low variance will receive more weight.
 #' When this function is used withing `process_sightings()`,
 #' this setting from the `cruz` object will be provided.
+#' Note that, although only the best estimates may be calibrated if specified above (never the highs and lows),
+#' the *same* kind of averaging function *is* applied to the highs and lows as is applied to the bests.
+#' That is, when `geometric_mean` is `TRUE`, the geometric mean of the highs and the lows is returned.
+#' If the best estimates are calibrated, the geometric *weighted* mean will be applied to the highs and lows,
+#' using the variance of the calibrated best estimates as weights. If the best estimates are *not* calibrated,
+#' the *unweighted* geometric mean is used to estimate the highs, lows, and bests.
 #' @param use_low_if_na If this setting is `TRUE`,
 #' when no observer makes a best estimate of group size,
 #' mean group size will be calculated from "low" estimates.
@@ -35,7 +43,7 @@
 #'
 #' @return A dataframe in which each row is a species within the sighting,
 #' with final estimates of best / high / low and metadata regarding calibration.
-#' Passed back to `process_sightings()`.
+#' When this function is used internally by `LTabundR`, the results are passed back to `process_sightings()`.
 #'
 #' @export
 #'

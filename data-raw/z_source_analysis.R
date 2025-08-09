@@ -2,7 +2,7 @@ library(devtools)
 library(usethis)
 document()
 
-library(LTabundR)
+#library(LTabundR)
 
 # g0_results
 source('data-raw/g0_results.R')
