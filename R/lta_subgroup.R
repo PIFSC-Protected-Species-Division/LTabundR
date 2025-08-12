@@ -345,12 +345,45 @@ lta_subgroup <- function(df_sits, # DateTime, Lat, Lon, Cruise, PerpDistKm
       seed = 123
       output_dir <- '../test_code/subgroup/'
       output_dir <- "/Users/ekezell/Desktop"
+      output_dir <- NULL
       toplot = TRUE
       verbose = TRUE
       stochastic = TRUE
     }
     # cruz <- cruzi
 
+    if(FALSE){# Vignette tests
+      load('../LTabundR-vignette/results_subgroup_nwhi_objects.rds')
+      density_sightings <- sightings_nwhi
+      density_segments <- segments_nwhi
+      abundance_area <- area_nwhi
+      df_settings <- NULL
+      df_settings=list(covariates = c('Bft', 'EffType'),
+                       covariates_factor = c(FALSE, TRUE))
+      test <- lta_subgroup(df_sits, truncation_distance, ss,
+                           density_segments = segments_nwhi,
+                           density_das = density_das,
+                           density_sightings = sightings_nwhi,
+                           df_settings=NULL,
+                           Rg0=Rg0,
+                           abundance_area = area_nwhi,
+                           iterations = 10, seed = 123,
+                           toplot = TRUE, verbose=TRUE)
+      test$estimate
+      # D = 0.001095271, # ESW = 2.432073
+
+      testcovar <- lta_subgroup(df_sits, truncation_distance, ss,
+                           segments_nwhi, density_das, sightings_nwhi,
+                           df_settings=list(covariates = c('Bft', 'EffType'),
+                                            covariates_factor = c(FALSE, TRUE)),
+                           Rg0=Rg0,
+                           abundance_area = abundance_area,
+                           iterations = 10, seed = 123,
+                           toplot = TRUE, verbose=TRUE)
+      testcovar$estimate
+      # D = 0.001102036, # ESW = 2.417143
+
+    }
     # try it ===================================================================
     test <-
       lta_subgroup(df_sits,
@@ -578,6 +611,7 @@ lta_subgroup <- function(df_sits, # DateTime, Lat, Lon, Cruise, PerpDistKm
   (df_sits <- df_sits %>% mutate(esw = fitted_sightings$esw))
   # esw is now a column in new_sightings
   df_sits$esw %>% table(useNA='ifany')
+  mean(df_sits$esw)
   message('--- --- mean of ESW estimates = ',round(mean(df_sits$esw),3), ' km')
 
   # Repeat this in a bootstrap method ==========================================
@@ -689,30 +723,32 @@ lta_subgroup <- function(df_sits, # DateTime, Lat, Lon, Cruise, PerpDistKm
     esw_predict <- function(density_sightings,
                             df_sits_names,
                             df_bests){
-      # prep version of density_sightings that can be used for predicting ESW
-      ds_temp <- density_sightings
-      names(ds_temp) <- tolower(names(ds_temp))
-      (ds_temp <- ds_temp %>%
-          select(all_of(tolower(df_sits_names))) %>%
-          mutate(object = 1:n(),
-                 observer=1,
-                 detected=1))
-      # predict ESW for every best model
-      esws <- list()
-      df
-      (bestis <- df_bests)
-      j=1
-      for(j in 1:length(bestis)){
-        eswsi <- predict(bestis[[j]],
-                         newdata=ds_temp,
-                         esw=TRUE)$fitted
-        esws[[i]] <- eswsi
+      if(nrow(density_sightings)>0){
+        # prep version of density_sightings that can be used for predicting ESW
+        ds_temp <- density_sightings
+        names(ds_temp) <- tolower(names(ds_temp))
+        (ds_temp <- ds_temp %>%
+            select(all_of(tolower(df_sits_names))) %>%
+            mutate(object = 1:n(),
+                   observer=1,
+                   detected=1))
+        # predict ESW for every best model
+        esws <- list()
+        df
+        (bestis <- df_bests)
+        j=1
+        for(j in 1:length(bestis)){
+          (eswsi <- predict(bestis[[j]],
+                           newdata=ds_temp,
+                           esw=TRUE)$fitted)
+          esws[[j]] <- eswsi
+        }
+        esws
+        (esws1 <- as.data.frame(do.call(rbind, esws)))
+        (esws2 <- apply(esws1, 2, mean) %>% as.numeric)
+        # Add to density_sightings
+        density_sightings$esw <- esws2
       }
-      esws
-      (esws1 <- as.data.frame(do.call(rbind, esws)))
-      (esws2 <- apply(esws1, 2, mean) %>% as.numeric)
-      # Add to density_sightings
-      density_sightings$esw <- esws2
       return(density_sightings)
     }
 
@@ -725,7 +761,13 @@ lta_subgroup <- function(df_sits, # DateTime, Lat, Lon, Cruise, PerpDistKm
                             stochastic = FALSE,
                             seed = NULL){
 
+      # Stage encounter rate result
+      L <- density_segments$dist %>% sum
+      (er <- data.frame(population = populations, n=NA, L=L, esw=NA))
+
       if(nrow(density_sightings)>0){
+        er <- data.frame()
+
         # Make a key with one sighting per row, summing subgroups in each sighting
         if(! 'esw' %in% names(density_sightings)){
           density_sightings$esw <- NA
@@ -774,49 +816,47 @@ lta_subgroup <- function(df_sits, # DateTime, Lat, Lon, Cruise, PerpDistKm
             }
           } # end of loop through each sighting
         } # end of stochastic reassignment =========================================
-      } # end of if nrow density_sightings > 0
-      sit_key
+        sit_key
 
-      # Stage encounter rate result
-      er <- data.frame()
-      L <- density_segments$dist %>% sum
-      # Loop through each population
-      if(length(populations) == 1 && is.na(populations)){
-        (n <- sit_key$n %>% sum)
-        (esw <- sit_key$esw %>% unlist %>% mean)
-        (er <- data.frame(population = NA, n, L, esw))
-      }else{
-        i=1
-        for(i in 1:length(populations)){
-          (popi <- populations[i])
-          n <- 0
-          if(nrow(density_sightings)>0){
-            ni <- c()
-            eswi <- c()
-            j=6
-            for(j in 1:nrow(sit_key)){
-              (sitj <- sit_key[j, ])
-              eswj <- sitj$esw %>% unlist
-              eswi <- c(eswi, eswj)
-              (popj <- sitj$population)
-              (pop_splits <- (stringr::str_split(popj, ';')[[1]]))
-              (matchj <- which(pop_splits == popi))
-              (probj <- sitj$pop_prob)
-              (prob_splits <- (stringr::str_split(probj, ';')[[1]]) %>% as.numeric)
-              if(length(matchj)>0){
-                (probj <- prob_splits[matchj])
-                (nj <- sitj$n * probj)
-                ni <- c(ni, nj)
+        # Loop through each population
+        if(length(populations) == 1 && is.na(populations)){
+          (n <- sit_key$n %>% sum)
+          (esw <- sit_key$esw %>% unlist %>% mean)
+          (er <- data.frame(population = NA, n, L, esw))
+        }else{
+          i=1
+          for(i in 1:length(populations)){
+            (popi <- populations[i])
+            n <- 0
+            if(nrow(density_sightings)>0){
+              ni <- c()
+              eswi <- c()
+              j=6
+              for(j in 1:nrow(sit_key)){
+                (sitj <- sit_key[j, ])
+                eswj <- sitj$esw %>% unlist
+                eswi <- c(eswi, eswj)
+                (popj <- sitj$population)
+                (pop_splits <- (stringr::str_split(popj, ';')[[1]]))
+                (matchj <- which(pop_splits == popi))
+                (probj <- sitj$pop_prob)
+                (prob_splits <- (stringr::str_split(probj, ';')[[1]]) %>% as.numeric)
+                if(length(matchj)>0){
+                  (probj <- prob_splits[matchj])
+                  (nj <- sitj$n * probj)
+                  ni <- c(ni, nj)
+                }
               }
-            }
-            ni
-            (n <- ni %>% sum)
-            (esw <- eswi %>% mean)
-          }     # end of if nrow density_sightings > 0
-          eri <- data.frame(population = popi, n, L, esw)
-          er <- rbind(er, eri)
-        } # end of loop through populations
-      } # end of NA check
+              ni
+              (n <- ni %>% sum)
+              (esw <- eswi %>% mean)
+            }     # end of if nrow density_sightings > 0
+            eri <- data.frame(population = popi, n, L, esw)
+            er <- rbind(er, eri)
+          } # end of loop through populations
+        } # end of NA check
+      } # end of if nrow density_sightings > 0
+
       er
       er$er <- er$n / er$L
       er
@@ -858,10 +898,10 @@ lta_subgroup <- function(df_sits, # DateTime, Lat, Lon, Cruise, PerpDistKm
     ds_esw$esw
 
     (eri <- er_subgroup(ds_esw, #boot_data$sightings,
-                       boot_data$segments,
-                       populations,
-                       stochastic = TRUE,
-                       seed=seediter))
+                        boot_data$segments,
+                        populations,
+                        stochastic = TRUE,
+                        seed=seediter))
     message('--- --- ',
             stringr::str_pad(i, width=4, pad=' ', side='left'),
             ' :: re-sampled encounter rate estimate = ',
