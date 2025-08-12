@@ -11,6 +11,9 @@ lta_subgroup(
   density_segments,
   density_das,
   density_sightings,
+  df_settings = list(covariates = NULL, covariates_factor = NULL, covariates_levels = 2,
+    covariates_n_per_level = 10, simplify_cue = TRUE, simplify_bino = TRUE,
+    detection_function_base = "hn", base_model = "~1", delta_aic = 2),
   Rg0 = NULL,
   cruz10 = NULL,
   g0_spp = NULL,
@@ -32,7 +35,9 @@ prior to 2010 and Phase 1 sightings from 2010 onwards (using the PC protocol).
 This \code{dataframe} must have a column named \code{PerpDistKM} with detection distances in km.
 No filtering will be applied to these sightings within this function,
 so make sure you provide the data pre-filtered. Bradford et al. (2020) used a
-single detection function for all populations of false killer whale.}
+single detection function for all populations of false killer whale.
+Note that all column names within \code{df_sits} must be within \code{density_sightings} and the names must match exactly.
+This is needed in order to predict the Effective Strip Width of \code{density_sightings} based on the detection function fitting procedure.}
 
 \item{truncation_distance}{(Required.) The truncation distance, in km, to apply during detection function model fitting.}
 
@@ -56,7 +61,13 @@ sea state during Relative \code{g(0)} estimation.}
 In Bradford et al. (2020), these were the Phase 1 detections of false killer whales
 within the population-region-year of interest, e.g., Northwest Hawaiian Island population sightings
 within the Hawaiian EEZ in 2017. No filtering will be applied to these sightings,
-so make sure only the sightings you wish to use are included and nothing more.}
+so make sure only the sightings you wish to use are included and nothing more.
+Note that all column names within \code{df_sits} must be within \code{density_sightings} and the names must match exactly.
+This is needed in order to predict the Effective Strip Width of \code{density_sightings} based on the detection function fitting procedure.}
+
+\item{df_settings}{Optional. A named list, with parameters for fitting the detection function.
+See detailed documentation in the \code{\link[=lta]{lta()}} function. Default inputs shown above.
+Note that the default is that covariates are \emph{not} used in detection function fitting.}
 
 \item{Rg0}{A \code{data.frame} with estimates of Relative \emph{g(0)} and its CV at each Bft state.
 If this input is left \code{NULL}, then these estimates will be produced by the function using the subsequent \code{g0_} inputs.
@@ -104,9 +115,14 @@ aspects of the analysis.}
 \item{verbose}{A Boolean, with default \code{TRUE}, indicating whether to print status updates to the Console.}
 }
 \value{
-A list.
+A list with these slots: \verb{$estimate} (point estimates of parameters, detailed below),
+\verb{$bft} (proportion of survey effort in each sea state),
+\verb{$g0_details} (details on g0 fitting),
+\verb{$df} (details on detection function fitting),
+\verb{$bootstraps} (parameter values for each bootstrap iteration),
+\verb{$iterations} (the number of iterations). Columns in \verb{$estimate} slot are as follows:
 \enumerate{
-\item \code{D}: The estimate of density.
+\item \code{D}: The estimate of density for the population.
 \item \code{D_CV}: The CV of the density estimate.
 \item \code{D_L95}: The lower 95\% confidence interval of density using the BCA method.
 \item \code{D_U95}: The upper 95\% confidence interval of density using the BCA method.
@@ -115,7 +131,7 @@ A list.
 \item \code{N_L95}: The lower 95\% confidence interval of abundance using the BCA method.
 \item \code{N_U95}: The upper 95\% confidence interval of abundance using the BCA method.
 \item \code{ER}: The estimate of the encounter rate.
-\item  \code{ESW} = The estimate of the Effective Strip Width (km).
+\item  \code{ESW} = The estimate of the Effective Strip Width (km) for the population.
 \item  \code{ESW_CV} = Estimate of ESW CV, based on standard deviation of bootstrap estimates of ESW.
 \item \code{ss} = Mean subgroup size estimate.
 \item \code{n}: Number of sightings used in density estimation.
@@ -145,23 +161,23 @@ then a weighted \code{g(0)} and its CV are estimated using \code{LTabundR} funct
 \details{
 This function performs the following operations:
 \enumerate{
-\item Fits a detection function to \code{df_sits} without covariates, using the \code{LTabundR} function \code{df_fit()},
-in order to estimate the effective strip half-width (ESW).
+\item Fits a detection function to \code{df_sits}, using the \code{LTabundR} function \code{df_fit()}.
+That function will be used to estimate the effective strip half-width (ESW) of each sighting in \code{detection_sightings} (and bootstrapped versions thereof).
 \item Conducts bootstrap re-sampling of the detection function fitting routine in order to estimate the CV of ESW.
 \item Estimates the arithmetic mean of subgroup school size based on the \code{ss} input.
 \item Creates a bootstrap-resampled distribution of subgroup school sizes, with which CV is estimated.
 \item Models the relative g(0) in different survey conditions using the \code{LTabundR} function \code{g0_model()}.
 This function also estimates the CV of the Rg(0) estimate in each Beaufort sea state using jackknife resampling.
-\item Estimates the encounter rate (subgroup detections / trackline surveyed).
-\item Creates a bootstrap-resampled distribution of encounter rate estimates.
+\item Estimates the ESW and encounter rate (subgroup detections / trackline surveyed).
+\item Creates a bootstrap-resampled distribution of encounter rate and ESW estimates.
 \item Calculates a weighted \code{g(0)} estimate according to the proportion of effort occurring in each Beaufort sea state,
 then uses an automated parameter optimization routine (see details in \code{LTabundR} function \code{g0_weighted()}) to
 estimate the CV of the weighted \code{g(0)} estimate.
 \item Creates a bootstrap-resampled distribution of the weighted \code{g(0)} estimate.
 \item Estimates density using the best estimates of effective strip half-width, school size, \code{g(0)}, and the encounter rate.
-\item Estimates abundance by scaling the density estimate by the provided \code{abundance_area}.
+\item Estimates abundance by scaling the density estimate by the provided \code{abundance_area}, if provided.
 \item Creates a bootstrap-resampled distribution of the density estimate by
-iteratively drawing values (without replacement) from the resampled distributions
+iteratively drawing values (without replacement, since the constituent distributions were already built with replacement) from the resampled distributions
 of the constituent parameters of the density equation.
 \item Creates a bootstrap-resampled distribtion of the abundance estimate by
 scaling the density distribution by \code{abundance_area}.

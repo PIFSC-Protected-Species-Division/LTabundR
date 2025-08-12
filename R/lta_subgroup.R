@@ -17,6 +17,8 @@
 #' No filtering will be applied to these sightings within this function,
 #' so make sure you provide the data pre-filtered. Bradford et al. (2020) used a
 #' single detection function for all populations of false killer whale.
+#' Note that all column names within `df_sits` must be within `density_sightings` and the names must match exactly.
+#' This is needed in order to predict the Effective Strip Width of `density_sightings` based on the detection function fitting procedure.
 #'
 #' @param truncation_distance (Required.) The truncation distance, in km, to apply during detection function model fitting.
 #'
@@ -41,6 +43,12 @@
 #' within the population-region-year of interest, e.g., Northwest Hawaiian Island population sightings
 #' within the Hawaiian EEZ in 2017. No filtering will be applied to these sightings,
 #' so make sure only the sightings you wish to use are included and nothing more.
+#' Note that all column names within `df_sits` must be within `density_sightings` and the names must match exactly.
+#' This is needed in order to predict the Effective Strip Width of `density_sightings` based on the detection function fitting procedure.
+#'
+#' @param df_settings Optional. A named list, with parameters for fitting the detection function.
+#' See detailed documentation in the [`lta()`] function. Default inputs shown above.
+#' Note that the default is that covariates are *not* used in detection function fitting.
 #'
 #' @param Rg0 A `data.frame` with estimates of Relative *g(0)* and its CV at each Bft state.
 #' If this input is left `NULL`, then these estimates will be produced by the function using the subsequent `g0_` inputs.
@@ -89,32 +97,37 @@
 #'
 #' @details This function performs the following operations:
 #' \enumerate{
-#' \item Fits a detection function to `df_sits` without covariates, using the `LTabundR` function `df_fit()`,
-#' in order to estimate the effective strip half-width (ESW).
+#' \item Fits a detection function to `df_sits`, using the `LTabundR` function `df_fit()`.
+#' That function will be used to estimate the effective strip half-width (ESW) of each sighting in `detection_sightings` (and bootstrapped versions thereof).
 #' \item Conducts bootstrap re-sampling of the detection function fitting routine in order to estimate the CV of ESW.
 #' \item Estimates the arithmetic mean of subgroup school size based on the `ss` input.
 #' \item Creates a bootstrap-resampled distribution of subgroup school sizes, with which CV is estimated.
 #' \item Models the relative g(0) in different survey conditions using the `LTabundR` function `g0_model()`.
 #' This function also estimates the CV of the Rg(0) estimate in each Beaufort sea state using jackknife resampling.
-#' \item Estimates the encounter rate (subgroup detections / trackline surveyed).
-#' \item Creates a bootstrap-resampled distribution of encounter rate estimates.
+#' \item Estimates the ESW and encounter rate (subgroup detections / trackline surveyed).
+#' \item Creates a bootstrap-resampled distribution of encounter rate and ESW estimates.
 #' \item Calculates a weighted `g(0)` estimate according to the proportion of effort occurring in each Beaufort sea state,
 #' then uses an automated parameter optimization routine (see details in `LTabundR` function `g0_weighted()`) to
 #' estimate the CV of the weighted `g(0)` estimate.
 #' \item Creates a bootstrap-resampled distribution of the weighted `g(0)` estimate.
 #' \item Estimates density using the best estimates of effective strip half-width, school size, `g(0)`, and the encounter rate.
-#' \item Estimates abundance by scaling the density estimate by the provided `abundance_area`.
+#' \item Estimates abundance by scaling the density estimate by the provided `abundance_area`, if provided.
 #' \item Creates a bootstrap-resampled distribution of the density estimate by
-#' iteratively drawing values (without replacement) from the resampled distributions
+#' iteratively drawing values (without replacement, since the constituent distributions were already built with replacement) from the resampled distributions
 #' of the constituent parameters of the density equation.
 #' \item Creates a bootstrap-resampled distribtion of the abundance estimate by
 #' scaling the density distribution by `abundance_area`.
 #' }
 #'
 #'
-#' @return A list.
+#' @return A list with these slots: `$estimate` (point estimates of parameters, detailed below),
+#' `$bft` (proportion of survey effort in each sea state),
+#' `$g0_details` (details on g0 fitting),
+#' `$df` (details on detection function fitting),
+#' `$bootstraps` (parameter values for each bootstrap iteration),
+#' `$iterations` (the number of iterations). Columns in `$estimate` slot are as follows:
 #' \enumerate{
-#' \item `D`: The estimate of density.
+#' \item `D`: The estimate of density for the population.
 #' \item `D_CV`: The CV of the density estimate.
 #' \item `D_L95`: The lower 95% confidence interval of density using the BCA method.
 #' \item `D_U95`: The upper 95% confidence interval of density using the BCA method.
@@ -123,7 +136,7 @@
 #' \item `N_L95`: The lower 95% confidence interval of abundance using the BCA method.
 #' \item `N_U95`: The upper 95% confidence interval of abundance using the BCA method.
 #' \item `ER`: The estimate of the encounter rate.
-#' \item  `ESW` = The estimate of the Effective Strip Width (km).
+#' \item  `ESW` = The estimate of the Effective Strip Width (km) for the population.
 #' \item  `ESW_CV` = Estimate of ESW CV, based on standard deviation of bootstrap estimates of ESW.
 #' \item `ss` = Mean subgroup size estimate.
 #' \item `n`: Number of sightings used in density estimation.
@@ -148,6 +161,15 @@ lta_subgroup <- function(df_sits, # DateTime, Lat, Lon, Cruise, PerpDistKm
                          density_segments, # already filtered to population
                          density_das,
                          density_sightings,
+                         df_settings = list(covariates = NULL,
+                                            covariates_factor = NULL,
+                                            covariates_levels = 2,
+                                            covariates_n_per_level = 10,
+                                            simplify_cue = TRUE,
+                                            simplify_bino = TRUE,
+                                            detection_function_base = 'hn',
+                                            base_model = '~1',
+                                            delta_aic = 2),
                          Rg0 = NULL,
                          cruz10 = NULL, # if NULL, load the built-in dataset
                          g0_spp = NULL,
@@ -166,159 +188,194 @@ lta_subgroup <- function(df_sits, # DateTime, Lat, Lon, Cruise, PerpDistKm
 
   if(FALSE){ # to develop/debug, use Pelagic population in 2017
 
-    #document()
-    # prep cruz  ===============================================================
-    data("cnp_150km_1986_2020")
-    cruz <- cnp_150km_1986_2020
-    cruz$cohorts$all$sightings$stratum %>% table
-    cruz$cohorts$pseudorca$subgroups$sightings
-    cruz$cohorts$pseudorca$subgroups$subgroups %>% names
+    {
+      # Default
+      df_settings = list(covariates = NULL,
+                         covariates_factor = NULL,
+                         covariates_levels = 2,
+                         covariates_n_per_level = 10,
+                         simplify_cue = TRUE,
+                         simplify_bino = TRUE,
+                         detection_function_base = 'hn',
+                         base_model = '~1',
+                         delta_aic = 2)
 
-    # df_sits ==================================================================
+      # testing for covariates
+      if(TRUE){
+        df_settings = list(covariates = c('Bft', 'EffType'),
+                           covariates_factor = c(FALSE, TRUE),
+                           covariates_levels = 2,
+                           covariates_n_per_level = 5,
+                           simplify_cue = TRUE,
+                           simplify_bino = TRUE,
+                           detection_function_base = 'hn',
+                           base_model = '~1',
+                           delta_aic = 2)
+      }
 
-    # For 1986 - 2010, assume all detections are Phase 1
-    sits1  <-
-      cruz$cohorts$all$sightings %>%
-      filter(OnEffort == TRUE,
-             year < 2011,
-             Lat >= 5, Lat <= 40, Lon >= -185, Lon <= -120,
-             species == '033',
-             mixed == FALSE) %>%
-      select(DateTime, Lat, Lon, Cruise, PerpDistKm)
+      #document()
+      # prep cruz  ===============================================================
+      data("cnp_150km_1986_2020")
+      cruz <- cnp_150km_1986_2020
+      cruz$cohorts$all$sightings$stratum %>% table
+      cruz$cohorts$pseudorca$subgroups$sightings
+      cruz$cohorts$pseudorca$subgroups$subgroups %>% names
 
-    sits1 %>% nrow
+      # df_sits ==================================================================
 
-    # For 2011 on, use subgroups data and filter to Phase 1 only
-    sits2  <-
-      cruz$cohorts$all$subgroups$subgroups %>%
-      filter(OnEffort == TRUE,
-             lubridate::year(DateTime) >= 2011,
-             Lat >= 5, Lat <= 40, Lon >= -185, Lon <= -120,
-             Species == '033',
-             Angle <= 90,
-             ObsStd == TRUE,
-             Phase == 1) %>%
-      select(DateTime, Lat, Lon, Cruise, PerpDistKm = PerpDist)
+      # include optional covariates: Bft & EffType
+      cruz$cohorts$all$sightings %>% head
+      cruz$cohorts$all$subgroups$subgroups %>% head
 
-    sits2 %>% nrow
+      # For 1986 - 2010, assume all detections are Phase 1
+      sits1  <-
+        cruz$cohorts$all$sightings %>%
+        filter(OnEffort == TRUE,
+               year < 2011,
+               Lat >= 5, Lat <= 40, Lon >= -185, Lon <= -120,
+               species == '033',
+               mixed == FALSE) %>%
+        select(DateTime, Lat, Lon, Cruise, PerpDistKm, Bft, EffType)
 
-    # Combine
-    df_sits <- rbind(sits1, sits2)
-    nrow(df_sits)
+      sits1 %>% nrow
 
-    # Truncation_distance ======================================================
-    hist(df_sits$PerpDistKm)
-    quantile(df_sits$PerpDistKm, c(0.90,0.91,0.92,0.93,0.94,.95))
-    abline(v=4.5, col='red', lty=3)
-    truncation_distance <- 4.5
+      # For 2011 on, use subgroups data and filter to Phase 1 only
+      sits2  <-
+        cruz$cohorts$all$subgroups$subgroups %>%
+        filter(OnEffort == TRUE,
+               lubridate::year(DateTime) >= 2011,
+               Lat >= 5, Lat <= 40, Lon >= -185, Lon <= -120,
+               Species == '033',
+               Angle <= 90,
+               ObsStd == TRUE,
+               Phase == 1) %>%
+        select(DateTime, Lat, Lon, Cruise, PerpDistKm = PerpDist, Bft, EffType)
 
-    # ss =======================================================================
-    # School size of subgroups # based on 2012 - 2020 PC protocol only
-    # not doing any phase 1 / phase 2 GLMM for now -- assume phase 1 and phase 2 are eqwally unbiased
+      sits2 %>% nrow
 
-    ss  <-
-      cruz$cohort$all$subgroups$subgroups %>%
-      filter(lubridate::year(DateTime) >= 2011,
-             Lat >= 5, Lat <= 40, Lon >= -185, Lon <= -120,
-             GSBest_geom_valid == TRUE,
-             Species == '033') %>%
-      pull(GSBest_geom)
+      # Combine
+      df_sits <- rbind(sits1, sits2)
+      nrow(df_sits)
+      df_sits %>% head
+      df_sits$Bft %>% table(useNA='ifany')
+      df_sits$EffType %>% table(useNA='ifany')
 
-    ss %>% length
+      # Truncation_distance ======================================================
+      hist(df_sits$PerpDistKm)
+      quantile(df_sits$PerpDistKm, c(0.90,0.91,0.92,0.93,0.94,.95))
+      abline(v=4.5, col='red', lty=3)
+      truncation_distance <- 4.5
 
-    # g0 params ================================================================
+      # ss =======================================================================
+      # School size of subgroups # based on 2012 - 2020 PC protocol only
+      # not doing any phase 1 / phase 2 GLMM for now -- assume phase 1 and phase 2 are eqwally unbiased
 
-    data(barlow_2015)
-    barlow_2015 %>% pull(title) %>% unique
+      ss  <-
+        cruz$cohort$all$subgroups$subgroups %>%
+        filter(lubridate::year(DateTime) >= 2011,
+               Lat >= 5, Lat <= 40, Lon >= -185, Lon <= -120,
+               GSBest_geom_valid == TRUE,
+               Species == '033') %>%
+        pull(GSBest_geom)
 
-    Rg0_fkw <- data.frame(title = 'False killer whale',
-                          scientific = 'Pseudorca crassidens',
-                          spp = '033',
-                          truncation = NA,
-                          pooling = 'none',
-                          regions = 'none',
-                          bft = 0:6,
-                          Rg0 = c(1, 1, .72, .51, .37, .26, .19),
-                          Rg0_CV = c(0, 0, 0.11, 0.22, 0.34, 0.46, 0.59),
-                          ESW = c(3.64, 3.37, 3.10, 2.82, 2.56, 2.30, 2.07),
-                          ESW_CV = c(.23, .19, .14, .07, .07, .15, .24))
-    Rg0_fkw
-    Rg0 <- Rg0_fkw
+      ss %>% length
 
-    g0_spp <- '033'
-    g0_truncation <- 5.5
-    g0_constrain_shape = FALSE
-    g0_jackknife_fraction = 0.1
+      # g0 params ================================================================
 
-    data("noaa_10km_1986_2020")
-    cruz10 <- noaa_10km_1986_2020
+      data(barlow_2015)
+      barlow_2015 %>% pull(title) %>% unique
 
-    # density_segments =========================================================
+      Rg0_fkw <- data.frame(title = 'False killer whale',
+                            scientific = 'Pseudorca crassidens',
+                            spp = '033',
+                            truncation = NA,
+                            pooling = 'none',
+                            regions = 'none',
+                            bft = 0:6,
+                            Rg0 = c(1, 1, .72, .51, .37, .26, .19),
+                            Rg0_CV = c(0, 0, 0.11, 0.22, 0.34, 0.46, 0.59),
+                            ESW = c(3.64, 3.37, 3.10, 2.82, 2.56, 2.30, 2.07),
+                            ESW_CV = c(.23, .19, .14, .07, .07, .15, .24))
+      Rg0_fkw
+      Rg0 <- Rg0_fkw
 
-    cruz$strata
-    cruzi <- filter_cruz(cruz = cruz,
-                         analysis_only = TRUE,
-                         years = 2017,
-                         cruises = c(1705, 1706),
-                         regions = 'HI_EEZ',
-                         bft_range = 0:6,
-                         eff_types = 'S',
-                         on_off = TRUE)
-    # simplify_strata
-    cruzi$cohorts$all$segments$stratum <- 'HI-EEZ'
-    density_segments <- cruzi$cohorts$all$segments
-    density_das <- cruz$cohorts$all$das
+      g0_spp <- '033'
+      g0_truncation <- 5.5
+      g0_constrain_shape = FALSE
+      g0_jackknife_fraction = 0.1
 
-    # density_sightings ========================================================
+      data("noaa_10km_1986_2020")
+      cruz10 <- noaa_10km_1986_2020
 
-    density_sightings  <-
-      cruz$cohorts$all$subgroups$subgroups %>%
-      filter(EffType == 'S',
-             OnEffort == TRUE,
-             lubridate::year(DateTime) == 2017,
-             PerpDist <= truncation_distance,
-             Species == '033',
-             Phase == 1)
-    density_sightings %>% nrow
-    density_sightings %>% head
+      # density_segments =========================================================
 
-    # abundance_area  ==========================================================
-    (abundance_area <- cruz$strata$area[cruz$strata$stratum == 'HI_EEZ'])
+      cruz$strata
+      cruzi <- filter_cruz(cruz = cruz,
+                           analysis_only = TRUE,
+                           years = 2017,
+                           cruises = c(1705, 1706),
+                           regions = 'HI_EEZ',
+                           bft_range = 0:6,
+                           eff_types = 'S',
+                           on_off = TRUE)
+      # simplify_strata
+      cruzi$cohorts$all$segments$stratum <- 'HI-EEZ'
+      density_segments <- cruzi$cohorts$all$segments
+      density_das <- cruz$cohorts$all$das
 
-    # final params
-    iterations <- 10
-    seed = 123
-    output_dir <- '../test_code/subgroup/'
-    output_dir <- "/Users/ekezell/Desktop"
-    toplot = TRUE
-    verbose = TRUE
-    stochastic = TRUE
+      # density_sightings ========================================================
 
+      density_sightings  <-
+        cruz$cohorts$all$subgroups$subgroups %>%
+        rename(PerpDistKm = PerpDist) %>%
+        filter(EffType == 'S',
+               OnEffort == TRUE,
+               lubridate::year(DateTime) == 2017,
+               PerpDistKm <= truncation_distance,
+               Species == '033',
+               Phase == 1)
+      density_sightings %>% nrow
+      density_sightings %>% head
+
+      # abundance_area  ==========================================================
+      (abundance_area <- cruz$strata$area[cruz$strata$stratum == 'HI_EEZ'])
+
+      # final params
+      iterations <- 10
+      seed = 123
+      output_dir <- '../test_code/subgroup/'
+      output_dir <- "/Users/ekezell/Desktop"
+      toplot = TRUE
+      verbose = TRUE
+      stochastic = TRUE
+    }
     # cruz <- cruzi
 
     # try it ===================================================================
     test <-
       lta_subgroup(df_sits,
-                 truncation_distance,
-                 ss,
-                 density_segments,
-                 density_das,
-                 density_sightings,
-                 Rg0 = Rg0,
-                 cruz10,
-                 g0_spp,
-                 g0_truncation,
-                 g0_constrain_shape,
-                 g0_jackknife_fraction,
-                 abundance_area,
-                 iterations = 10,
-                 #seed = NULL,
-                 seed = 123,
-                 output_dir = NULL,
-                 toplot,
-                 verbose)
+                   truncation_distance,
+                   ss,
+                   density_segments,
+                   density_das,
+                   density_sightings,
+                   df_settings=NULL,
+                   Rg0 = Rg0,
+                   cruz10,
+                   g0_spp,
+                   g0_truncation,
+                   g0_constrain_shape,
+                   g0_jackknife_fraction,
+                   abundance_area,
+                   iterations = 10,
+                   #seed = NULL,
+                   seed = 123,
+                   output_dir = NULL,
+                   toplot,
+                   verbose)
     test$estimate$D
     #[1] 0.003256424
+    test$estimate
     test$bootstraps$D
     #[1] 0.003679436 0.001844027 0.003449246 0.002388588 0.002896210 0.003450336
     #[7] 0.004759967 0.004894897 0.002043226 0.003788407
@@ -332,32 +389,230 @@ lta_subgroup <- function(df_sits, # DateTime, Lat, Lon, Cruise, PerpDistKm
 
   ##############################################################################
   ##############################################################################
+  # Handle df_settings
+
+  # Ensure all density_sightings are within df_sits
+  df_sits %>% head
+  (df_sits_names <- names(df_sits))
+  (tests <- sapply(df_sits_names, function(x){x %in% names(density_sightings)}))
+  if(!all(tests)){
+    stop('Wait!!! Not all columns from `df_sits` are present in `density_sighings`. Fix and try again!')
+  }
+
+  if(verbose){message('--- checking df_settings ...')}
+  df_settings
+  # defaults
+  covariates = NULL
+  covariates_factor = NULL
+  covariates_levels = 2
+  covariates_n_per_level = 10
+  simplify_cue = TRUE
+  simplify_bino = TRUE
+  detection_function_base = 'hn'
+  base_model = '~1'
+  delta_aic = 2
+
+  if(!is.null(df_settings)){
+    if(!is.null(df_settings$covariates)){covariates <- df_settings$covariates}
+    if(!is.null(df_settings$covariates_factor)){covariates_factor <- df_settings$covariates_factor}
+    if(!is.null(df_settings$covariates_levels)){covariates_levels <- df_settings$covariates_levels}
+    if(!is.null(df_settings$covariates_n_per_level)){covariates_n_per_level <- df_settings$covariates_n_per_level}
+    if(!is.null(df_settings$detection_function_base)){detection_function_base <- df_settings$detection_function_base}
+    if(!is.null(df_settings$base_model)){base_model <- df_settings$base_model}
+    if(!is.null(df_settings$delta_aic)){delta_aic <- df_settings$delta_aic}
+    if(!is.null(df_settings$simplify_cue)){simplify_cue <- df_settings$simplify_cue}
+    if(!is.null(df_settings$simplify_bino)){simplify_bino <- df_settings$simplify_bino}
+  }
+
+  # Basic formatting & checks
+  if(!is.null(covariates)){covariates <- tolower(covariates)}
+  if(length(covariates) != length(covariates_factor)){stop('Wait!!! In `df_settings`, `covariates` is not the same length as `covariates_factor.')}
+
+  if(!is.null(covariates)){
+    if(length(covariates)>0){
+
+      # Simplify cue or bino? ==================================================
+      if(verbose & any(simplify_cue, simplify_bino)){message('--- --- polishing cue and/or bino (sighting method) levels ...')}
+      if(simplify_cue){
+        if('Cue' %in% names(df_sits)){
+          others <- which(df_sits$Cue %in% c(0,1,2,4,7))
+          if(length(others)>0){df_sits$Cue[others] <- 5}
+        }
+      }
+      if(simplify_bino){
+        if('Method' %in% names(df_sits)){
+          others <- which(df_sits$Method != 4)
+          if(length(others)>0){df_sits$Method[others] <- 5}
+        }
+      }
+
+      # Check that all coavariates are there ===================================
+      bads <-
+        sapply(covariates, function(x){
+          coli <- which(tolower(names(df_sits)) == x)
+          if(length(coli) == 0){ return(x) }else{ return(NULL) }
+        }) %>%
+        unlist %>% unique
+      bads
+      if(length(bads)>0){
+        stop('Wait!!! In `df_settings`, not all covaraites match a column name in `df_sits`. Fix and try again!')
+      }
+
+      # Numeric covariates =====================================================
+      (numeric_covars <- covariates[!covariates_factor])
+      # Get indices for which one of the numeric covariates is NA
+      if(length(numeric_covars)>0){
+        bads <-
+          sapply(numeric_covars, function(x){
+            coli <- which(tolower(names(df_sits)) == x)
+            bads <- which(is.na(as.numeric(df_sits[,coli])))
+            return(bads)
+          }) %>%
+          unlist %>% unique
+        bads
+        # If there are any, remove them and announce that you are doing so.
+        if(length(bads)>0){
+          stop('Wait!!! In NAs were introduced when numeric coveriates were forced to be numeric. Fix and try again!')
+        }
+      }
+
+      # Factor covariates ====================================================
+      (factor_covars <- covariates[covariates_factor])
+      # Get indices for which one of the numeric covariates is NA
+      if(length(factor_covars)>0){
+        bads <-
+          sapply(factor_covars, function(x){
+            coli <- which(tolower(names(df_sits)) == x)
+            bads <- which(is.na(as.factor(df_sits[,coli])))
+            return(bads)
+          }) %>%
+          unlist %>% unique
+        bads
+        # If there are any, remove them and announce that you are doing so.
+        if(length(bads)>0){
+          stop('Wait!!! In NAs were introduced when factor coveriates were forced to be factors Fix and try again!')
+        }
+      }
+
+      #=============================================================================
+      # Process factorial covariates
+      if(any(covariates_factor)){ # only proceed if at least one covariate is intended as a factor
+        if(verbose){message('--- --- inventorying covariate factors ...')}
+        # Setup master list of factor levels for each covariate
+        covar_levels <- list()
+        # Get the covariates intended as factors
+        (covar_numeric <- covariates[! covariates_factor])
+        (covar_factors <- covariates[covariates_factor])
+        cfi=2 # loop through each of them
+        for(cfi in 1:length(covar_factors)){
+          (covari <- covar_factors[cfi]) # get this covariate
+
+          # Find the matching column in the df_sits sightings
+          (dist_matchi <- which(tolower(names(df_sits))==covari))
+          (dist_covari <- df_sits[,dist_matchi])
+
+          # Assess sample size
+          (level_counts <- dist_covari %>% table)
+          sufficient <- TRUE
+          if(length(level_counts) < covariates_levels){sufficient <- FALSE} ; sufficient
+          if(min(level_counts) < covariates_n_per_level){sufficient <- FALSE} ; sufficient
+
+          # If sample size is sufficient, add to the master list
+          if(sufficient){
+            df_sits[, dist_matchi] <- factor(df_sits[, dist_matchi])
+            covar_levels[[length(covar_levels) + 1]] <- unique(dist_covari)
+            names(covar_levels)[length(covar_levels)] <- covari
+          }
+        }
+        covar_levels
+
+        # Use covar_levels to update the list of covariates to try in detection function fitting
+        new_covariates <- covar_numeric
+        new_covariates_factor <- rep(FALSE, times=length(new_covariates))
+        if(length(covar_levels)>0){
+          new_covariates <- c(new_covariates, names(covar_levels))
+          new_covariates_factor <- c(new_covariates_factor, rep(TRUE, times=length(covar_levels)))
+        }
+        (new_covariates)
+        covariates <- new_covariates
+        (new_covariates_factor)
+        covariates_factor <- new_covariates_factor
+      }
+
+      covar_levels
+      covariates
+      if(verbose){message('--- --- covariates that will be used in detection function fitting:    \n        ',paste(covariates, collapse=', '))}
+    }} # end of handling covariates
+
+  ##############################################################################
+  ##############################################################################
   # Estimate the detection function
 
   # Fit detection function
   if(verbose){message('--- fitting the detection function ...')}
-  df <- df_fit(sightings = df_sits, truncation_distance = truncation_distance)
+  #df_sits$i_fit <- 1:nrow(df_sits) # Add unique identifier for each row
+  df_sits_names <- names(df_sits)
+  df <- df_fit(sightings = df_sits,
+               truncation_distance = truncation_distance,
+               covariates = covariates,
+               detection_function_base = detection_function_base,
+               base_model = base_model,
+               delta_aic = delta_aic,
+               toplot = toplot,
+               verbose = verbose)
 
-  # Extract ESW (1 / f0)
-  if(verbose){message('--- estimating ESW ...')}
-  (esw <- predict(df$best_objects[[1]], esw=TRUE)$fitted[1])
-
-  # Repeat this in a bootstrap method
-  esw_boots <- c()
-  i = 1
-  for(i in 1:iterations){
-    if(!is.null(seed)){set.seed(seed + i)}
-    resamples <- sample(1:nrow(df_sits), size=nrow(df_sits), replace=TRUE)
-    siti <- df_sits[resamples, ]
-    dfi <- df_fit(sightings = siti, truncation_distance = truncation_distance, toplot=FALSE, verbose=FALSE)
-    (eswi <- predict(dfi$best_objects[[1]], esw=TRUE)$fitted[1] %>% as.numeric)
-    message('--- --- ',
-            stringr::str_pad(i, width=4, pad=' ', side='left'),
-            ' :: re-sampled ESW estimate = ',round(eswi,3), ' km')
-    esw_boots <- c(esw_boots, eswi)
-    if(!is.null(output_dir)){saveRDS(esw_boots, file=paste0(output_dir,'esw_boots.RData'))}
+  if(verbose){
+    message('--- --- ranked fits for candidate models:')
+    print(df$all_models %>% select(Formula, AIC))
   }
-  esw_boots
+
+  # Get averaged df curve for best models, using LTabundR function df_curve()
+  df_models <- df$best_objects
+  mod_curve <- df_curve(df_models, covariates, truncation_distance)
+  if(toplot){mod_curve %>% plot(ylim=c(0,1))}
+
+  # Get esw column from df_fit() results, then join to sightings
+  fitted_sightings <- df$sightings
+  if(verbose){message('--- --- fitted sightings n = ',nrow(fitted_sightings))}
+  if(verbose){message('--- --- extracting ESW estimates ...')}
+  (df_sits <- df_sits %>% mutate(esw = fitted_sightings$esw))
+  # esw is now a column in new_sightings
+  df_sits$esw %>% table(useNA='ifany')
+  message('--- --- mean of ESW estimates = ',round(mean(df_sits$esw),3), ' km')
+
+  # Repeat this in a bootstrap method ==========================================
+  esw_boots <- list()
+  df_boots <- list()
+  #esw_boots <- c()
+  if(iterations > 1){
+    i = 1
+    for(i in 1:iterations){
+      if(!is.null(seed)){set.seed(seed + i)}
+      resamples <- sample(1:nrow(df_sits), size=nrow(df_sits), replace=TRUE)
+      siti <- df_sits[resamples, ]
+      siti$i_fit <- 1:nrow(siti) # Add unique identifier for each row
+      dfi <- df_fit(sightings = siti,
+                    truncation_distance = truncation_distance,
+                    covariates = covariates,
+                    detection_function_base = detection_function_base,
+                    base_model = base_model,
+                    delta_aic = delta_aic,
+                    toplot=FALSE,
+                    verbose=FALSE)
+      siti$esw <- dfi$sightings$esw
+      siti %>% head
+      siti$esw %>% table
+      esw_boots[[i]] <- siti
+      df_boots[[i]] <- dfi$best_objects
+      message('--- --- ',
+              stringr::str_pad(i, width=4, pad=' ', side='left'),
+              ' :: mean of re-sampled ESW estimates = ',round(mean(siti$esw),3), ' km')
+      if(!is.null(output_dir)){saveRDS(esw_boots, file=paste0(output_dir,'esw_boots.RData'))}
+      if(!is.null(output_dir)){saveRDS(df_boots, file=paste0(output_dir,'df_boots.RData'))}
+    }
+  }
+  esw_boots %>% length
+  df_boots %>% length
 
   ##############################################################################
   # School size bootstraps
@@ -413,6 +668,7 @@ lta_subgroup <- function(df_sits, # DateTime, Lat, Lon, Cruise, PerpDistKm
 
 
   ##############################################################################
+  ##############################################################################
   # Encounter rate
 
   if(verbose){message('\n--- estimating the encounter rate ...')}
@@ -425,108 +681,159 @@ lta_subgroup <- function(df_sits, # DateTime, Lat, Lon, Cruise, PerpDistKm
       unique)
 
   #=============================================================================
-  # convenience function
+  # convenience functions
   #=============================================================================
 
-  er_subgroup <- function(density_sightings,
-                          density_segments,
-                          populations,
-                          stochastic = FALSE,
-                          seed = NULL){
+  {
+    # convenience function to predict ESW of density_sightings ===================
+    esw_predict <- function(density_sightings,
+                            df_sits_names,
+                            df_bests){
+      # prep version of density_sightings that can be used for predicting ESW
+      ds_temp <- density_sightings
+      names(ds_temp) <- tolower(names(ds_temp))
+      (ds_temp <- ds_temp %>%
+          select(all_of(tolower(df_sits_names))) %>%
+          mutate(object = 1:n(),
+                 observer=1,
+                 detected=1))
+      # predict ESW for every best model
+      esws <- list()
+      df
+      (bestis <- df_bests)
+      j=1
+      for(j in 1:length(bestis)){
+        eswsi <- predict(bestis[[j]],
+                         newdata=ds_temp,
+                         esw=TRUE)$fitted
+        esws[[i]] <- eswsi
+      }
+      esws
+      (esws1 <- as.data.frame(do.call(rbind, esws)))
+      (esws2 <- apply(esws1, 2, mean) %>% as.numeric)
+      # Add to density_sightings
+      density_sightings$esw <- esws2
+      return(density_sightings)
+    }
 
-    if(nrow(density_sightings)>0){
-      # Make a key with one sighting per row, summing subgroups in each sighting
-      (sit_key <-
-         density_sightings %>%
-         group_by(sitid) %>%
-         summarize(n=n(),
-                   population = population[1],
-                   pop_prob = pop_prob[1]))
+    #=============================================================================
+    #=============================================================================
 
+    er_subgroup <- function(density_sightings,
+                            density_segments,
+                            populations,
+                            stochastic = FALSE,
+                            seed = NULL){
 
-      # Stochastically assign mixed-population sightings to a single pop? ========
-      # Handle stochastic assignment
-      if(stochastic == TRUE & length(populations) > 1){
-        j=6
-        for(j in 1:nrow(sit_key)){
-          (sitj <- sit_key[j, ])
-          (popj <- sitj$population)
-          (pop_splits <- (stringr::str_split(popj, ';')[[1]]))
-          (probj <- sitj$pop_prob)
-          (prob_splits <- (stringr::str_split(probj, ';')[[1]]) %>% as.numeric)
-          # See if this sighting's population is split
-          if(length(pop_splits)>1 & length(prob_splits)>1){
-            pop_splits
-            prob_splits
+      if(nrow(density_sightings)>0){
+        # Make a key with one sighting per row, summing subgroups in each sighting
+        if(! 'esw' %in% names(density_sightings)){
+          density_sightings$esw <- NA
+        }
 
-            # Make sure probabilities are ordered
-            pop_splits <- pop_splits[order(prob_splits)]
-            prob_splits <- prob_splits[order(prob_splits)]
+        (sit_key <-
+            density_sightings %>%
+            group_by(sitid) %>%
+            summarize(n=n(),
+                      population = population[1],
+                      pop_prob = pop_prob[1],
+                      esw = list(esw)))
 
-            # Set up a probability table
-            (splits <- data.frame(population = pop_splits,
-                                  prob = prob_splits) %>%
-                mutate(prob_cum = cumsum(prob)))
-
-            # Take a stochastic draw to determine population
-            if(!is.null(seed)){set.seed(seed + j)}
-            (drawi <- runif(1, 0, 1))
-            (popi <- splits$population[splits$prob_cum >= drawi][1])
-
-            # Update population in sit_key
-            sit_key$population[j] <- popi
-            sit_key$pop_prob[j] <- '1'
-          }
-        } # end of loop through each sighting
-      } # end of stochastic reassignment =========================================
-    } # end of if nrow density_sightings > 0
-
-    # Stage encounter rate result
-    er <- data.frame()
-    L <- density_segments$dist %>% sum
-
-    # Loop through each population
-    if(length(populations) == 1 && is.na(populations)){
-      n <- sit_key$n %>% sum
-      er <- data.frame(population = NA, n, L)
-    }else{
-      i=1
-      for(i in 1:length(populations)){
-        (popi <- populations[i])
-        n <- 0
-        if(nrow(density_sightings)>0){
-          ni <- c()
+        # Stochastically assign mixed-population sightings to a single pop? ========
+        # Handle stochastic assignment
+        if(stochastic == TRUE & length(populations) > 1){
           j=6
           for(j in 1:nrow(sit_key)){
             (sitj <- sit_key[j, ])
             (popj <- sitj$population)
             (pop_splits <- (stringr::str_split(popj, ';')[[1]]))
-            (matchj <- which(pop_splits == popi))
             (probj <- sitj$pop_prob)
             (prob_splits <- (stringr::str_split(probj, ';')[[1]]) %>% as.numeric)
-            if(length(matchj)>0){
-              (probj <- prob_splits[matchj])
-              (nj <- sitj$n * probj)
-              ni <- c(ni, nj)
-            }
-          }
-          ni
-          n <- ni %>% sum
-        }     # end of if nrow density_sightings > 0
-        eri <- data.frame(population = popi, n, L)
-        er <- rbind(er, eri)
-      } # end of loop through populations
-    } # end of NA check
-    er
+            # See if this sighting's population is split
+            if(length(pop_splits)>1 & length(prob_splits)>1){
+              pop_splits
+              prob_splits
 
-    er$er <- er$n / er$L
-    er
-    return(er)
+              # Make sure probabilities are ordered
+              pop_splits <- pop_splits[order(prob_splits)]
+              prob_splits <- prob_splits[order(prob_splits)]
+
+              # Set up a probability table
+              (splits <- data.frame(population = pop_splits,
+                                    prob = prob_splits) %>%
+                  mutate(prob_cum = cumsum(prob)))
+
+              # Take a stochastic draw to determine population
+              if(!is.null(seed)){set.seed(seed + j)}
+              (drawi <- runif(1, 0, 1))
+              (popi <- splits$population[splits$prob_cum >= drawi][1])
+
+              # Update population in sit_key
+              sit_key$population[j] <- popi
+              sit_key$pop_prob[j] <- '1'
+            }
+          } # end of loop through each sighting
+        } # end of stochastic reassignment =========================================
+      } # end of if nrow density_sightings > 0
+      sit_key
+
+      # Stage encounter rate result
+      er <- data.frame()
+      L <- density_segments$dist %>% sum
+      # Loop through each population
+      if(length(populations) == 1 && is.na(populations)){
+        (n <- sit_key$n %>% sum)
+        (esw <- sit_key$esw %>% unlist %>% mean)
+        (er <- data.frame(population = NA, n, L, esw))
+      }else{
+        i=1
+        for(i in 1:length(populations)){
+          (popi <- populations[i])
+          n <- 0
+          if(nrow(density_sightings)>0){
+            ni <- c()
+            eswi <- c()
+            j=6
+            for(j in 1:nrow(sit_key)){
+              (sitj <- sit_key[j, ])
+              eswj <- sitj$esw %>% unlist
+              eswi <- c(eswi, eswj)
+              (popj <- sitj$population)
+              (pop_splits <- (stringr::str_split(popj, ';')[[1]]))
+              (matchj <- which(pop_splits == popi))
+              (probj <- sitj$pop_prob)
+              (prob_splits <- (stringr::str_split(probj, ';')[[1]]) %>% as.numeric)
+              if(length(matchj)>0){
+                (probj <- prob_splits[matchj])
+                (nj <- sitj$n * probj)
+                ni <- c(ni, nj)
+              }
+            }
+            ni
+            (n <- ni %>% sum)
+            (esw <- eswi %>% mean)
+          }     # end of if nrow density_sightings > 0
+          eri <- data.frame(population = popi, n, L, esw)
+          er <- rbind(er, eri)
+        } # end of loop through populations
+      } # end of NA check
+      er
+      er$er <- er$n / er$L
+      er
+      return(er)
+    }
   }
   # end of convenience function ================================================
 
+  # Point estimate of ESW for each in density_sightings
+  density_sightings_esw <-
+    esw_predict(density_sightings,
+                df_sits_names,
+                df$best_objects)
+  density_sightings_esw$esw
+
   # Point estimate of encounter rate ===========================================
-  (er_estimate <- er_subgroup(density_sightings,
+  (er_estimate <- er_subgroup(density_sightings_esw,
                               density_segments,
                               populations,
                               stochastic = FALSE,
@@ -540,17 +847,21 @@ lta_subgroup <- function(df_sits, # DateTime, Lat, Lon, Cruise, PerpDistKm
   i = 1
   for(i in 1:iterations){
     if(!is.null(seed)){seediter <- seed + i}
+    # Bootstrap the segments and sightings
     boot_data <- prep_bootstrap_datasets(segments = density_segments,
                                          sightings = density_sightings,
                                          seed=seediter)
-    eri <- er_subgroup(boot_data$sightings,
+
+    # Recall the bootstrapped detection function for this iteration
+    (dfi <- df_boots[[i]])
+    ds_esw <- esw_predict(boot_data$sightings, df_sits_names, dfi)
+    ds_esw$esw
+
+    (eri <- er_subgroup(ds_esw, #boot_data$sightings,
                        boot_data$segments,
                        populations,
                        stochastic = TRUE,
-                       seed=seediter)
-    #(Li <- boot_data$segments$dist %>% sum)
-    #(ni <- boot_data$sightings %>% nrow)
-    #(eri <- ni / Li)
+                       seed=seediter))
     message('--- --- ',
             stringr::str_pad(i, width=4, pad=' ', side='left'),
             ' :: re-sampled encounter rate estimate = ',
@@ -586,11 +897,11 @@ lta_subgroup <- function(df_sits, # DateTime, Lat, Lon, Cruise, PerpDistKm
   if(toplot){hist(g0_boots)}
 
   ##############################################################################
+  ##############################################################################
   # Density estimation
 
   # Get estimate
   if(verbose){message('\n--- estimating density & abundance...')}
-
   populations
   er_estimate$D <- NA
   er_estimate$N <- NA
@@ -600,13 +911,15 @@ lta_subgroup <- function(df_sits, # DateTime, Lat, Lon, Cruise, PerpDistKm
     (popi <- populations[i])
     message('--- --- population = ', popi)
 
-    message('--- --- --- point estimate...')
+    message('--- --- --- point estimate...') #==================================
     if(is.na(popi)){
       (eri <- er_estimate %>% filter(is.na(population)))
     }else{
       (eri <- er_estimate %>% filter(population == popi))
     }
-    (D <- eri$er * (as.numeric(ss_estimate) / (2 * esw * g0_wt_mn)))
+    (D <- eri$er * (as.numeric(ss_estimate) / (2 * eri$esw * g0_wt_mn)))
+    #(er_2esw <- eri$er / (2*eri$esw))
+    #(D <- er_2esw * (as.numeric(ss_estimate)) * (1/g0_wt_mn))
     D * 100
     er_estimate$D[i] <- D
     if(!is.null(abundance_area)){
@@ -614,7 +927,7 @@ lta_subgroup <- function(df_sits, # DateTime, Lat, Lon, Cruise, PerpDistKm
       er_estimate$N[i] <- N
     }
 
-    message('--- --- --- bootstraps...\n')
+    message('--- --- --- bootstraps...\n') #====================================
     if(is.na(popi)){
       (booti <- er_boots %>% filter(is.na(population)))
     }else{
@@ -622,7 +935,7 @@ lta_subgroup <- function(df_sits, # DateTime, Lat, Lon, Cruise, PerpDistKm
     }
     (itsi <- data.frame(booti,
                         ss = ss_boots,
-                        esw = esw_boots,
+                        #esw = esw_boots,
                         g0 = g0_boots))
     if(!is.null(seed)){set.seed(seed + i)}
     itsi <- itsi[sample(1:nrow(itsi), size= iterations, replace=FALSE),]
@@ -666,6 +979,7 @@ lta_subgroup <- function(df_sits, # DateTime, Lat, Lon, Cruise, PerpDistKm
               er_sd = sd(er))
 
   pops <- left_join(er_estimate, bootsumm, by='population')
+  pops %>% head
   pops <-
     pops %>%
     mutate(ESW = esw %>% as.numeric,
