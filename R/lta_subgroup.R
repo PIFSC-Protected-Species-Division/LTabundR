@@ -341,7 +341,7 @@ lta_subgroup <- function(df_sits, # DateTime, Lat, Lon, Cruise, PerpDistKm
       (abundance_area <- cruz$strata$area[cruz$strata$stratum == 'HI_EEZ'])
 
       # final params
-      iterations <- 10
+      iterations <- 1000
       seed = 123
       output_dir <- '../test_code/subgroup/'
       output_dir <- "/Users/ekezell/Desktop"
@@ -884,7 +884,8 @@ lta_subgroup <- function(df_sits, # DateTime, Lat, Lon, Cruise, PerpDistKm
 
   er_boots <- data.frame()
   seediter <- seed
-  i = 1
+  i=1
+  #i = 673
   for(i in 1:iterations){
     if(!is.null(seed)){seediter <- seed + i}
     # Bootstrap the segments and sightings
@@ -895,6 +896,7 @@ lta_subgroup <- function(df_sits, # DateTime, Lat, Lon, Cruise, PerpDistKm
     # Recall the bootstrapped detection function for this iteration
     (dfi <- df_boots[[i]])
     ds_esw <- esw_predict(boot_data$sightings, df_sits_names, dfi)
+    ds_esw
     ds_esw$esw
 
     (eri <- er_subgroup(ds_esw, #boot_data$sightings,
@@ -1006,8 +1008,18 @@ lta_subgroup <- function(df_sits, # DateTime, Lat, Lon, Cruise, PerpDistKm
   er_estimate
   its %>% head
 
+  if(verbose){
+    (nas <- which(is.na(its$D)))
+    if(length(nas)>0){
+      its[nas,]
+      message('--- --- ', length(nas), ' bootstrap attempts returned NA for D, out of ', nrow(its))
+    }
+  }
+
+
   bootsumm <-
     its %>%
+    filter(!is.na(D)) %>%
     group_by(population) %>%
     summarize(D_sd = sd(D),
               D_L95 = coxed::bca(D)[1],
