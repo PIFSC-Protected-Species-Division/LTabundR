@@ -172,15 +172,15 @@ spp1_5 <- g0_table(cruzi,
                    jackknife_fraction = 0.1,
                    seed = 123)
 spp6_10 <- g0_table(cruzi,
-                   species[6:10],
-                   eff_types = 'S',
-                   jackknife_fraction = 0.1,
-                   seed = 123)
-spp11_15 <- g0_table(cruzi,
-                    species[11:15],
+                    species[6:10],
                     eff_types = 'S',
                     jackknife_fraction = 0.1,
                     seed = 123)
+spp11_15 <- g0_table(cruzi,
+                     species[11:15],
+                     eff_types = 'S',
+                     jackknife_fraction = 0.1,
+                     seed = 123)
 spp16_20 <- g0_table(cruzi,
                      species[16:20],
                      eff_types = 'S',
@@ -193,8 +193,6 @@ spp21_25 <- g0_table(cruzi,
                      seed = 123)
 
 (Rg0 <- rbind(spp1_5, spp6_10, spp11_15, spp16_20, spp21_25))
-
-
 
 # Rg0 <-
 #   g0_table(cruzi,
@@ -237,5 +235,15 @@ if(FALSE){
 
 Rg0
 g0_results <- rbind(Rg0, sp036)
+
+if(FALSE){
+  data(g0_results)
+  # fix one-time problem - 036 duplicated
+  which(g0_results$spp == '036' & g0_results$bft == 0)
+  which(g0_results$spp == '036' & g0_results$bft == 6)
+  g0_results <- g0_results[-c(176:182),]
+  g0_results %>% filter(spp == '036')
+}
+
 usethis::use_data(g0_results, overwrite = TRUE)
 
