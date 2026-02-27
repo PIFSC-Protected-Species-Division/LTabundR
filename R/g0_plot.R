@@ -86,7 +86,7 @@ ggList <- lapply(split(Rg0new, Rg0new$Group),
                      scale_y_continuous(breaks = seq(0,1,by=0.1), limits=c(0,1)) +
                      theme_light() +
                      scale_x_continuous(breaks=0:6) +
-                     xlab('Beaufort Sea State') + ylab('Relative g(0)') +
+                     xlab('Beaufort sea state') + ylab(expression('Relative ' ~ italic('g(0)'))) +
                      labs(color = 'Species group') +
                      theme(legend.title = element_text(size=(legend_font + 1)), #change legend title font size
                            legend.key.height = unit(legend_key, 'cm'), #change legend key height

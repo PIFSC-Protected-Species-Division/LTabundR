@@ -506,18 +506,21 @@ lta_report <- function(lta_result,
 
   suppressMessages({
     (estimates <- lta_result$estimate)
+    estimates$title %>% unique
+    estimates$Area
+    estimates$Region
     tablea1 <-
       estimates %>%
       rename(Year = year) %>%
       mutate(Area = format(round(Area), big.mark=',')) %>%
-      group_by(Area, Region) %>%
+      group_by(Area, Region, title) %>%
       summarize(Year = paste(unique(Year), collapse=', '),
                 Species = ifelse(length(unique(title)) > 1, 'All other species', unique(title))) %>%
       mutate(Region = gsub(r"{\s*\(}",'',Region)) %>%
       mutate(Region = gsub(r"{\s*\)}",'',Region)) %>%
       mutate(Region_Year = paste0(Region,' (',Year,')')) %>%
       select(Species, Region_Year, Area) %>%
-      tidyr::pivot_wider(id_cols = Species, values_from = Area, names_from = Region_Year, values_fill = '-')
+      tidyr::pivot_wider(id_cols = Species, values_from = Area, names_from = Region_Year)#, values_fill = '-')
   })
 
   ##############################################################################
