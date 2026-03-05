@@ -75,11 +75,28 @@ g0_table <- function(cruz,
     jackknife_fraction = NULL
 
     species <- list(
-      list(spp = '046',
-           title = 'Sperm whale',
-           truncation = 5,
+      list(spp = '036',
+           title = 'Short-finned pilot whale',
+           truncation = 5.5,
            pool_bft = NULL,
            regions = NULL))
+
+    cruz <- filter_cruz(noaa_10km_1986_2020,
+                         years=1986:2010,
+                         analysis_only = TRUE,
+                         eff_types = c('S','N'),
+                         bft_range = 0:6,
+                         on_off = TRUE)
+
+    sits <- cruzi$cohorts$all$sightings %>%
+      filter(PerpDistKm < 5.5) %>%
+      filter(species == '036')
+
+    sits %>% nrow
+
+    cruzi$cohorts$all$das$EffType %>% table
+
+
 
   } #===========================================================================
 
@@ -134,12 +151,17 @@ g0_table <- function(cruz,
     # Summarize sample sizes
     (summi <- rg0_sp$summary)
 
+    #rg0_sp$sightings$bft %>% table %>% sum
+    #rg0_sp$sightings %>% nrow
+
+    #rg0_sp$sightings$bft %>% table
     summi$sits <-
       sapply(0:6, function(x){
         rg0_sp$sightings %>%
           summarize(sits = length(which(bft == x))) %>%
           as.numeric
       })
+    #summi$sits %>% sum
     summi$sits_p <- summi$sits / sum(summi$sits)
 
     summi$segs <-

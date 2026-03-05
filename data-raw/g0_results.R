@@ -144,7 +144,7 @@ species <- list(
        regions = 'CCS'),
   #22
   list(spp = '075',
-       title = 'Blue whale',
+       title = ' Blue whale',
        truncation = 5.5,
        regions = 'CCS'),
   #23
@@ -166,30 +166,33 @@ species <- list(
 ################################################################################
 # Run Rg0 estimation analysis
 
+jkf <- 0.1
+jkf <- 0
+
 spp1_5 <- g0_table(cruzi,
                    species[1:5],
                    eff_types = 'S',
-                   jackknife_fraction = 0.1,
+                   jackknife_fraction = jkf,
                    seed = 123)
 spp6_10 <- g0_table(cruzi,
                     species[6:10],
                     eff_types = 'S',
-                    jackknife_fraction = 0.1,
+                    jackknife_fraction = jkf,
                     seed = 123)
 spp11_15 <- g0_table(cruzi,
                      species[11:15],
                      eff_types = 'S',
-                     jackknife_fraction = 0.1,
+                     jackknife_fraction = jkf,
                      seed = 123)
 spp16_20 <- g0_table(cruzi,
                      species[16:20],
                      eff_types = 'S',
-                     jackknife_fraction = 0.1,
+                     jackknife_fraction = jkf,
                      seed = 123)
 spp21_25 <- g0_table(cruzi,
                      species[21:25],
                      eff_types = 'S',
-                     jackknife_fraction = 0.1,
+                     jackknife_fraction = jkf,
                      seed = 123)
 
 (Rg0 <- rbind(spp1_5, spp6_10, spp11_15, spp16_20, spp21_25))
@@ -205,6 +208,59 @@ g0_plot(Rg0, panes = 3)
 
 ################################################################################
 #### Explore / QA-QC
+
+table3 <-
+  Rg0 %>%
+  mutate(`Trunc.` = 5.5) %>%
+  group_by(title) %>%
+  mutate(n = format(sum(sits), big.mark=',')) %>%
+  mutate(Rg0 = stringr::str_pad(round(Rg0, 3), side='left',width=4, pad='0')) %>%
+  mutate(Rg0_CV = stringr::str_pad(round(Rg0_CV, 3), side='left',width=4, pad='0')) %>%
+  ungroup() %>%
+  select(Species = title, n, `Trunc.`, bft, Rg0, Rg0_CV) %>%
+  mutate(bft = paste0('Bft ',bft)) %>%
+  mutate(g0 = paste0(Rg0,' (',Rg0_CV, ')')) %>%
+  pivot_wider(id_cols = Species:`Trunc.`,
+              names_from = bft,
+              values_from = g0) %>%
+  mutate(`Bft 0` = '1.000 (0)')
+
+table3$`Trunc.`[c(14, 15, 17, 19)] <- '4.0'
+
+table3 <-
+  table3 %>%
+  filter(Species != 'Delphinus spp',
+         Species != 'Stenella longirostris spp',
+         Species != "Fraser's dolphin",
+         Species != 'Melon-headed whale',
+         Species != 'Killer whale',
+         Species != "Cuvier's beaked whale",
+         Species != "Dall's porpoise",
+         Species != "Unid. beaked whale",
+         Species != "Unid. dolphin",
+         Species != "Unid. cetacean",
+         Species != " Blue whale",
+         Species != "Minke whale") %>%
+  mutate(Species = ifelse(Species == 'Bottlenose dolphin',
+                          'Common bottlenose dolphin',
+                          Species)) %>%
+  mutate(Species = ifelse(Species == 'Stenella attenuata spp',
+                          'Pantropical spotted dolphin',
+                          Species)) %>%
+  mutate(Species = ifelse(Species == 'Kogia spp',
+                          '\\emph{Kogia} spp',
+                          Species)) %>%
+  mutate(Species = ifelse(Species == 'Mesoplodon spp',
+                          '\\emph{Mesoplodon} spp',
+                          Species))
+
+library(tinytable)
+tt(table3,
+   width=c(.25, .05, .05, .06, .08, .08, .08, .08, .08, .08)) %>%
+  style_tt(fontsize = .7) %>%
+  theme_latex(inner = "rowsep=3pt, colsep=3pt")
+
+
 
 if(FALSE){
   cruzi <- filter_cruz(noaa_10km_1986_2020,

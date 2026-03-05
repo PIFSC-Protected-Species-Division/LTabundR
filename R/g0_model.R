@@ -109,7 +109,7 @@ g0_model <- function(spp,
     #spp <- '071' # minke
     cohort = 1
     eff_types = 'S'
-    truncation_distance <- 4.0
+    truncation_distance <- 5.5
     jackknife_fraction <- .1
     seed = NULL
     constrain_shape = TRUE

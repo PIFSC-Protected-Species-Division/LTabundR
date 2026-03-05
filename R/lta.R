@@ -479,7 +479,7 @@ lta <- function(cruz,
     bootstraps = 5
     seed = NULL
     toplot=TRUE
-    verbose=FALSE
+    verbose=TRUE
     abund_bft_range = 0:6
     abund_eff_types = c('S')
 
