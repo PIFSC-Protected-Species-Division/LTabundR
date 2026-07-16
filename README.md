@@ -14,11 +14,11 @@ This package is currently in `beta` testing and is not yet ready for widespread 
 
 ```{r}
 # Install 'devtools' package, if needed
-if (!require('devtools')) install.packages('devtools')
+if (!require('remotes')) install.packages('remotes')
 
 # Install LTabundR remotely from GitHub
-library(devtools)
-devtools::install_github('PIFSC-Protected-Species-Division/LTabundR')
+library(remotes)
+remotes::install_github('PIFSC-Protected-Species-Division/LTabundR')
 
 # Load into session
 library(LTabundR)
