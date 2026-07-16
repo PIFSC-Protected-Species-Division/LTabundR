@@ -123,6 +123,8 @@ group_size_calibration <- function(obs,
       if(status_ok){
         # Get year coefficient, if it is relevant
         By <- 0 # assume it is not relevant
+        # Modify yr if it is more than 2000
+        if(as.numeric(yr) > 2000){yr <- '20XX'}
         (b_match <- grep(yr, names(gsci)))
         if(length(b_match)>0){
           By <- gsci[2,b_match] %>% as.numeric

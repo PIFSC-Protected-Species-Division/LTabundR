@@ -67,7 +67,8 @@ group_size <- function(grp,
     cruz <- segmentize(cruz)
     sits <- swfscDAS::das_sight(cruz$cohorts$default$das, return.format = 'complete')
     # Example of a mixed-species sightings
-    siti <- sits %>% filter(SightNo == '002') ; siti
+    siti <- sits %>% filter(SightNo == '002')
+    siti %>% as.data.frame
     # This is the input prepared by the process_sightings() function, which is
     # then passed to this function
     (grp <- siti %>%
