@@ -210,8 +210,10 @@ lta_destratify <- function(lta_list,
                   lapply(function(x){x %>% dplyr::pull(N)}) %>%
                   Reduce(f = '+')
                 (N_sd <- ns %>% sd)
-                (N_lci <- coxed::bca(ns)[1])
-                (N_uci <- coxed::bca(ns)[2])
+                #(N_lci <- coxed::bca(ns)[1])
+                (N_lci <- bca(ns)[1])
+                #(N_uci <- coxed::bca(ns)[2])
+                (N_uci <- bca(ns)[2])
 
                 # Complete destratification
                 bsummii$Nsd <- N_sd

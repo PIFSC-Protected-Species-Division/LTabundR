@@ -1,6 +1,6 @@
 Package: LTabundR
 Title: Development Version 
-Version: 1.58
+Version: 1.59
 Authors@R: 
     person("Eric", "Keen", , "eric.keen@noaa.gov", role = c("aut", "cre"))
     person("Amanda", "Bradford", , "amanda.bradford@noaa.gov", role = c("aut", "cre"))
@@ -11,7 +11,6 @@ Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.1
 Imports: 
     cowplot,
-    coxed,
     dplyr,
     DT,
     geosphere,

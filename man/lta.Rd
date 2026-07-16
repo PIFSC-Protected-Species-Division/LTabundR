@@ -400,7 +400,7 @@ Note that the entire process is repeated in each bootstrap: step-wise fitting
 of the detection function, averaging of the best-fitting models, and density/abundance
 estimation for all species/region/year combinations specified in your \code{estimates} input.
 At the end of the bootstrap process, results are summarized for each species/region/year combination.
-95\% confidence intervals are calculated using the BCA method (package \code{coxed}, function \code{bca()}).
+95\% confidence intervals are calculated using the BCA method (adapted from package \code{coxed}, function \code{bca()}).
 
 \strong{\code{g(0)} values during bootstrapping:} When conducting the non-parametric bootstrap routine
 to estimate the CV of density and abundance, uncertainty is incorporated into the g(0) value

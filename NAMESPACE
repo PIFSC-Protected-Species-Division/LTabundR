@@ -2,6 +2,7 @@
 
 export("%>%")
 export(abundance)
+export(bca)
 export(coordinates_in_strata)
 export(cruz_combine)
 export(cruz_explorer)

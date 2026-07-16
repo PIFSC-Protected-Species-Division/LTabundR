@@ -1022,10 +1022,14 @@ lta_subgroup <- function(df_sits, # DateTime, Lat, Lon, Cruise, PerpDistKm
     filter(!is.na(D)) %>%
     group_by(population) %>%
     summarize(D_sd = sd(D),
-              D_L95 = coxed::bca(D)[1],
-              D_U95 = coxed::bca(D)[2],
-              N_L95 = coxed::bca(N)[1],
-              N_U95 = coxed::bca(N)[2],
+              D_L95 = bca(D)[1],
+              #D_L95 = coxed::bca(D)[1],
+              D_U95 = bca(D)[2],
+              #D_U95 = coxed::bca(D)[2],
+              N_L95 = bca(N)[1],
+              #N_L95 = coxed::bca(N)[1],
+              N_U95 = bca(N)[2],
+              #N_U95 = coxed::bca(N)[2],
               ESW_sd = sd(esw),
               ss_sd = sd(ss),
               er_sd = sd(er))
