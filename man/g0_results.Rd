@@ -3,7 +3,7 @@
 \docType{data}
 \name{g0_results}
 \alias{g0_results}
-\title{Relative trackline detection probabilities -- Rg(0)}
+\title{Relative trackline detection probabilities, \emph{Rg(0)}}
 \format{
 An object of class \code{data.frame} with 175 rows and 13 columns.
 }
@@ -11,10 +11,10 @@ An object of class \code{data.frame} with 175 rows and 13 columns.
 g0_results
 }
 \description{
-Relative trackline detection probabilities -- Rg(0)
+Relative trackline detection probabilities, \emph{Rg(0)}
 }
 \details{
-Rg(0) estimates for 25 species groups, based on survey data from 1986-2020 (see
+\emph{Rg(0)} estimates for 25 species groups, based on survey data from 1986-2020 (see
 \code{noaa_10km_1986_2020} dataset).
 }
 \keyword{datasets}

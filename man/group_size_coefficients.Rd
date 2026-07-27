@@ -15,7 +15,7 @@ Group size coefficients
 }
 \details{
 A table of group size calibration coefficient values for a variety of species
-for a variety of observer codes. This table was provided by Jay Barlow (NOAA NMFS Bioligist), was created
+for a variety of observer codes. This table was provided by Jay Barlow (NOAA NMFS biologist), was created
 prior to 2016, and has been used for published analyses through 2021.
 }
 \keyword{datasets}

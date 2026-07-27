@@ -27,12 +27,12 @@
 #' @details World dataset of geopolitical Exclusive Economic Zones (EEZ), downloaded from Natural Earth.
 "eez"
 #'
-#' EEZ - California Current System (formatted for sf / tmap mapping)
-#' @details The EEZ relevant to the California Current System only, formatted for `sf`-compatibility.
+#' EEZ - California Current System (formatted for `sf` mapping)
+#' @details The EEZ relevant to the California Current System only, formatted for `sf` compatibility.
 "eez_ccs"
 #'
-#' EEZ - Hawaii (formatted for sf / tmap mapping)
-#' @details The EEZ relevant to the Hawai'ian area only, formatted for `sf`-compatibility.
+#' EEZ - Hawaii (formatted for `sf` mapping)
+#' @details The EEZ relevant to the Hawai'ian area only, formatted for `sf` compatibility.
 "eez_hawaii"
 #'
 #' Strata CCS
@@ -326,12 +326,12 @@
 #'
 #' Group size coefficients
 #' @details A table of group size calibration coefficient values for a variety of species
-#' for a variety of observer codes. This table was provided by Jay Barlow (NOAA NMFS Bioligist), was created
+#' for a variety of observer codes. This table was provided by Jay Barlow (NOAA NMFS biologist), was created
 #' prior to 2016, and has been used for published analyses through 2021.
 "group_size_coefficients"
 #'
-#' Relative trackline detection probabilities -- Rg(0)
-#' @details Rg(0) estimates for 25 species groups, based on survey data from 1986-2020 (see
+#' Relative trackline detection probabilities, *Rg(0)*
+#' @details *Rg(0)* estimates for 25 species groups, based on survey data from 1986-2020 (see
 #' `noaa_10km_1986_2020` dataset).
 "g0_results"
 #'
@@ -342,6 +342,6 @@
 #' 1986 to 2010.
 "barlow_2015"
 #'
-#' Example of coded edits to `cruz` object.
+#' Example of coded edits to `cruz` object
 #' @details This is an example of the kind of object that can be passed to the `edits` input in `process_surveys()`.
 "cnp_1986_2020_edits"

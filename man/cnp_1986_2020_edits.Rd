@@ -3,7 +3,7 @@
 \docType{data}
 \name{cnp_1986_2020_edits}
 \alias{cnp_1986_2020_edits}
-\title{Example of coded edits to \code{cruz} object.}
+\title{Example of coded edits to \code{cruz} object}
 \format{
 An object of class \code{list} of length 4.
 }
@@ -11,7 +11,7 @@ An object of class \code{list} of length 4.
 cnp_1986_2020_edits
 }
 \description{
-Example of coded edits to \code{cruz} object.
+Example of coded edits to \code{cruz} object
 }
 \details{
 This is an example of the kind of object that can be passed to the \code{edits} input in \code{process_surveys()}.

@@ -3,7 +3,7 @@
 \docType{data}
 \name{eez_ccs}
 \alias{eez_ccs}
-\title{EEZ - California Current System (formatted for sf / tmap mapping)}
+\title{EEZ - California Current System (formatted for \code{sf} mapping)}
 \format{
 An object of class \code{sfc_MULTILINESTRING} (inherits from \code{sfc}) of length 17.
 }
@@ -11,9 +11,9 @@ An object of class \code{sfc_MULTILINESTRING} (inherits from \code{sfc}) of leng
 eez_ccs
 }
 \description{
-EEZ - California Current System (formatted for sf / tmap mapping)
+EEZ - California Current System (formatted for \code{sf} mapping)
 }
 \details{
-The EEZ relevant to the California Current System only, formatted for \code{sf}-compatibility.
+The EEZ relevant to the California Current System only, formatted for \code{sf} compatibility.
 }
 \keyword{datasets}

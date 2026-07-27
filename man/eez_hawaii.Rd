@@ -3,7 +3,7 @@
 \docType{data}
 \name{eez_hawaii}
 \alias{eez_hawaii}
-\title{EEZ - Hawaii (formatted for sf / tmap mapping)}
+\title{EEZ - Hawaii (formatted for \code{sf} mapping)}
 \format{
 An object of class \code{sfc_MULTILINESTRING} (inherits from \code{sfc}) of length 25.
 }
@@ -11,9 +11,9 @@ An object of class \code{sfc_MULTILINESTRING} (inherits from \code{sfc}) of leng
 eez_hawaii
 }
 \description{
-EEZ - Hawaii (formatted for sf / tmap mapping)
+EEZ - Hawaii (formatted for \code{sf} mapping)
 }
 \details{
-The EEZ relevant to the Hawai'ian area only, formatted for \code{sf}-compatibility.
+The EEZ relevant to the Hawai'ian area only, formatted for \code{sf} compatibility.
 }
 \keyword{datasets}
