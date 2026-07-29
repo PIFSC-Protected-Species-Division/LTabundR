@@ -3,7 +3,6 @@
 #' This function is the main command you will use to begin working with your survey data in `R`.
 #' It takes `Wincruz` survey data -- `.DAS` file(s) -- and user-specified settings
 #' to prepare the data for density estimation and/or habitat modeling analyses.
-#' \cr \cr
 #' This function was designed to be similar to `ABUND9`, the Fortran program
 #' written by Jay Barlow (NOAA SWFSC) for the same purpose.
 #'
@@ -64,9 +63,7 @@
 #' \item `cohorts`, containing a named list for each cohort you specified within the `settings` argument.
 #' }
 #' Each cohort slot has a similar structure:
-#' \cr \cr
 #' `cruz$cohorts$<cohort>$<details>`
-#' \cr \cr
 #' \itemize{
 #' \item The name of each `<cohort>` slot is drawn from the `id` slot within that cohort's settings (e.g., `settings$cohorts[[1]]$id`).
 #' \item All cohorts have the same three slots for `<details>`:
@@ -79,7 +76,7 @@
 #' if subgroups were found in the data for the species specified in the cohort.
 #' This slot will contain a list (see below).
 #' }
-#' \cr
+#'
 #' **`segments`** data structure \cr
 #' A `data.frame` with metadata for each segment; each row is a segment.
 #' \enumerate{
@@ -121,7 +118,7 @@
 #' \item `avgCourse`: Weighted average ship heading during this segment
 #' \item `avgSpdKt`: Weighted average speed, in knots, during this segment
 #' }
-#' \cr
+#'
 #' **`das`** data structure \cr
 #' The `data.frame` of `DAS` survey data, as read and formatted by `swfscDAS::das_read()` and `swfscDAS::das_process()`
 #' See the latter function documentation for details on columns. We have added the following columns during the preparation
@@ -140,7 +137,7 @@
 #' \item `seg_id` Identifier for the segment containing this row of data.
 #' \item `use`: A Boolean decision as to whether or not this segment will be included in the analysis, based upon user-specified criteria in settings.
 #' }
-#' \cr
+#'
 #' **`sightings`** data structure \cr
 #' The `data.frame` of processed sightings, as prepared by `swfscDAS::das_sight(return.format = 'complete')`.
 #' See that function's documentation for details on columns. Note that the unique sighting identifier can be
@@ -177,7 +174,7 @@
 #' the ship's beam can be excluded from the analysis  (`included == FALSE`)
 #' even though the effort segment it occurs within will still be used (`use == TRUE`).
 #' }
-#' \cr
+#'
 #' **`subgroups`** data structure \cr
 #' If subgroup events (`DAS` event code `G`) are found pertaining to the species in your cohort,
 #' this slot will have a list with three slots:
@@ -267,7 +264,7 @@
 #' \item `phase` Phase in protocol; all `OnEffort == TRUE` estimates are Phase 1; all `OnEffort == FALSE` estimates are Phase 2.
 #' }
 #' }
-#' \cr\cr
+#'
 #' This `cruz` object can be carried forward into data exploration (e.g., see the `LTabundR` function `cruz_explorer()`),
 #' analyses (e.g., see the `LTabundR` function `lta()`),
 #' or passed to mapping functions (see the `LTabundR` functions that begin with `map_...`)

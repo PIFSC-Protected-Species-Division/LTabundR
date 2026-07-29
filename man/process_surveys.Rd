@@ -47,9 +47,7 @@ A \code{cruz} object, which is a nested list with the following primary slots:
 \item \code{cohorts}, containing a named list for each cohort you specified within the \code{settings} argument.
 }
 Each cohort slot has a similar structure:
-\cr \cr
 \verb{cruz$cohorts$<cohort>$<details>}
-\cr \cr
 \itemize{
 \item The name of each \verb{<cohort>} slot is drawn from the \code{id} slot within that cohort's settings (e.g., \code{settings$cohorts[[1]]$id}).
 \item All cohorts have the same three slots for \verb{<details>}:
@@ -62,7 +60,7 @@ Each cohort slot has a similar structure:
 if subgroups were found in the data for the species specified in the cohort.
 This slot will contain a list (see below).
 }
-\cr
+
 \strong{\code{segments}} data structure \cr
 A \code{data.frame} with metadata for each segment; each row is a segment.
 \enumerate{
@@ -104,7 +102,7 @@ A \code{data.frame} with metadata for each segment; each row is a segment.
 \item \code{avgCourse}: Weighted average ship heading during this segment
 \item \code{avgSpdKt}: Weighted average speed, in knots, during this segment
 }
-\cr
+
 \strong{\code{das}} data structure \cr
 The \code{data.frame} of \code{DAS} survey data, as read and formatted by \code{swfscDAS::das_read()} and \code{swfscDAS::das_process()}
 See the latter function documentation for details on columns. We have added the following columns during the preparation
@@ -123,7 +121,7 @@ There will be a column like this for each geostratum provided in your \code{sett
 \item \code{seg_id} Identifier for the segment containing this row of data.
 \item \code{use}: A Boolean decision as to whether or not this segment will be included in the analysis, based upon user-specified criteria in settings.
 }
-\cr
+
 \strong{\code{sightings}} data structure \cr
 The \code{data.frame} of processed sightings, as prepared by \code{swfscDAS::das_sight(return.format = 'complete')}.
 See that function's documentation for details on columns. Note that the unique sighting identifier can be
@@ -160,7 +158,7 @@ to have \code{use == TRUE} with \code{included == FALSE}. For example, if the se
 the ship's beam can be excluded from the analysis  (\code{included == FALSE})
 even though the effort segment it occurs within will still be used (\code{use == TRUE}).
 }
-\cr
+
 \strong{\code{subgroups}} data structure \cr
 If subgroup events (\code{DAS} event code \code{G}) are found pertaining to the species in your cohort,
 this slot will have a list with three slots:
@@ -250,7 +248,7 @@ indicating whether or not this location occurs within each geostratum.
 \item \code{phase} Phase in protocol; all \code{OnEffort == TRUE} estimates are Phase 1; all \code{OnEffort == FALSE} estimates are Phase 2.
 }
 }
-\cr\cr
+
 This \code{cruz} object can be carried forward into data exploration (e.g., see the \code{LTabundR} function \code{cruz_explorer()}),
 analyses (e.g., see the \code{LTabundR} function \code{lta()}),
 or passed to mapping functions (see the \code{LTabundR} functions that begin with \code{map_...})
@@ -260,7 +258,6 @@ or summary functions (see the \code{LTabundR} functions that begin with \code{su
 This function is the main command you will use to begin working with your survey data in \code{R}.
 It takes \code{Wincruz} survey data -- \code{.DAS} file(s) -- and user-specified settings
 to prepare the data for density estimation and/or habitat modeling analyses.
-\cr \cr
 This function was designed to be similar to \code{ABUND9}, the Fortran program
 written by Jay Barlow (NOAA SWFSC) for the same purpose.
 }
