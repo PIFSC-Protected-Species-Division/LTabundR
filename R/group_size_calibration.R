@@ -98,6 +98,24 @@ group_size_calibration <- function(obs,
       # get coefficient table row that corresponds to observer
       (gsci <- gsc[as.numeric(gsc$obs) == as.numeric(obs),])
 
+      #=========================================================================
+      # debugging land
+      if(FALSE){
+        if(any(c(as.numeric(gsci$w_best[1]) > 0 & gbest == 0,
+               as.numeric(gsci$w_high[1]) > 0 & ghigh == 0,
+               as.numeric(gsci$w_low[1]) > 0 & glow == 0))){
+        message('go to 20!')
+      }else{
+        message('all good!')
+      }
+
+      # weighted sum
+      (as.numeric(gsci$w_best[1]) * gbest) +
+        (as.numeric(gsci$w_high[1]) * ghigh) +
+        (as.numeric(gsci$w_low[1]) * glow)
+      }
+      #=========================================================================
+
       # Determine best, high, low values after applying observer-specific weights
       (w <- as.numeric(gsci$w_best[1]))
       (yi_best <- ifelse(w>0, w*gbest, 0))
@@ -156,7 +174,10 @@ group_size_calibration <- function(obs,
         (V <- ifelse(gs_slope == 1, 0, gs_var))
 
         # Make sure best group size estimate falls within group size range for observer-specific model
-        if(gbest < as.numeric(gsci$min) | gbest > as.numeric(gsci$max)){status_ok <- FALSE}
+        # In ABUND 8 and prior, the *calibrated* estimate is used for this test.
+        # In ABUND 9, the uncalibrated estimate is used.
+        # Commenting out code here because we are reverting to ABUND 8-
+        # if(gbest < as.numeric(gsci$min) | gbest > as.numeric(gsci$max)){status_ok <- FALSE}
       }
       status_ok # status
 
@@ -172,12 +193,21 @@ group_size_calibration <- function(obs,
         gs_slope
         gs_intercept
         V
-        #(new_gs <- exp((log(yi) - (V/2) - gs_intercept)) / gs_slope)
         ( new_gs <- exp((log(yi) - (V/2) - gs_intercept) / gs_slope) )
       }
       status_ok
     }else{
       (status_ok <- FALSE) # full calibration was not possible
+    }
+
+    # follownig ABUND 8 and prior,
+    # make sure calibrated best estimate falls within group size range for observer-specific model
+    if(status_ok){
+      if(!is.na(new_gs)){
+        if(new_gs < as.numeric(gsci$min) | new_gs > as.numeric(gsci$max)){status_ok <- FALSE}
+      }else{
+        status_ok <- FALSE
+      }
     }
 
     #===== end of attempt at full calibration ====================================
