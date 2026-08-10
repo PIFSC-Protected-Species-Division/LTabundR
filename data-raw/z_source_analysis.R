@@ -1,7 +1,6 @@
 library(devtools)
 library(usethis)
 document()
-
 #library(LTabundR)
 
 # g0_results

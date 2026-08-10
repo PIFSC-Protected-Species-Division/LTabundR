@@ -290,7 +290,8 @@ if(FALSE){
 #head(result)
 
 Rg0
-g0_results <- rbind(Rg0, sp036)
+g0_results <- Rg0
+#g0_results <- rbind(Rg0, sp036)
 
 if(FALSE){
   data(g0_results)
