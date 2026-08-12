@@ -5,11 +5,11 @@
 # Load strata
 data(strata_cnp)
 
-# Load group size coefficients
-data(group_size_coefficients)
-
 # Survey settings
 survey <- load_survey_settings(seed=123)
+
+# Load group size coefficients
+data(grp_coeff_abund)
 
 # Cohort 1 (default)
 cohort1 <- load_cohort_settings(strata = c('OtherCNP', 'HI_EEZ', 'WHICEAS'))

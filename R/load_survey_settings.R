@@ -65,42 +65,9 @@
 #' If segmentizinng by `"day"`, this argument is ignored.
 #' The default is 150 km, the distance generally surveyed in one day on NOAA Fisheries surveys.
 #'
-#' @param segment_max_interval If segmentizing by `"equallength"`,
-#' this setting allows you to specify the time gaps in effort
-#' that are allowed to be contained within a single segment.
-#' For example, if your goal is a few large segments of equal length
-#' (e.g., 150-km segments, for bootstrap estimation of density variance),
-#' you are probably willing for discrete periods of effort to be concatenated into a single segment,
-#' even if the gaps between effort are as large as 1 or 2 days,
-#' in which case you would set `segment_max_interval` to 24 or 48 (hours), respectively.
-#' However, if your goal is many smaller segments (e.g., 5-km segments, for habitat modeling),
-#' you want to ensure that effort is contiguous so that segment locations
-#' can be accurately related to environmental variables,
-#' in which case you would set `segment_max_interval` to be very small (e.g., 0.2 hours, or 12 minutes).
-#' Setting this interval to a small number, such as 0.2, also allows
-#' the segmentizing function to overlook momentary breaks in effort,
-#' such as when an unofficial observer logs a sighting.
-#' If segmentizinng by `"day"`, this argument is ignored.
+#' @param segment_max_interval A number indicating hours. See Details.
 #'
-#' @param segment_remainder_handling If segmentizing by `"equallength"`,
-#' periods of effectively-contiguous effort (as specified by `segment_max_interval`)
-#' are unlikely to be perfectly divisible by your `segment_target_km`;
-#' there is going to be a remainder. You can handle this remainder in three ways:
-#' (1) `"disperse"` allows the function to adjust `segment_target_km` so that
-#' there is in fact no remainder, effectively dispersing the remainder evenly
-#' across all segments within that period of contiguous effort;
-#' (2) `"append"` asks the function to append the remainder to a randomly selected segment,
-#' such that most segments are the target length with the exception of one longer one;
-#' or (3) `"segment"` asks the function to simply place the remainder in its own segment,
-#' placed randomly within the period of contiguous effort.
-#' This setting also has a second layer of versatility,
-#' because it can accept a one- or two-element character vector.
-#' If a two-element vector is provided (e.g., `c("append","segment")`),
-#' the first element will be used in the event that the remainder is less than or equal to
-#' half your `segment_target_km`; if the remainder is more than half that target length,
-#' the second element will be used. This feature allows for replication
-#' of the segmentizing methods in Becker et al. (2010).
-#' If segmentizinng by `"day"`, this argument is ignored.
+#' @param segment_remainder_handling A character string. See Details.
 #'
 #' @param seed Set a seed (any integer) to ensure that your survey is processed reproducibly:
 #' namely, segments will be chopped the exact same way every time.
@@ -118,17 +85,56 @@
 #' in the reporting stage of the workflow (`lta_report()` especially).
 #' If the user supplies a `data.frame` it must match the column naming structure of `data(species_codes)`.
 #'
-#' @param group_size_coefficients A `data.frame` of calibration factors.
-#' If not provided, group sizes will not be calibrated.
-#' To use the same coefficients that have been in use at SWFSC and PIFSC up to 2021, see `data(group_size_coefficients)`.
-#' Supplied `data.frame`'s must match the column naming structure of that built-in dataset.
-#'
 #' @param smear_angles If `TRUE` (the default is `FALSE`), bearing angles to a
 #' group of animals will be "smeared" by adding a uniformly distributed random number between -5 and +5 degrees.
 #' This has not been used in any recent analyses because observers have not been rounding angles as much as they used to,
 #' according to the release notes for `ABUND9`.
 #' It was suggested by Buckland as a method for dealing with rounding, which is
 #' especially influential when rounding to zero places many sightings at zero perpendicular distance.
+#'
+#' @details More information on the **`segment_max_interval`** input:
+#' If segmentizing by `"equallength"`,
+#' this setting allows you to specify the time gaps in effort
+#' that are allowed to be contained within a single segment.
+#' For example, if your goal is a few large segments of equal length
+#' (e.g., 150-km segments, for bootstrap estimation of density variance),
+#' you are probably willing for discrete periods of effort to be concatenated into a single segment,
+#' even if the gaps between effort are as large as 1 or 2 days,
+#' in which case you would set `segment_max_interval` to 24 or 48 (hours), respectively.
+#' However, if your goal is many smaller segments (e.g., 5-km segments, for habitat modeling),
+#' you want to ensure that effort is contiguous so that segment locations
+#' can be accurately related to environmental variables,
+#' in which case you would set `segment_max_interval` to be very small (e.g., 0.2 hours, or 12 minutes).
+#' Setting this interval to a small number, such as 0.2, also allows
+#' the segmentizing function to overlook momentary breaks in effort,
+#' such as when an unofficial observer logs a sighting.
+#' If segmentizinng by `"day"`, this argument is ignored.
+#'
+#'
+#' More information on the **`segment_remainder_handling`** input:
+#' If segmentizing by `"day"`, this argument is ignored.
+#' But if segmentizing by `"equallength"`,
+#' periods of effectively-contiguous effort (as specified by `segment_max_interval`)
+#' are unlikely to be perfectly divisible by your `segment_target_km`;
+#' there is going to be a remainder. You can handle this remainder in three ways:
+#' \enumerate{
+#' \item `"disperse"` allows the function to adjust `segment_target_km` so that
+#' there is in fact no remainder, effectively dispersing the remainder evenly
+#' across all segments within that period of contiguous effort;
+#'
+#' \item `"append"` asks the function to append the remainder to a randomly selected segment,
+#' such that most segments are the target length with the exception of one longer one;
+#'
+#' \item `"segment"` asks the function to simply place the remainder in its own segment,
+#' placed randomly within the period of contiguous effort.
+#' }
+#' This setting also has a second layer of versatility,
+#' because it can accept a one- or two-element character vector.
+#' If a two-element vector is provided (e.g., `c("append","segment")`),
+#' the first element will be used in the event that the remainder is less than or equal to
+#' half your `segment_target_km`; if the remainder is more than half that target length,
+#' the second element will be used. This feature allows for replication
+#' of the segmentizing methods in Becker et al. (2010).
 #'
 #' @return A list with named slots, equivalent to your input arguments.
 #' Save this output to an object, e.g., "`survey_settings`", and pass it to `load_settings()`.
@@ -149,7 +155,6 @@ load_survey_settings <- function(out_handling = 'remove',
                                  seed = NULL,
                                  ship_list = NULL,
                                  species_codes = NULL,
-                                 group_size_coefficients = NULL,
                                  smear_angles = FALSE){
 
   # Simply save the input arguments as a named list and return it.

@@ -324,11 +324,25 @@
 #' ```
 "lta_result"
 #'
-#' Group size coefficients
+#' Group size coefficients for the ABUND calibration approach
 #' @details A table of group size calibration coefficient values for a variety of species
 #' for a variety of observer codes. This table was provided by Jay Barlow (NOAA NMFS biologist), was created
-#' prior to 2016, and has been used for published analyses through 2021.
-"group_size_coefficients"
+#' prior to 2016, and has been used for published analyses through 2021 with ABUND versions 7 & 8.
+"grp_coeff_abund"
+#'
+#' Group size coefficients for the Gerrodette calibration approach
+#' @details A table of group size calibration coefficient values for a variety of species
+#' for use in the "Gerrodette" calibration approach. These values were drawn
+#' from Gerrodette et al. 2019 and used in Barlow et al. (2026).
+"grp_coeff_gerrodette"
+#'
+#' Calibration options for ABUND approach
+#' @details Example of calibration options to use for the ABUND group-size-calibration approach.
+"grp_ops_abund"
+#'
+#' Calibration options for Gerrodette approach
+#' @details Example of calibration options to use for the "Gerrodette" group-size-calibration approach.
+"grp_ops_gerrodette"
 #'
 #' Relative trackline detection probabilities, *Rg(0)*
 #' @details *Rg(0)* estimates for 25 species groups, based on survey data from 1986-2020 (see

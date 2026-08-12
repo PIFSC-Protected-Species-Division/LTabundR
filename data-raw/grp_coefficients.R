@@ -1,4 +1,7 @@
-## code to prepare `grp_coefficients` dataset goes here
+## code to prepare `grp_coefficients` datasets goes here
+
+################################################################################
+# grp_coeff_abund
 
 # Read in dat
 suppressMessages({
@@ -31,6 +34,7 @@ nrow(df)
 ncol(df)
 
 c(das$ObsL, das$ObsR, das$ObsInd) %>% unique
+
 # 126, 227, 197, 125, 238, 307, 099
 
 names(df) <- c('obs', 'n', 'var','min','max','w_best','w_high','w_low','model_1',
@@ -39,6 +43,66 @@ names(df) <- c('obs', 'n', 'var','min','max','w_best','w_high','w_low','model_1'
 df
 length(names(df))
 
-group_size_coefficients <- df
+#group_size_coefficients <- df
+grp_coeff_abund <- df
 
-usethis::use_data(group_size_coefficients, overwrite = TRUE)
+usethis::use_data(grp_coeff_abund, overwrite = TRUE)
+
+################################################################################
+# create a built-in dataset for gerrodette calibration approach
+
+grp_coeff_gerrodette <- data.frame(
+  species = c(
+    # Spinner dolphins
+    '003','010','011','088','100','101','102','103',
+    # Spotted dolphins
+    '002','006','090',
+    # Striped dolphins
+    '013',
+    # Common dolphins
+    '005','016','017',
+    # "Other" (common bottlenose, risso's, short-finned pilot whale, rough-toothed)
+    '018', '021', '036', '015'
+  ),
+  beta = c(
+    rep(0.603, times = 8), # spinner
+    rep(0.656, times = 3), # spotted
+    rep(0.513, times = 1), # striped
+    rep(0.757, times = 3), # common
+    rep(0.423, times = 4) # other
+  ),
+  intercept = 0.796,
+  floor = 25)
+
+grp_coeff_gerrodette
+
+usethis::use_data(grp_coeff_gerrodette, overwrite = TRUE)
+
+################################################################################
+# create grp_ops datasets
+
+# one for abund
+data('grp_coeff_abund', package='LTabundR')
+grp_ops_abund <- list(method = 'ABUND',
+                      coefficients = grp_coeff_abund,
+                      floor = 0,
+                      intercept = NULL,
+                      beta = NULL,
+                      beta_mixed = NULL)
+grp_ops_abund
+usethis::use_data(grp_ops_abund, overwrite = TRUE)
+
+# one for gerrodette
+data('grp_coeff_gerrodette', package='LTabundR')
+grp_ops_gerrodette <- list(method = 'Gerrodette',
+                           coefficients = grp_coeff_gerrodette,
+                           floor = 25,
+                           intercept = 0.796,
+                           beta = 0.626,
+                           beta_mixed = NULL)
+grp_ops_gerrodette
+usethis::use_data(grp_ops_gerrodette, overwrite = TRUE)
+
+################################################################################
+
+#

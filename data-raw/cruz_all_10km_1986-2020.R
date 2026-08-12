@@ -21,9 +21,6 @@ library(swfscDAS)
 
 # Survey-wide settings =========================================================
 
-# Load built-in group size coefficiens
-data(group_size_coefficients)
-
 survey <- load_survey_settings(
   out_handling = 'stratum',
   min_row_interval = 2,
@@ -35,8 +32,7 @@ survey <- load_survey_settings(
   segment_target_km = 10,
   segment_max_interval = 6,
   segment_remainder_handling = c("segment"),
-  seed=123,
-  group_size_coefficients = group_size_coefficients)
+  seed=123)
 
 
 # Load built-in strata  =======================================================
@@ -52,6 +48,9 @@ strata
 
 # Cohort 1: All species =======================================================
 
+data(grp_coeff_abund)
+data(grp_ops_abund)
+
 # Prep cohort settings
 all_species <- load_cohort_settings(
   id = "all",
@@ -59,9 +58,8 @@ all_species <- load_cohort_settings(
   probable_species = FALSE,
   sighting_method = 0,
   cue_range = 0:7,
-  school_size_range = c(0, 10000),
-  school_size_calibrate = TRUE,
-  calibration_floor = 0,
+  group_size_range = c(0, 10000),
+  group_size_calibrate = grp_ops_abund,
   use_low_if_na = TRUE,
   io_sightings = 0,
   geometric_mean_group = TRUE,

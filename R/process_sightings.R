@@ -6,10 +6,13 @@
 #' @param cruz A `cruz` object passed from `segmentize()`.
 #'
 #' @param calibrate An argument allowing you to override the settings contained within the `cruz` object.
-#' This argument accepts a Boolean; if `TRUE`, school size calibration will be attempted,
-#' but only if calibration coefficients are provided in `cruz$settings$survey`.
-#' Note that only the best estimates of schol size will be calibrated;
-#' the high and low estimates are *never* calibrated.
+#' If `NULL`, the `cruz` settings will be used.
+#' If `NA`, calibration will be skipped.
+#' Otherwise supply a `list` to specify which calibration approach to use.
+#' Currently two approaches are supported: that used by `ABUND 7/8` (the default shown),
+#' which takes an observer-specific, species-agnostic approach,
+#' and that developed in Gerrodette et al. (2019) and applied in Barlow et al. (2026),
+#' which includes a species-specific, observer-agnostic approach. Details in `?load_cohort_settings()`.
 #'
 #' @param calibrate_floor Another argument allowing for settings override.
 #' This argument accepts a number indicating the minimum raw school size estimate
@@ -62,8 +65,7 @@ process_sightings <- function(cruz,
     cruz <- das_format(cruz)
     cruz <- segmentize(cruz)
     verbose=TRUE
-    calibrate = TRUE
-    calibrate_floor = 0
+    calibrate = NULL
     geometric_mean = NULL
     cohorts_i = 1
 
@@ -126,7 +128,6 @@ process_sightings <- function(cruz,
     sets <- cruzi$settings$survey
     names(sets)
     species_codes <- sets$species_codes
-    group_size_coefficients <- sets$group_size_coefficients
     smear_angles <- sets$smear_angles
     random_seed <- sets$random_seed
 
@@ -138,9 +139,8 @@ process_sightings <- function(cruz,
     probable_species <- sets$probable_species
     sighting_method <- sets$sighting_method
     cue_range <- sets$cue_range
-    school_size_range <- sets$school_size_range
-    school_size_calibrate <- sets$school_size_calibrate
-    calibrate_floor_set <- sets$calibration_floor
+    group_size_range <- sets$group_size_range
+    group_size_calibrate <- sets$group_size_calibrate
     use_low_if_na <- sets$use_low_if_na
     abeam_sightings <- sets$abeam_sightings
     io_sightings <- sets$io_sightings
@@ -148,17 +148,14 @@ process_sightings <- function(cruz,
     truncation_km <- sets$truncation_km
 
     # Modify calibration plan according to cohort-specific setting
-    if(!school_size_calibrate){group_size_coefficients <- NULL}
-
-    # Adjust settings based on inputs
-    if(!is.null(calibrate)){
-      if(!calibrate){group_size_coefficients <- NULL}
+    if(!is.null(calibrate)){ group_size_calibrate <- calibrate }
+    if(!is.null(group_size_calibrate)){
+      if(is.null(calibrate_floor)){
+        calibrate_floor <- group_size_calibrate$floor
+      }
     }
     if(!is.null(geometric_mean)){
       if(!geometric_mean){geometric_mean_group <- FALSE}
-    }
-    if(is.null(calibrate_floor)){
-      calibrate_floor <- calibrate_floor_set
     }
 
     ##############################################################################
@@ -402,50 +399,48 @@ process_sightings <- function(cruz,
         # Estimate group sizes, including calibration coefficients
         # output will have one row for each species in detection:
         grp %>% as.data.frame # review grp dataframe
-        # group_size() is a LTabundR function. See 'group_size.R'.
-        grp_results <- LTabundR::group_size(grp,
-                                            gs_coefficients = group_size_coefficients,
-                                            calibrate_floor = calibrate_floor,
-                                            geometric_mean = geometric_mean_group,
-                                            use_low_if_na = use_low_if_na)
+        # grp_size() is a LTabundR function. See 'grp_size.R'.
+        grp_results <- LTabundR::grp_size(grp,
+                                          calibrate = group_size_calibrate,
+                                          geometric_mean = geometric_mean_group,
+                                          use_low_if_na = use_low_if_na)
         grp_results
 
         if(FALSE){
           # for debugging
-          gs_coefficients = group_size_coefficients
-          calibrate_floor = calibrate_floor
+          calibrate = group_size_calibrate
           geometric_mean = geometric_mean_group
           use_low_if_na = use_low_if_na
         }
 
         # That function incorporates 3 settings:
-        # group size coefficients
+        # calibration options
         # geometric_mean_group and
         # use_low_if_best_na: if the Best group size estimate is NA,
         # mean group size will be calculated from low estimates.
         # This should only be done if NO observer has a best estimate
 
         # That function returns a dataframe with one row for each species in the sighting (if multi-species)
-        # (the vast majority of sightings are single-species, meaning the grp output will be nrow=1)
+        # (the vast majority of sightings are single-species, meaning the grp output will usually be nrow=1)
 
         # Flag invalid group size estimate
         if(any(grp_results$ss_valid == FALSE)){
-          # If any best estimates are valid/finite, flag the the school size is not valid.
+          # If any best estimates are not valid/finite, flag that the school size is not valid.
           message('--- DateTime = ', dti,', line_num = ',line_num_i, 'i = ', i,' | Species ', paste(grp_results$species, collapse=', '), ' | Some group size best estimates are NOT valid! *****')
         }
 
+        # The following step was moved into the grp_size() function in version 1.66
         # First add an indicator if this species is the largest part of the mixed school
-        grp_results$mixed_max <- FALSE
-        grp_results$spp_max <- NA
-        if(any(grp_results$ss_valid)){
-          max_best <- max(grp_results$best, na.rm=TRUE)
-          # Is it the max species?
-          grp_results$mixed_max[grp_results$best == max_best] <- TRUE
-          # Who is the max species?
-          spp_max <- grp_results$species[which(grp_results$best == max_best)[1]]
-          grp_results$spp_max <- spp_max
-        }
-
+        #grp_results$mixed_max <- FALSE
+        #grp_results$spp_max <- NA
+        #if(any(grp_results$ss_valid)){
+        #  max_best <- max(grp_results$best, na.rm=TRUE)
+        #  # Is it the max species?
+        #  grp_results$mixed_max[grp_results$best == max_best] <- TRUE
+        #  # Who is the max species?
+        #  spp_max <- grp_results$species[which(grp_results$best == max_best)[1]]
+        #  grp_results$spp_max <- spp_max
+        #}
         grp_results
 
         # Take these results, loop through each species and finish up.
@@ -467,13 +462,13 @@ process_sightings <- function(cruz,
             reason_i <- paste0('Species codes not recognized: ',grpi$species)
           }
 
-          # School size range
-          school_size_range
-          group_good <- grpi$best[1] >= school_size_range[1] & grpi$best[1] <= school_size_range[2]
+          # Group size range
+          group_size_range
+          group_good <- grpi$best[1] >= group_size_range[1] & grpi$best[1] <= group_size_range[2]
           if(is.na(group_good)){group_good <- FALSE}
           if(all(included_i, !group_good)){
             included_i <- FALSE
-            reason_i <- paste0('Group size out of range (',paste(school_size_range,collapse='-'),'): ',round(grpi$best[1]))
+            reason_i <- paste0('Group size out of range (',paste(group_size_range,collapse='-'),'): ',round(grpi$best[1]))
             debugger <- c(debugger, i)
             #print(reason_i)
           }

@@ -16,10 +16,13 @@ process_sightings(
 \item{cruz}{A \code{cruz} object passed from \code{segmentize()}.}
 
 \item{calibrate}{An argument allowing you to override the settings contained within the \code{cruz} object.
-This argument accepts a Boolean; if \code{TRUE}, school size calibration will be attempted,
-but only if calibration coefficients are provided in \code{cruz$settings$survey}.
-Note that only the best estimates of schol size will be calibrated;
-the high and low estimates are \emph{never} calibrated.}
+If \code{NULL}, the \code{cruz} settings will be used.
+If \code{NA}, calibration will be skipped.
+Otherwise supply a \code{list} to specify which calibration approach to use.
+Currently two approaches are supported: that used by \verb{ABUND 7/8} (the default shown),
+which takes an observer-specific, species-agnostic approach,
+and that developed in Gerrodette et al. (2019) and applied in Barlow et al. (2026),
+which includes a species-specific, observer-agnostic approach. Details in \code{?load_cohort_settings()}.}
 
 \item{calibrate_floor}{Another argument allowing for settings override.
 This argument accepts a number indicating the minimum raw school size estimate

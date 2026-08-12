@@ -11,9 +11,8 @@ load_cohort_settings(
   probable_species = FALSE,
   sighting_method = 0,
   cue_range = 0:7,
-  school_size_range = c(0, 10000),
-  school_size_calibrate = TRUE,
-  calibration_floor = 0,
+  group_size_range = c(0, 10000),
+  group_size_calibrate = grp_ops_abund,
   use_low_if_na = FALSE,
   io_sightings = 0,
   geometric_mean_group = TRUE,
@@ -64,24 +63,17 @@ for sightings used in estimates of abundance.
 \code{5}=?,
 \code{6}=blow / spout,
 \code{7}=associated helicopter).
-These codes match those used in \code{ABUND7/9}.}
+These codes match those used in \code{ABUND7/8/9}.}
 
-\item{school_size_range}{Minimum and maximum group sizes to be included in estimates of abundance.
-This is the overall group size, not the number of the given species that are present in a group.}
+\item{group_size_range}{Minimum and maximum group sizes to be included in estimates of abundance.
+This is the overall group size, not the number of the given species that are present in a mixed group.}
 
-\item{school_size_calibrate}{A logical (\code{TRUE} or \code{FALSE}) specifying
-whether or not to carry out school size adjustments according to the calibration table
-provided in \code{survey$group_size_coefficients} (if that \code{data.frame} is provided).
-Default is \code{TRUE}.
-This setting allows you to toggle the survey-wide setting for certain cohorts.
-For example, perhaps you want to carry out calibration for a cohort of dolphin species,
-but not for a cohort of large whales whose group sizes tend to be smaller and easier to estimate accurately.}
-
-\item{calibration_floor}{A numeric indicating the minimum school size estimate for which
-school size calibration will be attempted. This pertains only to observers who do no have an entry in the
-\code{group_size_coefficients} table provided in \code{load_survey_settings()} (that table has a calibration floor for each observer).
-The default is 0, meaning that calibration will be attempted for \emph{all}
-school size estimates, regarding of the raw estimate.}
+\item{group_size_calibrate}{If \code{NULL}, group sizes will not be calibrated.
+Otherwise supply a \code{list} to specify which calibration approach to use.
+Currently two approaches are supported: that used by \verb{ABUND 7/8} (the default shown),
+which takes an observer-specific, species-agnostic approach,
+and that developed in Gerrodette et al. (2019) and applied in Barlow et al. (2026),
+which includes a species-specific, observer-agnostic approach. See Details below.}
 
 \item{use_low_if_na}{If this setting is \code{TRUE},
 and if an observer does not make a best estimate of group size,
@@ -116,23 +108,7 @@ all abeam sightings will not be used in density estimation or detection function
 
 \item{strata_overlap_handling}{This setting informs how effort is split into
 segments when surveys cross stratum boundaries, and also which stratum name
-is assigned to each row of data. Note that the main impact of this setting is
-on how effort is broken into segments; the assigned stratum name is for display
-only and will not constrain options for including/excluding strata in analyses
-farther along in the \code{LTabundR} workflow. The default option is \code{"smallest"},
-which means that effort will always be assigned to the smallest stratum when
-multiple strata overlap spatially. This is a safe option for surveys with "nested"
-strata (such as the Central North Pacific strata used by NOAA Fisheries.
-Another option is \code{"each"}in which each time a stratum boundary is crossed the
-current segment will end and a new segment will begin.
-Also, stratum assignments for each row of effort will be shown as a concatenation
-of all the stratum layers overlapping at its position (e.g., "OtherCNP&HI_EEZ").
-Note that the \code{"each"} option segmentizes effort in the exact same was as \code{"smallest"}
-when strata are fully nested; its main advantage is in dealing with partially
-overlapping strata. The third option is \code{"largest"}, in which the largest of
-overlapping strata is used to assign a stratum name to each row.
-(We are not sure what use case this would serve,
-but we offer it as an option for niche analyses.)}
+is assigned to each row of data. See Details below.}
 
 \item{distance_types}{A character vector of the full-range of effort types that meet the "analysis
 inclusion criteria", i.e., will be included in detection function estimation,
@@ -161,4 +137,63 @@ and pass it to \code{load_settings()}.
 \description{
 This function builds a list of cohort-specific settings -- applying only to the analyses
 for a certain group of species -- which you will pass to \code{load_settings()}.
+}
+\details{
+More information on the \code{list} required for the \strong{\code{group_size_calibrate}} input:
+The \code{list} requires the following fields (examples are given in the built-in datasets
+\code{grp_ops_abund} and \code{grp_ops_gerrodette}):
+\itemize{
+\item \code{method}: accepted values = 'ABUND' and 'Gerrodette';
+
+\item \code{coefficients}: a \code{data.frame}. For the "ABUND" method, this is a table of observer-specific calibration coefficients.
+To use the same coefficients that have been in use at SWFSC and PIFSC up to 2021,
+see the built-in dataset \code{data(grp_coeff_abund)}.
+For the "Gerrodette" method, this is a table of species-specific coefficients.
+To use the same coefficients from the method's originating papers, see the
+built-in dataset \code{data(grp_coeff_gerrodette)}.
+For both methods, supplied \code{data.frame}'s must match the column naming structure of the respective built-in dataset.
+
+\item \code{floor}: minimum group size to which calibration will be applied.
+In the "ABUND" approach, this is referenced only for observers who do not
+have an entry in the \code{coefficients} table, which has a calibration floor for each observer.
+The default is 0, meaning that calibration will be attempted for \emph{all}
+school size estimates, regarding of the raw estimate.
+
+\item \code{intercept} (ignored if not using the "Gerrodette" method) the value to
+use for the "intercept" coefficient if a species in this cohort is not present in the \code{coefficients} table.
+
+\item \code{beta} (ignored if not using the "Gerrodette" method): the value to
+use for the "beta" coefficient if a species in this cohort is not present in the \code{coefficients} table.
+
+\item \code{beta_mixed} (ignored if not using the "Gerrodette" method): used for mixed-species groups.
+If \code{NULL}, the "beta" coefficient for the most abundant species in the group will be used.
+If a numeric value is supplied here, that value will be used instead.
+}
+Note that the high and low estimates are \emph{never} calibrated; only the best estimates are.
+
+More information on the \code{list} required for the \strong{\code{strata_overlap_handling}} input:
+Note that the main impact of this setting is
+on how effort is broken into segments; the assigned stratum name is for display
+only and will not constrain options for including/excluding strata in analyses
+farther along in the \code{LTabundR} workflow.
+
+\itemize{
+\item The default option is \code{"smallest"},
+which means that effort will always be assigned to the smallest stratum when
+multiple strata overlap spatially. This is a safe option for surveys with "nested"
+strata (such as the Central North Pacific strata used by NOAA Fisheries.
+
+\item Another option is \code{"each"}in which each time a stratum boundary is crossed the
+current segment will end and a new segment will begin.
+Also, stratum assignments for each row of effort will be shown as a concatenation
+of all the stratum layers overlapping at its position (e.g., "OtherCNP&HI_EEZ").
+Note that the \code{"each"} option segmentizes effort in the exact same was as \code{"smallest"}
+when strata are fully nested; its main advantage is in dealing with partially
+overlapping strata.
+
+\item The third option is \code{"largest"}, in which the largest of
+overlapping strata is used to assign a stratum name to each row.
+(We are not sure what use case this would serve,
+but we offer it as an option for niche analyses.)
+}
 }
