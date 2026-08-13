@@ -193,7 +193,7 @@ grp_size <- function(grp,
 
   # Master status variable
   go <- TRUE # will calibration happen?
-  valids <- FALSE # all observer estimates are valid
+  valids <- all(any(is.finite(bests)), any(bests > 0)) # at least one best estimate is valid
 
   #=============================================================================
   # Raw estimates  =============================================================
@@ -319,7 +319,7 @@ grp_size <- function(grp,
     # Filter to only valid estimates
     (grpvalid <- grpnew %>% dplyr::filter(valid == TRUE))
     bests_cal <- best_vars <- NA
-    valids <- calibs <- FALSE
+    calibs <- FALSE
     if(nrow(grpvalid)>0){
       (bests_cal <- grpvalid$best)
       (best_vars <- grpvalid$var)
@@ -332,7 +332,7 @@ grp_size <- function(grp,
     }
     bests_cal
     best_vars
-    #valids
+    valids
     calibs
     go
 
@@ -489,11 +489,11 @@ grp_size <- function(grp,
 
   go
   go_method
-  #valids
+  valids
   gs_best; gs_low; gs_high
 
-  # starting point: all kept observer estimates are valid
-  (validi <- all(valids))
+  # starting point: at least one kept observer estimates are valid
+  (validi <- any(valids))
 
   # If best estimate is negative, make it NA
   if(!is.na(gs_best)){ if(gs_best < 0){
