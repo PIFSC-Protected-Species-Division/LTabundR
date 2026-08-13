@@ -179,7 +179,6 @@ grp_size <- function(grp,
   (sp_prob <- grp$Prob %>% unique) # are IDs probable?
   (sp_n <- grp %>% dplyr::select(nSp) %>% unique %>% as.numeric) # number of species in sighting
   (sp_max <- get_spp_max(grp)) # get max species
-  best_vars <- rep(NA,times=length(bests)) # stage vector for variance of estimates for each observer
   grpnew <- data.frame() # for debugging
   bft <- grp$Bft[1] %>% as.numeric ; bft
   yr <- grp$year[1] %>% as.numeric ; yr
@@ -190,6 +189,7 @@ grp_size <- function(grp,
   (bests <- grp$GsSchoolBest)   # Estimates from each observer...
   (highs <- grp$GsSchoolHigh)
   (lows <- grp$GsSchoolLow)
+  best_vars <- rep(NA,times=length(bests)) # stage vector for variance of estimates for each observer
 
   # Master status variable
   go <- TRUE # will calibration happen?
@@ -580,6 +580,11 @@ grp_size <- function(grp,
     dfi
     grp_results <- rbind(grp_results,dfi)
   }
+
+  # fix cases where best is less than 1 in mixed species after best is scaled by percentage
+  grp_results <-
+    grp_results %>%
+    mutate(best = ifelse(best < 1, 1, best))
 
   # add mixed-max column, specifying whether a given species is the most abundant one in the group
   grp_results <-
