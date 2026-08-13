@@ -193,6 +193,7 @@ grp_size <- function(grp,
 
   # Master status variable
   go <- TRUE # will calibration happen?
+  valids <- FALSE # all observer estimates are valid
 
   #=============================================================================
   # Raw estimates  =============================================================
@@ -331,7 +332,7 @@ grp_size <- function(grp,
     }
     bests_cal
     best_vars
-    valids
+    #valids
     calibs
     go
 
@@ -488,7 +489,7 @@ grp_size <- function(grp,
 
   go
   go_method
-  valids
+  #valids
   gs_best; gs_low; gs_high
 
   # starting point: all kept observer estimates are valid
