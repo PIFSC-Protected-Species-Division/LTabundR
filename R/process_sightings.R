@@ -148,7 +148,15 @@ process_sightings <- function(cruz,
     truncation_km <- sets$truncation_km
 
     # Modify calibration plan according to cohort-specific setting
-    if(!is.null(calibrate)){ group_size_calibrate <- calibrate }
+    if(!is.null(calibrate)){ # an input override was provided
+      if(is.na(calibrate)){ # if the override was NA, turn off calibration
+        group_size_calibrate <- NULL
+      }else{ # override is a separate list, so replace
+        group_size_calibrate <- calibrate
+      }
+    }
+
+    # Use calibrate ops to define calibration floor
     if(!is.null(group_size_calibrate)){
       if(is.null(calibrate_floor)){
         calibrate_floor <- group_size_calibrate$floor
