@@ -253,9 +253,9 @@ grp_recalibrate <- function(cruz,
     if(nrow(grps_max)>0){
       i=1
       (sitmax <- grps_max$SightNoDaily %>% unique) %>% length
-      pb <- txtProgressBar(min = 0, max = length(sitmax), style = 3)
+      if(verbose){pb <- txtProgressBar(min = 0, max = length(sitmax), style = 3)}
       for(i in 1:length(sitmax)){
-        setTxtProgressBar(pb, i)
+        if(verbose){setTxtProgressBar(pb, i)}
         (sitnoi <- sitmax[i])
         (grpi <- grps_max %>% filter(SightNoDaily == sitnoi))
         (grpcali <- LTabundR::grp_size(grpi,
@@ -273,9 +273,9 @@ grp_recalibrate <- function(cruz,
     if(verbose){message('--- --- then for other cases (n=', nrow(grps_not), ') ...')}
     if(nrow(grps_not)>0){
       (sitnot <- grps_not$SightNoDaily %>% unique) %>% length
-      pb <- txtProgressBar(min = 0, max = length(sitnot), style = 3)
+      if(verbose){pb <- txtProgressBar(min = 0, max = length(sitnot), style = 3)}
       for(i in 1:length(sitnot)){
-        setTxtProgressBar(pb, i)
+        if(verbose){setTxtProgressBar(pb, i)}
         (sitnoi <- sitnot[i])
         (grpi <- grps_not %>% filter(SightNoDaily == sitnoi))
         (grpcali <- LTabundR::grp_size(grpi,
