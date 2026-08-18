@@ -21,6 +21,7 @@ library(ggpubr)
 ################################################################################
 # Prep data
 
+#library(LTabundR)
 document()
 
 # Bring in 10km-segment data from all NOAA/NMFS surveys, 1986 - 2020
@@ -167,7 +168,7 @@ species <- list(
 # Run Rg0 estimation analysis
 
 jkf <- 0.1
-jkf <- 0
+#jkf <- 0
 
 spp1_5 <- g0_table(cruzi,
                    species[1:5],
