@@ -221,10 +221,13 @@ process_sightings <- function(cruz,
     #sits_sp %>% names
     #sits_sp %>% filter(year == 2008, month==10, day == 31) %>% select(DateTime, SightNoDaily) %>% head(20)
 
+    sitno
     #which(sitno == "19861128_1") # debugging
     which(sitno == '20120513_20')
     which(sitno == '20081031_650')
+    which(sitno == '20090218_5')
     i=25477
+    i=75
     #i=641 # for debugging
     debugger <- c()
     for(i in 1:length(sitno)){
