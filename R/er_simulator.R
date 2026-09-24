@@ -43,10 +43,11 @@ er_simulator <- function(spp,
   if(FALSE){ #==================================================================
 
     spp = '072' # brydes
+    spp = '046'
     cohort = 1
     data("cnp_150km_1986_2020")
     cruz <- cnp_150km_1986_2020
-    cruz <- filter_cruz(cruz, years= c(2002, 2010, 2017))
+    cruz <- filter_cruz(cruz, years= c(2017, 2020))
     iterations = 1000
     seed = NULL
 
@@ -66,8 +67,8 @@ er_simulator <- function(spp,
 
   # Get data from the cruz object
   segments <- cruz$cohorts[[cohort]]$segments
-  sightings <-
-    cruz$cohorts[[cohort]]$sightings %>%
+  sightings <- cruz$cohorts[[cohort]]$sightings
+  sightings <- sightings %>%
     filter(species %in% spp)
   das <- cruz$cohorts[[cohort]]$das
   years <- unique(das$year)
@@ -83,7 +84,8 @@ er_simulator <- function(spp,
     (yeari <- years[yi])
     obsi[yi] <-
       sightings %>%
-      dplyr::filter(year == yeari) %>%
+      dplyr::filter(year == yeari,
+                    included == TRUE) %>%
       nrow()
   }
   obsi
@@ -175,6 +177,11 @@ er_simulator <- function(spp,
   resulti <- list(summary = data.frame(years, observed = obsi, p = pvals),
                   details = results,
                   p = p)
+
+  # Adjust p value in the event that it is larger than 0.5
+  resulti$summary <-
+    resulti$summary %>%
+    mutate(p = ifelse(p > 0.5, 1 - p, p))
 
   return(resulti)
 }
